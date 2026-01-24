@@ -1,18 +1,20 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { loadSessions, exportSessionsCSV, type Session } from '../lib/storage'
-import { formatDuration, formatTimestamp } from '../lib/format'
+import { formatDuration, formatTime } from '../lib/format';
 import { linearRegression } from '../lib/regression'
 import { Button } from '../components/catalyst/button'
 import { Badge } from '../components/catalyst/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/catalyst/table'
 import { Text } from '../components/catalyst/text';
 import { Heading, Subheading } from '../components/catalyst/heading';
+import { Switch } from '../components/catalyst/switch';
 import Plotly from 'plotly.js-dist-min'
 
 export function History() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [relativeTime, setRelativeTime] = useState(true)
   const plotContainerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -216,7 +218,13 @@ export function History() {
 
           {/* Session Table */}
           <section>
-              <Subheading level={2} className="mb-4">All Sessions</Subheading>
+              <div className="flex items-center justify-between mb-4">
+                <Subheading level={2}>All Sessions</Subheading>
+                <div className="flex items-center gap-2">
+                  <Text className="text-sm">{relativeTime ? 'Relative time' : 'Absolute time'}</Text>
+                  <Switch checked={relativeTime} onChange={setRelativeTime} />
+                </div>
+              </div>
             <div className="rounded-lg border border-zinc-800 overflow-hidden">
               <Table>
                 <TableHead>
@@ -232,7 +240,7 @@ export function History() {
                   {sessions.slice().reverse().map((session, i) => (
                     <TableRow key={i}>
                       <TableCell className="whitespace-nowrap">
-                        {formatTimestamp(session.timestamp).slice(0, 16)}
+                        {formatTime(session.timestamp, relativeTime)}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {session.focusText}
