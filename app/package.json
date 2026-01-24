@@ -5,12 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && npm run copy-assets",
-    "copy-assets": "cp public/bell.mp3 dist/ && cp -r public/icons dist/ 2>/dev/null || true",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "neu:run": "npm run build && neu run",
-    "neu:build": "npm run build && neu build",
+    "neu:run": "npm run build && (cd .. && neu run)",
+    "neu:build": "npm run build && (cd .. && neu build)",
     "test": "vitest run",
     "test:watch": "vitest"
   },

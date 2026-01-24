@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "defaultMode": "window",
   "port": 0,
-  "documentRoot": "/build/",
+  "documentRoot": "/app/build/",
   "url": "/",
   "enableServer": true,
   "enableNativeAPI": true,
@@ -32,7 +32,7 @@
       "center": true,
       "fullScreen": false,
       "alwaysOnTop": false,
-      "icon": "/public/icons/favicon.ico",
+      "icon": "/app/public/icons/favicon.ico",
       "enableInspector": true,
       "borderless": false,
       "maximize": false,
@@ -43,17 +43,50 @@
   },
   "cli": {
     "binaryName": "pucoti",
-    "resourcesPath": "/build/",
+    "resourcesPath": "/app/build/",
     "extensionsPath": "/extensions/",
     "binaryVersion": "6.4.0",
     "clientVersion": "6.4.0",
     "frontendLibrary": {
-        "patchFile": "/index.html",
+        "patchFile": "/app/index.html",
         "devUrl": "http://localhost:5173",
-        "projectPath": "/",
+        "projectPath": "/app/",
         "initCommand": "npm install",
         "devCommand": "BROWSER=none npm run dev",
         "buildCommand": "npm run build"
+    }
+  },
+  "buildScript": {
+    "mac": {
+      "architecture": [
+        "x64",
+        "arm64",
+        "universal"
+      ],
+      "minimumOS": "10.13.0",
+      "appName": "Pucoti",
+      "appBundleName": "Pucoti",
+      "appIdentifier": "dev.pucoti",
+      "appIcon": "app/public/icons/favicon.ico"
+    },
+    "win": {
+      "architecture": [
+        "x64"
+      ],
+      "appName": "Pucoti",
+      "appIcon": "app/public/icons/favicon.ico"
+    },
+    "linux": {
+      "architecture": [
+        "x64",
+        "arm64",
+        "armhf"
+      ],
+      "appName": "Pucoti",
+      "appIcon": "app/public/icons/favicon.ico",
+      "appPath": "/usr/share/pucoti",
+      "appIconPath": "/usr/share/pucoti/icon.png",
+      "appIconLocation": "/usr/share/pucoti/icon.png"
     }
   }
 }
