@@ -71,6 +71,9 @@ export function Timer() {
             const newCorner = nextCorner(corner)
             setCorner(newCorner)
             await setSmallMode(newCorner, settings)
+          } else {
+            setTimerMode('small');
+            await setSmallMode(corner, settings)
           }
           break
 
