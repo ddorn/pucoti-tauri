@@ -123,13 +123,19 @@ export function CalibrationPlot({
 
     const layout = createPlotLayout({
       xaxis: {
-        title: 'Your Estimate (minutes)',
+        title: {
+          text: 'Your Estimate (minutes)',
+          font: { color: '#a1a1aa' },
+        },
         gridcolor: '#27272a',
         zerolinecolor: '#3f3f46',
         range: [0, maxVal],
       },
       yaxis: {
-        title: 'Actual Time Taken (minutes)',
+        title: {
+          text: 'Actual Time Taken (minutes)',
+          font: { color: '#a1a1aa' },
+        },
         gridcolor: '#27272a',
         zerolinecolor: '#3f3f46',
         range: [0, maxVal],

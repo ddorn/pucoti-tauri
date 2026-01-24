@@ -59,12 +59,18 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
 
     const layout = createPlotLayout({
       xaxis: {
-        title: 'Adjustment (%)',
+        title: {
+          text: 'Adjustment (%)',
+          font: { color: '#a1a1aa' },
+        },
         gridcolor: '#27272a',
         zerolinecolor: '#3f3f46',
       },
       yaxis: {
-        title: 'On-time rate (%)',
+        title: {
+          text: 'On-time rate (%)',
+          font: { color: '#a1a1aa' },
+        },
         gridcolor: '#27272a',
         zerolinecolor: '#3f3f46',
         range: [0, 100],
