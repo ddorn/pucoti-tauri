@@ -163,6 +163,73 @@ export function Settings() {
         </Text>
       </section>
 
+      {/* Corner Margins */}
+      <section className="space-y-4">
+        <Heading level={2}>Corner Margins</Heading>
+        <Text className="text-sm text-zinc-400">
+          Distance from screen edges when in small corner mode (in pixels)
+        </Text>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Top margin
+            </label>
+            <Input
+              type="number"
+              value={settings.cornerMarginTop}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateSettings({ cornerMarginTop: parseInt(e.target.value) || 0 })
+              }
+              min={0}
+              max={500}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Right margin
+            </label>
+            <Input
+              type="number"
+              value={settings.cornerMarginRight}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateSettings({ cornerMarginRight: parseInt(e.target.value) || 0 })
+              }
+              min={0}
+              max={500}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Bottom margin
+            </label>
+            <Input
+              type="number"
+              value={settings.cornerMarginBottom}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateSettings({ cornerMarginBottom: parseInt(e.target.value) || 0 })
+              }
+              min={0}
+              max={500}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Left margin
+            </label>
+            <Input
+              type="number"
+              value={settings.cornerMarginLeft}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateSettings({ cornerMarginLeft: parseInt(e.target.value) || 0 })
+              }
+              min={0}
+              max={500}
+            />
+          </div>
+        </div>
+      </section>
+
       {/* Reset */}
       <section className="pt-4 border-t border-zinc-800">
         <Button

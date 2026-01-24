@@ -12,6 +12,12 @@ export interface Settings {
 
   // Small window behavior
   smallWindowBorderless: boolean
+
+  // Corner margins
+  cornerMarginTop: number
+  cornerMarginRight: number
+  cornerMarginBottom: number
+  cornerMarginLeft: number
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -21,6 +27,10 @@ export const DEFAULT_SETTINGS: Settings = {
   smallWindowWidth: 220,
   smallWindowHeight: 80,
   smallWindowBorderless: false,
+  cornerMarginTop: 16,
+  cornerMarginRight: 16,
+  cornerMarginBottom: 16,
+  cornerMarginLeft: 16,
 }
 
 let dataDir: string | null = null

@@ -3,8 +3,6 @@ import type { Settings } from './settings'
 
 export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
 
-const MARGIN = 16
-
 /**
  * Detect if running under Sway window manager
  */
@@ -55,14 +53,16 @@ async function setSwayCornerMode(
   corner: Corner,
   width: number,
   height: number,
-  borderless: boolean
+  borderless: boolean,
+  margins: Pick<Settings, 'cornerMarginTop' | 'cornerMarginRight' | 'cornerMarginBottom' | 'cornerMarginLeft'>
 ): Promise<void> {
   const display = await getDisplaySize();
+  const { cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = margins;
   const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - width - MARGIN, y: display.height - height - MARGIN },
-    'bottom-left': { x: MARGIN, y: display.height - height - MARGIN },
-    'top-right': { x: display.width - width - MARGIN, y: MARGIN },
-    'top-left': { x: MARGIN, y: MARGIN },
+    'bottom-right': { x: display.width - width - cornerMarginRight, y: display.height - height - cornerMarginBottom },
+    'bottom-left': { x: cornerMarginLeft, y: display.height - height - cornerMarginBottom },
+    'top-right': { x: display.width - width - cornerMarginRight, y: cornerMarginTop },
+    'top-left': { x: cornerMarginLeft, y: cornerMarginTop },
   };
 
   const pos = positions[corner];
@@ -102,9 +102,9 @@ async function setSwayNormalMode(width: number, height: number): Promise<void> {
  */
 export async function setSmallMode(
   corner: Corner,
-  settings: Pick<Settings, 'smallWindowWidth' | 'smallWindowHeight' | 'smallWindowBorderless'>
+  settings: Pick<Settings, 'smallWindowWidth' | 'smallWindowHeight' | 'smallWindowBorderless' | 'cornerMarginTop' | 'cornerMarginRight' | 'cornerMarginBottom' | 'cornerMarginLeft'>
 ): Promise<void> {
-  const { smallWindowWidth, smallWindowHeight, smallWindowBorderless } = settings
+  const { smallWindowWidth, smallWindowHeight, smallWindowBorderless, cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = settings
 
   // Exit fullscreen if active
   try {
@@ -117,17 +117,22 @@ export async function setSmallMode(
   }
 
   if (await isSway()) {
-    await setSwayCornerMode(corner, smallWindowWidth, smallWindowHeight, smallWindowBorderless)
+    await setSwayCornerMode(corner, smallWindowWidth, smallWindowHeight, smallWindowBorderless, {
+      cornerMarginTop,
+      cornerMarginRight,
+      cornerMarginBottom,
+      cornerMarginLeft,
+    })
     return
   }
 
   // Generic Neutralino fallback
   const display = await getDisplaySize()
   const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - smallWindowWidth - MARGIN, y: display.height - smallWindowHeight - MARGIN },
-    'bottom-left': { x: MARGIN, y: display.height - smallWindowHeight - MARGIN },
-    'top-right': { x: display.width - smallWindowWidth - MARGIN, y: MARGIN },
-    'top-left': { x: MARGIN, y: MARGIN },
+    'bottom-right': { x: display.width - smallWindowWidth - cornerMarginRight, y: display.height - smallWindowHeight - cornerMarginBottom },
+    'bottom-left': { x: cornerMarginLeft, y: display.height - smallWindowHeight - cornerMarginBottom },
+    'top-right': { x: display.width - smallWindowWidth - cornerMarginRight, y: cornerMarginTop },
+    'top-left': { x: cornerMarginLeft, y: cornerMarginTop },
   }
 
   const pos = positions[corner]
