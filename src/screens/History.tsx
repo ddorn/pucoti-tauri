@@ -41,8 +41,10 @@ export function History() {
   // Draw calibration plot
   useEffect(() => {
     if (completedSessions.length < 2) return;
-    if (!plotContainerRef.current) {
-      throw new Error('Calibration plot container missing');
+    const container = plotContainerRef.current;
+    if (!container) {
+      console.warn('Calibration plot container missing');
+      return;
     }
 
     const predicted = completedSessions.map(s => s.predictedSeconds / 60)
@@ -127,10 +129,10 @@ export function History() {
       responsive: true,
     }
 
-    Plotly.newPlot(plotContainerRef.current, traces, layout, config)
+    Plotly.newPlot(container, traces, layout, config)
 
     return () => {
-      Plotly.purge(plotContainerRef.current)
+      Plotly.purge(container)
     }
   }, [completedSessions, regression])
 
