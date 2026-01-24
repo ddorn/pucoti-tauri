@@ -17,6 +17,16 @@ function formatTime(seconds: number): string {
   return `${mins}m`;
 }
 
+function getCompletionTime(seconds: number): string {
+  const completionDate = new Date(Date.now() + seconds * 1000);
+  const hours = completionDate.getHours();
+  const minutes = completionDate.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  const displayMinutes = minutes.toString().padStart(2, '0');
+  return `${displayHours}:${displayMinutes} ${ampm}`;
+}
+
 export function NewFocus() {
   const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
   const [focusText, setFocusText] = useState('')
@@ -142,7 +152,11 @@ export function NewFocus() {
             />
             <Text className="text-sm h-5">
               {parsedSeconds !== null && parsedSeconds > 0 && (
-                <span className="text-accent">{formatTimePreview(parsedSeconds)}</span>
+                <>
+                  <span className="text-accent">{formatTimePreview(parsedSeconds)}</span>
+                  <span className="px-2">·</span>
+                  <span className="text-zinc-400">You'll be done at {getCompletionTime(parsedSeconds)}</span>
+                </>
               )}
               {timeInput && parsedSeconds === null && (
                 <span className="text-red-400">Invalid format. Try "25m", "1h 30m", "45:00"</span>
