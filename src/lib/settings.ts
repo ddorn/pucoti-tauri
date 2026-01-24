@@ -18,8 +18,8 @@ export const DEFAULT_SETTINGS: Settings = {
   notificationCommand: '', // Empty = use default OS notification
   normalWindowWidth: 600,
   normalWindowHeight: 500,
-  smallWindowWidth: 320,
-  smallWindowHeight: 120,
+  smallWindowWidth: 220,
+  smallWindowHeight: 80,
   smallWindowBorderless: false,
 }
 

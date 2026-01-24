@@ -57,53 +57,44 @@ async function setSwayCornerMode(
   height: number,
   borderless: boolean
 ): Promise<void> {
-  const display = await getDisplaySize()
+  const display = await getDisplaySize();
   const positions: Record<Corner, { x: number; y: number }> = {
     'bottom-right': { x: display.width - width - MARGIN, y: display.height - height - MARGIN },
     'bottom-left': { x: MARGIN, y: display.height - height - MARGIN },
     'top-right': { x: display.width - width - MARGIN, y: MARGIN },
     'top-left': { x: MARGIN, y: MARGIN },
-  }
+  };
 
-  const pos = positions[corner]
+  const pos = positions[corner];
 
-  // Sway commands: make floating, set size, set position, enable sticky
-  const commands = [
+  // Combine commands into a single swaymsg invocation
+  const command = [
     'floating enable',
     `resize set ${width} ${height}`,
-    `move position ${pos.x} ${pos.y}`,
-    'sticky enable',
-  ]
+    `border ${borderless ? 'none' : 'normal'}`,
+    `move absolute position ${pos.x} ${pos.y}`,
+    'sticky enable'
+  ].join(', ');
 
-  // Add border command for Sway
-  if (borderless) {
-    commands.push('border none')
-  } else {
-    commands.push('border normal')
-  }
+  console.log(command);
 
-  for (const cmd of commands) {
-    await Neutralino.os.execCommand(`swaymsg '${cmd}'`)
-  }
+  await Neutralino.os.execCommand(`swaymsg '${command}'`);
 }
 
 /**
  * Set window to normal mode in Sway
  */
 async function setSwayNormalMode(width: number, height: number): Promise<void> {
-  const commands = [
+  // Combine all commands, including resize, into a single swaymsg call
+  const command = [
     'sticky disable',
-    'border normal',
-    'floating disable',
-  ]
+    // 'border normal',  // uncomment if needed
+    // 'floating disable', // uncomment if needed
+    `resize set ${width} ${height}`,
+    'move absolute position center'
+  ].join(', ');
 
-  for (const cmd of commands) {
-    await Neutralino.os.execCommand(`swaymsg '${cmd}'`)
-  }
-
-  // Center and resize after unfloating
-  await Neutralino.window.setSize({ width, height })
-  await Neutralino.window.center()
+  await Neutralino.os.execCommand(`swaymsg '${command}'`);
 }
 
 /**
