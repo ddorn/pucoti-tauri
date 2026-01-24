@@ -5,6 +5,7 @@ import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
 import { saveActiveSession } from '../lib/storage';
 import confetti from 'canvas-confetti'
+import clsx from 'clsx'
 
 function formatTime(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
@@ -46,7 +47,7 @@ function BlankInput({
   onKeyDown,
   placeholder,
   inputRef,
-  minWidth = '8ch',
+  className,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -54,9 +55,23 @@ function BlankInput({
   placeholder: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   minWidth?: string;
+  className?: string;
 }) {
+  const [width, setWidth] = useState('0');
+  const measureRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (measureRef.current) {
+      const measured = measureRef.current.offsetWidth;
+      setWidth(`${measured + 8}px`);
+    }
+  }, [value, placeholder]);
+
   return (
-    <span className="inline-block relative">
+    <span className={clsx("inline-block relative", className)}>
+      <span ref={measureRef} className="invisible absolute whitespace-pre font-inherit text-3xl lg:text-4xl font-medium truncate max-w-xl">
+        {value || placeholder}
+      </span>
       <input
         ref={inputRef}
         type="text"
@@ -64,9 +79,9 @@ function BlankInput({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        style={{ minWidth, width: `${Math.max(value.length, placeholder.length)}ch` }}
+        style={{ width }}
         className="bg-transparent border-0 border-b-2 border-zinc-600 focus:border-accent outline-none
-                   font-inherit px-1 transition-colors placeholder:text-zinc-600 text-accent"
+                   font-inherit px-1 transition-colors placeholder:text-zinc-600 text-accent max-w-full"
       />
     </span>
   );
@@ -167,7 +182,7 @@ export function NewFocus() {
 
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-8">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-md lg:max-w-xl">
         {/* Small colored question */}
         <p className="text-xl lg:text-2xl font-medium text-zinc-400 mb-4">{question}</p>
 
@@ -180,16 +195,15 @@ export function NewFocus() {
             onKeyDown={handleFocusKeyDown}
             placeholder="write the intro"
             inputRef={focusInputRef}
-            minWidth="12ch"
+            className="max-w-[90%]"
           />
-          .<br /> There's 80% chance I'll be<br />done in{' '}
+          .<br /> There's 80% chance I'll be done <br />in{' '}
           <BlankInput
             value={timeInput}
             onChange={setTimeInput}
             onKeyDown={handleTimeKeyDown}
             placeholder="25m"
             inputRef={timeInputRef}
-            minWidth="4ch"
           />
           .
         </p>
