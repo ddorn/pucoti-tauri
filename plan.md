@@ -36,7 +36,7 @@ A timer app that helps you predict how long tasks take by tracking prediction vs
 - Small (`Space`): 320×120, always-on-top, no navbar, no shortcut hints
 - Zen and Small can transition to each other with Tab/Space
 
-### 3. History
+### 3. Stats
 - **Calibration plot**: scatter of (predicted, actual) + linear regression line + y=x reference line
   - Only `completed` sessions shown on plot (canceled/unknown excluded)
 - **Table**: timestamp, focus text, predicted, actual, status
@@ -83,7 +83,7 @@ The csv file is in the app's data directory.
   /screens
     NewFocus.tsx
     Timer.tsx
-    History.tsx
+    Stats.tsx
   /lib
     time-parser.ts    # parse "12m 30s" etc
     regression.ts     # linear regression calc
@@ -110,4 +110,4 @@ Tailwind Catalist and sound are in the folder.
 - Settings screen (corner size, sounds, etc.)
 - Remember last corner position
 - Single instance enforcement
-- Edit/delete history entries
+- Edit/delete stats entries

@@ -3,7 +3,7 @@ import { AppProvider, useApp } from './context/AppContext'
 import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { NewFocus } from './screens/NewFocus'
 import { Timer } from './screens/Timer'
-import { History } from './screens/History'
+import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
 import { setNormalMode } from './lib/window'
@@ -37,10 +37,10 @@ function AppContent() {
               Timer
             </NavButton>
             <NavButton
-              active={screen === 'history'}
-              onClick={() => setScreen('history')}
+              active={screen === 'stats'}
+              onClick={() => setScreen('stats')}
             >
-              History
+              Stats
             </NavButton>
             <NavButton
               active={screen === 'settings'}
@@ -59,7 +59,7 @@ function AppContent() {
       <main className="flex-1">
         {screen === 'new-focus' && <NewFocus />}
         {screen === 'timer' && <Timer />}
-        {screen === 'history' && <History />}
+        {screen === 'stats' && <Stats />}
         {screen === 'settings' && <Settings />}
       </main>
     </div>

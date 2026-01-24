@@ -10,7 +10,7 @@ import { Heading, Subheading } from '../components/catalyst/heading';
 import { Switch } from '../components/catalyst/switch';
 import Plotly from 'plotly.js-dist-min'
 
-export function History() {
+export function Stats() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -164,7 +164,7 @@ export function History() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Text>Loading history...</Text>
+        <Text>Loading stats...</Text>
       </div>
     )
   }
@@ -172,7 +172,7 @@ export function History() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
-        <p className="text-red-400 text-lg mb-2">Error loading history</p>
+        <p className="text-red-400 text-lg mb-2">Error loading stats</p>
         <Text className="text-sm">{error}</Text>
       </div>
     )
@@ -181,7 +181,7 @@ export function History() {
   return (
     <div className="p-6 space-y-8">
       <div className="flex items-center justify-between">
-        <Heading level={1} className="font-bold">Session History</Heading>
+        <Heading level={1} className="font-bold">Session Stats</Heading>
         <Button outline onClick={handleExport} disabled={sessions.length === 0}>
           Export CSV
         </Button>
