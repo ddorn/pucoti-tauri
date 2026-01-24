@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { parseTime, formatTimePreview } from '../lib/time-parser'
 import { Button } from '../components/catalyst/button';
@@ -60,7 +60,7 @@ function BlankInput({
   const [width, setWidth] = useState('0');
   const measureRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (measureRef.current) {
       const measured = measureRef.current.offsetWidth;
       setWidth(`${measured + 8}px`);
