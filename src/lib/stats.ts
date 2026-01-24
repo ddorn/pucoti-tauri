@@ -13,6 +13,8 @@ export interface CalibrationStats {
   withinTenPercent: number
   /** Number of completed sessions */
   sessionCount: number
+    /** Interquartile range of actual/predicted ratios */
+    ratioIQR: { q1: number; median: number; q3: number; } | null;
 }
 
 /**
@@ -55,6 +57,24 @@ export function computeCalibrationStats(sessions: Session[]): CalibrationStats |
   }).length
   const withinTenPercent = (withinCount / n) * 100
 
+    // Interquartile range of actual/predicted ratios
+    let ratioIQR: { q1: number; median: number; q3: number; } | null = null;
+    if (n >= 3) {
+        const ratios = completed
+            .map(s => s.actualSeconds / s.predictedSeconds)
+            .sort((a, b) => a - b);
+
+        const q1Index = Math.floor(n * 0.25);
+        const medianIndex = Math.floor(n * 0.5);
+        const q3Index = Math.floor(n * 0.75);
+
+        ratioIQR = {
+            q1: ratios[q1Index],
+            median: ratios[medianIndex],
+            q3: ratios[q3Index],
+        };
+    }
+
   return {
     meanBias,
     biasMargin,
@@ -62,6 +82,7 @@ export function computeCalibrationStats(sessions: Session[]): CalibrationStats |
     longerPercent,
     withinTenPercent,
     sessionCount: n,
+      ratioIQR,
   }
 }
 

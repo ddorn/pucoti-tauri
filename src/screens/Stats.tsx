@@ -6,9 +6,10 @@ import { Button } from '../components/catalyst/button'
 import { Text } from '../components/catalyst/text';
 import { Heading } from '../components/catalyst/heading';
 import { StatCard } from '../components/StatCard';
-import { AdjustmentHeadline } from '../components/AdjustmentHeadline';
 import { AdjustmentPlot } from '../components/AdjustmentPlot';
+import { AdjustmentRecommendation } from '../components/AdjustmentRecommendation';
 import { CalibrationPlot } from '../components/CalibrationPlot';
+import { MedianRangeCard } from '../components/MedianRangeCard';
 import { SessionTable } from '../components/SessionTable'
 
 export function Stats() {
@@ -63,26 +64,33 @@ export function Stats() {
         </div>
       ) : (
           <>
-            {adjustmentCurve && adjustmentCurve.adjustment80 !== null && (
-              <AdjustmentHeadline
+            {/* Planning adjustment recommendation */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <AdjustmentRecommendation
                 adjustmentCurve={adjustmentCurve}
                 sessionCount={completedSessions.length}
               />
-            )}
-
-            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <AdjustmentPlot adjustmentCurve={adjustmentCurve} />
-              <CalibrationPlot
-                completedSessions={completedSessions}
-                regression={regression}
+              <AdjustmentPlot
+                adjustmentCurve={adjustmentCurve}
               />
             </section>
 
+            {/* Calibration analysis */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <CalibrationPlot
+                completedSessions={completedSessions}
+                regression={regression}
+                stats={stats}
+              />
+              <MedianRangeCard stats={stats} />
+            </section>
+
+            {/* Stats cards */}
             {stats && (
               <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
                   value={`${Math.round(Math.abs(stats.meanBias))}%`}
-                  label={stats.meanBias > 0 ? 'You underestimate by' : stats.meanBias < 0 ? 'You overestimate by' : 'Estimation bias'}
+                  label={stats.meanBias > 0 ? 'Average underestimation' : stats.meanBias < 0 ? 'Average overestimation' : 'Estimation bias'}
                   sublabel={stats.biasMargin !== null
                     ? `95% CI: ±${Math.round(stats.biasMargin)} points`
                     : undefined}
@@ -90,19 +98,19 @@ export function Stats() {
                 />
                 <StatCard
                   value={formatDuration(stats.totalSeconds)}
-                  label="You tracked"
+                  label="Total time tracked"
                   sublabel={`across ${stats.sessionCount} sessions`}
                   color="zinc"
                 />
                 <StatCard
                   value={`${Math.round(stats.longerPercent)}%`}
-                  label="Sessions taking longer than expected"
+                  label="Tasks taking longer than estimate"
                   color={stats.longerPercent > 60 || stats.longerPercent < 40 ? 'amber' : 'emerald'}
                 />
                 <StatCard
                   value={`${Math.round(stats.withinTenPercent)}%`}
-                  label="Estimates within ±10%"
-                  sublabel={stats.withinTenPercent >= 50 ? 'Good accuracy!' : 'Room for improvement'}
+                  label="Accurate estimates"
+                  sublabel="Within ±10% of actual"
                   color={stats.withinTenPercent >= 50 ? 'emerald' : 'amber'}
                 />
               </section>
