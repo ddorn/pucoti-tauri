@@ -106,9 +106,18 @@ export function Timer() {
 
   // Zen and Small modes: minimal display with prominent intent
   if (timerMode === 'zen' || timerMode === 'small') {
+    const countdown = formatCountdown(remaining);
+    const countdownLength = countdown.length;
+
+    // First is to size wrt the height of the screen, second is to make sure there's enough space for each digit
+    // All the numbers are magic. You can try to find better, but test well.
+    const countDownFontSize = `min(62vh,${100/(countdownLength/1.5)}vw)`;
+    // First is to take the rest of the vertical space, second is to keep it smaller than the countdown
+    const intentFontSize = `min(calc(80vh - ${countDownFontSize}), ${countDownFontSize} * 0.3)`;
+
     return (
-      <div className="flex flex-col items-center justify-center h-screen p-4 select-none overflow-hidden bg-surface">
-        <p className="text-accent text-[3vw] mb-[2vh] text-center max-w-[80vw] font-medium">
+      <div className="flex flex-col items-center justify-center h-screen p-1 xs:p-4 select-none overflow-hidden bg-surface">
+        <p className="text-accent mb-[2vh] text-center max-w-[80vw] font-medium overflow-x-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
           {timerState.focusText}
         </p>
         <p
@@ -116,9 +125,9 @@ export function Timer() {
             'font-timer font-bold tracking-tight leading-none',
             isOvertime ? 'text-red-500' : 'text-zinc-100'
           )}
-          style={{ fontSize: 'min(25vw, 65vh)' }}
+          style={{ fontSize: countDownFontSize }}
         >
-          {formatCountdown(remaining)}
+          {countdown}
         </p>
       </div>
     )
