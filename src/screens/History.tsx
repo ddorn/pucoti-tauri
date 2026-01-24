@@ -52,7 +52,7 @@ export function History() {
     const predicted = completedSessions.map(s => s.predictedSeconds / 60)
     const actual = completedSessions.map(s => s.actualSeconds / 60)
 
-    const maxVal = Math.max(...predicted, ...actual, 30) * 1.1
+    const maxVal = Math.max(...predicted, ...actual, 5) * 1.1
 
     const traces: Plotly.Data[] = [
       // Scatter points
