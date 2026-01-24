@@ -80,7 +80,6 @@ export async function executeCustomNotification(title: string, body: string, com
   const substituted = command
     .replace(/\{title\}/g, escapeShellArg(title))
     .replace(/\{body\}/g, escapeShellArg(body))
-    .replace(/\{intent\}/g, escapeShellArg(body)) // {intent} is alias for {body}
 
   try {
     await Neutralino.os.execCommand(substituted)

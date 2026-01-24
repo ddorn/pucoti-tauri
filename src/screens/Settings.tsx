@@ -65,7 +65,7 @@ export function Settings() {
             placeholder="notify-send {title} {body}"
           />
           <Text className="text-xs">
-            Leave empty for default OS notifications. Use <code className="px-1 py-0.5 rounded bg-zinc-800">{'{title}'}</code>, <code className="px-1 py-0.5 rounded bg-zinc-800">{'{body}'}</code>, or <code className="px-1 py-0.5 rounded bg-zinc-800">{'{intent}'}</code> as placeholders.
+            Leave empty for default OS notifications. Use <code className="px-1 py-0.5 rounded bg-zinc-800">{'{title}'}</code> and <code className="px-1 py-0.5 rounded bg-zinc-800">{'{body}'}</code> as placeholders.
           </Text>
         </div>
 
