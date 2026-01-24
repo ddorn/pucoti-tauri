@@ -1,5 +1,4 @@
 import { Text } from './catalyst/text'
-import { Heading } from './catalyst/heading'
 import type { AdjustmentCurve } from '../lib/stats'
 
 export function AdjustmentRecommendation({

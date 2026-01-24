@@ -1,4 +1,3 @@
-import { Heading } from './catalyst/heading'
 import { Text } from './catalyst/text'
 import type { CalibrationStats } from '../lib/stats'
 

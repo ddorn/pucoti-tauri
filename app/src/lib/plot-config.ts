@@ -1,6 +1,6 @@
-import type { Layout, Config } from 'plotly.js-dist-min'
+import Plotly from 'plotly.js-dist-min'
 
-export function createPlotLayout(overrides?: Partial<Layout>): Partial<Layout> {
+export function createPlotLayout(overrides?: Partial<Plotly.Layout>): Partial<Plotly.Layout> {
   return {
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
@@ -18,7 +18,7 @@ export function createPlotLayout(overrides?: Partial<Layout>): Partial<Layout> {
   }
 }
 
-export function createPlotConfig(): Partial<Config> {
+export function createPlotConfig(): Partial<Plotly.Config> {
   return {
     displayModeBar: false,
     responsive: true,
