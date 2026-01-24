@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { linearRegression } from './regression'
+import { linearRegression } from './stats'
 
 describe('linearRegression', () => {
   it('returns null for insufficient data', () => {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { loadSessions, exportSessionsCSV, type Session } from '../lib/storage'
 import { formatDuration, formatTime } from '../lib/format';
-import { linearRegression } from '../lib/regression'
+import { computeCalibrationStats, computeRegressionWithCI } from '../lib/stats';
 import { Button } from '../components/catalyst/button'
 import { Badge } from '../components/catalyst/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/catalyst/table'
@@ -33,14 +33,20 @@ export function History() {
     [sessions]
   )
 
-  // Regression for completed sessions
+  // Regression for completed sessions (with confidence interval for slope)
   const regression = useMemo(() => {
     const points = completedSessions.map(s => ({
       x: s.predictedSeconds / 60, // Convert to minutes for plot
       y: s.actualSeconds / 60,
     }))
-    return linearRegression(points)
+    return computeRegressionWithCI(points)
   }, [completedSessions])
+
+  // Compute summary statistics for the cards
+  const stats = useMemo(
+    () => computeCalibrationStats(sessions),
+    [sessions]
+  )
 
   // Draw calibration plot
   useEffect(() => {
@@ -188,6 +194,37 @@ export function History() {
         </div>
       ) : (
         <>
+            {/* Stats Cards */}
+            {stats && (
+              <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                  value={`${Math.round(Math.abs(stats.meanBias))}%`}
+                  label={stats.meanBias > 0 ? 'You underestimate by' : stats.meanBias < 0 ? 'You overestimate by' : 'Estimation bias'}
+                  sublabel={stats.biasMargin !== null
+                    ? `95% CI: ±${Math.round(stats.biasMargin)} points`
+                    : undefined}
+                  color={Math.abs(stats.meanBias) < 10 ? 'emerald' : 'amber'}
+                />
+                <StatCard
+                  value={formatDuration(stats.totalSeconds)}
+                  label="You tracked"
+                  sublabel={`across ${stats.sessionCount} sessions`}
+                  color="zinc"
+                />
+                <StatCard
+                  value={`${Math.round(stats.longerPercent)}%`}
+                  label="Sessions taking longer than expected"
+                  color={stats.longerPercent > 60 || stats.longerPercent < 40 ? 'amber' : 'emerald'}
+                />
+                <StatCard
+                  value={`${Math.round(stats.withinTenPercent)}%`}
+                  label="Estimates within ±10%"
+                  sublabel={stats.withinTenPercent >= 50 ? 'Good accuracy!' : 'Room for improvement'}
+                  color={stats.withinTenPercent >= 50 ? 'emerald' : 'amber'}
+                />
+              </section>
+            )}
+
           {/* Calibration Plot */}
           <section>
               <Subheading level={2} className="mb-4">Calibration</Subheading>
@@ -209,7 +246,12 @@ export function History() {
                     ) : (
                       <>Your estimates are <span className="text-emerald-400">well calibrated</span>!</>
                     )}
-                    {' '}(slope: {regression.slope.toFixed(2)})
+                        {' '}— slope: {regression.slope.toFixed(2)}
+                        {regression.slopeCI && (
+                          <span className="text-zinc-500">
+                            {' '}(±{((regression.slopeCI.high - regression.slopeCI.low) / 2).toFixed(2)})
+                          </span>
+                        )}
                       </Text>
                 )}
               </div>
@@ -275,4 +317,34 @@ function StatusBadge({ status }: { status: Session['status'] }) {
     case 'unknown':
       return <Badge color="amber">unknown</Badge>
   }
+}
+
+function StatCard({
+  value,
+  label,
+  sublabel,
+  color,
+}: {
+  value: string;
+  label: string;
+  sublabel?: string;
+  color: 'emerald' | 'amber' | 'zinc';
+}) {
+  const colorClasses = {
+    emerald: 'text-emerald-400',
+    amber: 'text-amber-400',
+    zinc: 'text-zinc-100',
+  };
+
+  return (
+    <div className="bg-surface-raised rounded-lg p-5">
+      <div className="text-sm text-zinc-100 mb-1">{label}</div>
+      <div className={`text-3xl font-bold ${colorClasses[color]}`}>
+        {value}
+      </div>
+      {sublabel && (
+        <Text className="text-xs text-zinc-500 mt-2">{sublabel}</Text>
+      )}
+    </div>
+  );
 }
