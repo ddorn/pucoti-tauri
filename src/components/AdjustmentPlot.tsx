@@ -60,7 +60,7 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
     const layout = createPlotLayout({
       xaxis: {
         title: {
-          text: 'Adjustment (%)',
+          text: 'Adjustment to Initial Estimate (+X%)',
           font: { color: '#a1a1aa' },
         },
         gridcolor: '#27272a',
@@ -68,7 +68,7 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
       },
       yaxis: {
         title: {
-          text: 'On-time rate (%)',
+          text: 'Correct predictions (%)',
           font: { color: '#a1a1aa' },
         },
         gridcolor: '#27272a',
