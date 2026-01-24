@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
+  "applicationId": "dev.predicoti",
+  "version": "1.0.0",
+  "defaultMode": "window",
+  "port": 0,
+  "documentRoot": "/build/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "tokenSecurity": "one-time",
+  "logging": {
+    "enabled": true,
+    "writeToLogFile": true
+  },
+  "nativeAllowList": [
+    "app.*",
+    "os.*",
+    "filesystem.*",
+    "window.*",
+    "storage.*",
+    "computer.*",
+    "debug.log"
+  ],
+  "modes": {
+    "window": {
+      "title": "Predicoti",
+      "width": 600,
+      "height": 500,
+      "minWidth": 320,
+      "minHeight": 120,
+      "center": true,
+      "fullScreen": false,
+      "alwaysOnTop": false,
+      "icon": "/public/icons/favicon.ico",
+      "enableInspector": true,
+      "borderless": false,
+      "maximize": false,
+      "hidden": false,
+      "resizable": true,
+      "exitProcessOnClose": true
+    }
+  },
+  "cli": {
+    "binaryName": "predicoti",
+    "resourcesPath": "/build/",
+    "extensionsPath": "/extensions/",
+    "binaryVersion": "6.4.0",
+    "clientVersion": "6.4.0",
+    "frontendLibrary": {
+        "patchFile": "/index.html",
+        "devUrl": "http://localhost:5173",
+        "projectPath": "/",
+        "initCommand": "npm install",
+        "devCommand": "BROWSER=none npm run dev",
+        "buildCommand": "npm run build"
+    }
+  }
+}
