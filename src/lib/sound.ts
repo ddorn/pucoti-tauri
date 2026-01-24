@@ -13,7 +13,7 @@ export function playBell(): void {
 }
 
 export function showNotification(title: string, body: string): void {
-  Neutralino.os.showNotification(title, body, Icon.INFO).catch(() => {
+  Neutralino.os.showNotification(title, body).catch(() => {
     // Fall back to browser notification
     fallbackNotification(title, body)
   })

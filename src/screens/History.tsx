@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { loadSessions, exportSessionsCSV, type Session } from '../lib/storage'
 import { formatDuration, formatTimestamp } from '../lib/format'
 import { linearRegression } from '../lib/regression'
@@ -11,6 +11,7 @@ export function History() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const plotContainerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     loadSessions()
@@ -39,7 +40,10 @@ export function History() {
 
   // Draw calibration plot
   useEffect(() => {
-    if (completedSessions.length === 0) return
+    if (completedSessions.length < 2) return;
+    if (!plotContainerRef.current) {
+      throw new Error('Calibration plot container missing');
+    }
 
     const predicted = completedSessions.map(s => s.predictedSeconds / 60)
     const actual = completedSessions.map(s => s.actualSeconds / 60)
@@ -123,10 +127,10 @@ export function History() {
       responsive: true,
     }
 
-    Plotly.newPlot('calibration-plot', traces, layout, config)
+    Plotly.newPlot(plotContainerRef.current, traces, layout, config)
 
     return () => {
-      Plotly.purge('calibration-plot')
+      Plotly.purge(plotContainerRef.current)
     }
   }, [completedSessions, regression])
 
@@ -189,7 +193,7 @@ export function History() {
               </div>
             ) : (
               <div className="bg-surface-raised rounded-lg p-4">
-                <div id="calibration-plot" className="w-full h-72" />
+                    <div ref={plotContainerRef} className="w-full h-72" />
                 {regression && (
                   <p className="text-sm text-zinc-500 mt-2 text-center">
                     {regression.slope > 1.1 ? (

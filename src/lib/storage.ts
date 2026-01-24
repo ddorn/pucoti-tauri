@@ -22,29 +22,21 @@ let dataDir: string | null = null
 
 async function getDataDir(): Promise<string> {
   if (dataDir) return dataDir
-
-  const platform = navigator.platform.toLowerCase()
-  if (platform.includes('win')) {
-    const appData = await Neutralino.os.getPath('data')
-    dataDir = `${appData}\\predicoti`
-  } else if (platform.includes('mac')) {
-    const home = await Neutralino.os.getPath('data')
-    dataDir = `${home}/predicoti`
+  const base = await Neutralino.os.getPath('data')
+  if ((await Neutralino.computer.getKernelInfo()).variant === 'Windows NT') {
+    dataDir = `${base}\\predicoti`
   } else {
-    // Linux: use XDG_DATA_HOME or ~/.local/share
-    const home = await Neutralino.os.getPath('data')
-    dataDir = `${home}/predicoti`
+    dataDir = `${base}/predicoti`
   }
 
-  // Ensure directory exists by trying to write a test file
   try {
-    const testPath = `${dataDir}/.init`
-    await Neutralino.filesystem.writeFile(testPath, '')
-    await Neutralino.filesystem.remove(testPath)
+    let stats = await Neutralino.filesystem.getStats(dataDir)
+    if (!stats.isDirectory) {
+      throw new Error('Data directory is not a directory')
+    }
   } catch {
-    // Directory might not exist, try to create it by writing the CSV header
+    await Neutralino.filesystem.createDirectory(dataDir)
   }
-
   return dataDir
 }
 
