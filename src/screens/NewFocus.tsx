@@ -27,15 +27,37 @@ function getCompletionTime(seconds: number): string {
   return `${displayHours}:${displayMinutes} ${ampm}`;
 }
 
+const QUESTIONS = [
+  'What will you accomplish?',
+  'What is important right now?',
+  'What were you avoiding until now?',
+  "What's the right thing to do?",
+  'What is urgent?',
+  "What's a small thing you'll be proud to have done?",
+  "What are you excited about?",
+  "What's the best use of your time right now?",
+  "What's the next step?",
+  'How can you make progress today?',
+  'What will you be proud of at your next break?',
+  'Where does your heart tell you to go?',
+]
+
 export function NewFocus() {
   const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
+  const [question, setQuestion] = useState(QUESTIONS[0])
   const focusInputRef = useRef<HTMLInputElement>(null)
   const timeInputRef = useRef<HTMLInputElement>(null)
 
   const parsedSeconds = parseTime(timeInput)
   const isValid = focusText.trim() && parsedSeconds !== null && parsedSeconds > 0
+
+  // Pick a random question on mount
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * QUESTIONS.length);
+    setQuestion(QUESTIONS[randomIndex]);
+  }, [])
 
   // Initialize with last used duration
   useEffect(() => {
@@ -117,14 +139,13 @@ export function NewFocus() {
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <Heading level={1} className="text-3xl font-bold">New Focus Session</Heading>
-          <Text>What will you accomplish?</Text>
+          <Heading level={1} className="text-3xl font-bold">{question}</Heading>
         </div>
 
         <div className="space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-zinc-300">
-              I'll focus on...
+              I want to focus on...
             </label>
             <Input
               ref={focusInputRef}
