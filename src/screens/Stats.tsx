@@ -49,13 +49,8 @@ export function Stats() {
   }
 
   return (
-    <div className="p-6 space-y-8">
-      <div className="flex items-center justify-between">
-        <Heading level={1} className="font-bold">Session Stats</Heading>
-        <Button outline onClick={handleExport} disabled={sessions.length === 0}>
-          Export CSV
-        </Button>
-      </div>
+    <div className="p-6 space-y-8 mb-12 max-w-9xl mx-auto">
+      <Heading level={1} className="font-bold">Session Stats</Heading>
 
       {sessions.length === 0 ? (
         <div className="text-center py-16">
@@ -117,6 +112,16 @@ export function Stats() {
             )}
 
             <SessionTable sessions={sessions} />
+
+            {/* Export section */}
+            <section className="flex flex-col items-center gap-2 pt-4">
+              <Text className="text-sm text-zinc-400">
+                Download all your predictions for further analysis
+              </Text>
+              <Button outline onClick={handleExport} disabled={sessions.length === 0}>
+                Export CSV
+              </Button>
+            </section>
         </>
       )}
     </div>
