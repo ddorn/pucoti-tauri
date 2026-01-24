@@ -23,17 +23,18 @@ A timer app that helps you predict how long tasks take by tracking prediction vs
 - Past 0: show negative time in red
 
 **Shortcuts:**
-- `Tab` — Presentation mode (countdown only, fullscreen)
+- `Tab` — Toggle zen mode (countdown only, minimal UI). Works from any mode.
 - `j` / `k` — ±1 minute to countdown (doesn't change prediction)
 - `Enter` — Complete session → confetti → New Focus
 - `q` — Cancel session → New Focus
-- `Space` — Toggle small corner mode (320×120, always-on-top, bottom-right corner)
+- `Space` — Toggle small corner mode (320×120, always-on-top, bottom-right corner). Works from any mode.
 - `c` — Cycle corners (when small)
 
 **Modes:**
 - Normal: all UI visible
-- Presentation (`Tab`): countdown + intent text only, shortcuts still work
+- Zen (`Tab`): countdown + intent text only, minimal UI, shortcuts still work
 - Small (`Space`): 320×120, always-on-top, no navbar, no shortcut hints
+- Zen and Small can transition to each other with Tab/Space
 
 ### 3. History
 - **Calibration plot**: scatter of (predicted, actual) + linear regression line + y=x reference line
@@ -42,7 +43,7 @@ A timer app that helps you predict how long tasks take by tracking prediction vs
 - **Export CSV** button
 
 ### Navigation
-- Navbar between screens (hidden in small/presentation modes)
+- Navbar between screens (hidden in small/zen modes)
 - Flow: New Focus → Timer → (confetti) → New Focus
 
 ## Data

@@ -12,7 +12,7 @@ import clsx from 'clsx'
 function AppContent() {
   const { screen, timerMode, setScreen, timerState } = useApp()
 
-  // Hide navbar in small or presentation modes
+  // Hide navbar in small or zen modes
   const showNavbar = timerMode === 'normal'
 
   // Show mini timer when there's an active timer but we're not on the timer screen

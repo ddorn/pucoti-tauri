@@ -3,7 +3,7 @@ import { recoverOrphanedSession, appendSession, clearActiveSession } from '../li
 import { useTimerEngine } from '../hooks/useTimerEngine'
 
 export type Screen = 'new-focus' | 'timer' | 'history' | 'settings'
-export type TimerMode = 'normal' | 'presentation' | 'small'
+export type TimerMode = 'normal' | 'zen' | 'small';
 export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
 
 export interface TimerState {
@@ -25,7 +25,7 @@ interface AppContextValue extends AppState {
   // Navigation
   setScreen: (screen: Screen) => void
 
-  // Timer mode (presentation, small, normal)
+  // Timer mode (zen, small, normal)
   setTimerMode: (mode: TimerMode) => void
   setCorner: (corner: Corner) => void
 
@@ -138,7 +138,8 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'new-focus',
-      timerMode: 'normal',
+      // Preserve zen/small mode, only reset to normal if already in normal
+      timerMode: s.timerMode === 'normal' ? 'normal' : s.timerMode,
       timerState: null,
       showConfetti: true,
     }))
@@ -174,7 +175,8 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'new-focus',
-      timerMode: 'normal',
+      // Preserve zen/small mode, only reset to normal if already in normal
+      timerMode: s.timerMode === 'normal' ? 'normal' : s.timerMode,
       timerState: null,
       showConfetti: false,
     }))

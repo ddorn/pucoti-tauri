@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
 import { formatCountdown, formatDuration } from '../lib/format'
-import { setSmallMode, setNormalMode, toggleFullscreen, nextCorner } from '../lib/window'
+import { setSmallMode, setNormalMode, nextCorner } from '../lib/window';
 import { Text } from '../components/catalyst/text'
 import clsx from 'clsx'
 
@@ -43,12 +43,12 @@ export function Timer() {
       switch (e.key.toLowerCase()) {
         case 'tab':
           e.preventDefault()
-          if (timerMode === 'presentation') {
+          if (timerMode === 'zen') {
             setTimerMode('normal')
-            await toggleFullscreen()
           } else if (timerMode === 'normal') {
-            setTimerMode('presentation')
-            await toggleFullscreen()
+            setTimerMode('zen');
+          } else if (timerMode === 'small') {
+            setTimerMode('zen')
           }
           break
 
@@ -59,6 +59,9 @@ export function Timer() {
             await setNormalMode(settings)
           } else if (timerMode === 'normal') {
             setTimerMode('small')
+            await setSmallMode(corner, settings)
+          } else if (timerMode === 'zen') {
+            setTimerMode('small');
             await setSmallMode(corner, settings)
           }
           break
@@ -101,37 +104,19 @@ export function Timer() {
     )
   }
 
-  // Small mode: compact display with prominent intent
-  if (timerMode === 'small') {
+  // Zen and Small modes: minimal display with prominent intent
+  if (timerMode === 'zen' || timerMode === 'small') {
     return (
-      <div className="flex flex-col items-center justify-center h-screen p-2 select-none overflow-hidden">
-        <p className="text-amber-400 text-base font-medium truncate max-w-full mb-1 px-2">
+      <div className="flex flex-col items-center justify-center h-screen p-4 select-none overflow-hidden bg-surface">
+        <p className="text-accent text-[3vw] mb-[2vh] text-center max-w-[80vw] font-medium">
           {timerState.focusText}
         </p>
         <p
           className={clsx(
-            'font-timer text-5xl font-bold tracking-tight',
+            'font-timer font-bold tracking-tight leading-none',
             isOvertime ? 'text-red-500' : 'text-zinc-100'
           )}
-        >
-          {formatCountdown(remaining)}
-        </p>
-      </div>
-    )
-  }
-
-  // Presentation mode: minimal display, viewport-proportional
-  if (timerMode === 'presentation') {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen p-8 select-none bg-surface">
-        <p className="text-zinc-200 text-[4vw] mb-[2vh] text-center max-w-[80vw] font-medium">
-          {timerState.focusText}
-        </p>
-        <p
-          className={clsx(
-            'font-timer text-[20vw] font-bold tracking-tight leading-none',
-            isOvertime ? 'text-red-500' : 'text-zinc-100'
-          )}
+          style={{ fontSize: 'min(25vw, 65vh)' }}
         >
           {formatCountdown(remaining)}
         </p>
@@ -144,7 +129,7 @@ export function Timer() {
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 select-none">
       <div className="flex flex-col items-center w-full max-w-2xl">
         {/* Intent - prominent */}
-        <p className="text-zinc-200 text-2xl md:text-3xl text-center mb-8 font-medium">
+        <p className="text-accent text-2xl md:text-3xl text-center mb-8 font-medium">
           {timerState.focusText}
         </p>
 
@@ -165,7 +150,7 @@ export function Timer() {
 
         {/* Shortcut hints */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
-          <Shortcut keys={['Tab']} label="Presentation mode" />
+          <Shortcut keys={['Tab']} label="Zen mode" />
           <Shortcut keys={['Space']} label="Small corner mode" />
           <Shortcut keys={['j', 'k']} label="±1 minute" />
           <Shortcut keys={['c']} label="Cycle corners" />

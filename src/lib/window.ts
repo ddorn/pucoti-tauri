@@ -115,6 +115,16 @@ export async function setSmallMode(
 ): Promise<void> {
   const { smallWindowWidth, smallWindowHeight, smallWindowBorderless } = settings
 
+  // Exit fullscreen if active
+  try {
+    const isFs = await Neutralino.window.isFullScreen();
+    if (isFs) {
+      await Neutralino.window.exitFullScreen();
+    }
+  } catch {
+    // Fullscreen check/exit not supported
+  }
+
   if (await isSway()) {
     await setSwayCornerMode(corner, smallWindowWidth, smallWindowHeight, smallWindowBorderless)
     return
@@ -151,19 +161,6 @@ export async function setNormalMode(
   await Neutralino.window.setAlwaysOnTop(false)
   await Neutralino.window.setSize({ width: normalWindowWidth, height: normalWindowHeight })
   await Neutralino.window.center()
-}
-
-/**
- * Toggle fullscreen mode
- */
-export async function toggleFullscreen(): Promise<boolean> {
-  const isFs = await Neutralino.window.isFullScreen()
-  if (isFs) {
-    await Neutralino.window.exitFullScreen()
-  } else {
-    await Neutralino.window.setFullScreen()
-  }
-  return !isFs
 }
 
 /**
