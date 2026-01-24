@@ -30,9 +30,9 @@ async function getDataDir(): Promise<string> {
   const base = await Neutralino.os.getPath('data')
   const kernelInfo = await Neutralino.computer.getKernelInfo()
   if (kernelInfo.variant === 'Windows NT') {
-    dataDir = `${base}\\predicoti`
+    dataDir = `${base}\\pucoti`
   } else {
-    dataDir = `${base}/predicoti`
+    dataDir = `${base}/pucoti`
   }
 
   try {

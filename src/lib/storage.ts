@@ -24,9 +24,9 @@ async function getDataDir(): Promise<string> {
   if (dataDir) return dataDir
   const base = await Neutralino.os.getPath('data')
   if ((await Neutralino.computer.getKernelInfo()).variant === 'Windows NT') {
-    dataDir = `${base}\\predicoti`
+    dataDir = `${base}\\pucoti`
   } else {
-    dataDir = `${base}/predicoti`
+    dataDir = `${base}/pucoti`
   }
 
   try {
@@ -87,7 +87,7 @@ export async function getCSVPath(): Promise<string> {
 
 export async function getActiveSessionPath(): Promise<string> {
   const dir = await getDataDir()
-  return `${dir}/predicoti_active_session.json`
+  return `${dir}/pucoti_active_session.json`
 }
 
 export async function loadSessions(): Promise<Session[]> {

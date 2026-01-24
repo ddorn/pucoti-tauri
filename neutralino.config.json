@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
-  "applicationId": "dev.predicoti",
+  "applicationId": "dev.pucoti",
   "version": "1.0.0",
   "defaultMode": "window",
   "port": 0,
@@ -24,7 +24,7 @@
   ],
   "modes": {
     "window": {
-      "title": "Predicoti",
+      "title": "Pucoti",
       "width": 600,
       "height": 500,
       "minWidth": 320,
@@ -42,7 +42,7 @@
     }
   },
   "cli": {
-    "binaryName": "predicoti",
+    "binaryName": "pucoti",
     "resourcesPath": "/build/",
     "extensionsPath": "/extensions/",
     "binaryVersion": "6.4.0",

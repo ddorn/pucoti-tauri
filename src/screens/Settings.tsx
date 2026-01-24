@@ -23,7 +23,7 @@ export function Settings() {
     setTestingNotification(true)
     try {
       const title = 'Test Notification'
-      const body = 'This is a test notification from Predicoti'
+      const body = 'This is a test notification from Pucoti'
 
       if (settings.notificationCommand) {
         const success = await executeCustomNotification(title, body, settings.notificationCommand)
@@ -45,7 +45,7 @@ export function Settings() {
     <div className="p-6 max-w-2xl mx-auto space-y-8">
       <div>
         <Heading level={1}>Settings</Heading>
-        <Text className="mt-1">Configure Predicoti behavior</Text>
+        <Text className="mt-1">Configure Pucoti behavior</Text>
       </div>
 
       {/* Notification Settings */}

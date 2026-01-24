@@ -1,4 +1,4 @@
-# Predicoti - Focus Timer with Calibration
+# Pucoti - Focus Timer with Calibration
 
 A timer app that helps you predict how long tasks take by tracking prediction vs actual time.
 
@@ -60,7 +60,7 @@ timestamp,focus_text,predicted_seconds,actual_seconds,status,tags
 - `canceled`: user pressed cancel shortcut
 - `unknown`: app quit mid-session (detected via orphaned temp file on next launch)
 
-On timer start, write `predicoti_active_session.json` in the app's data directory. On complete/cancel, delete it and append to CSV. On app launch, if temp file exists → append as `unknown` status, then delete temp file.
+On timer start, write `pucoti_active_session.json` in the app's data directory. On complete/cancel, delete it and append to CSV. On app launch, if temp file exists → append as `unknown` status, then delete temp file.
 
 The csv file is in the app's data directory.
 
