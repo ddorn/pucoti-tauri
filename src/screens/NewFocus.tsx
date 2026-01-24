@@ -197,7 +197,7 @@ export function NewFocus() {
             inputRef={focusInputRef}
             className="max-w-[90%]"
           />
-          .<br /> There's 80% chance I'll be done <br />in{' '}
+          .<br /> There's 80% likely I'll be done <br />in{' '}
           <BlankInput
             value={timeInput}
             onChange={setTimeInput}
@@ -218,7 +218,7 @@ export function NewFocus() {
             </>
           )}
           {timeInput && parsedSeconds === null && (
-            <span className="text-red-400">Invalid format. Try "25m", "1h 30m", "45:00"</span>
+            <span className="text-red-400">Invalid duration format. Try "25m", "1h 30m", or "45:00"</span>
           )}
         </Text>
 
