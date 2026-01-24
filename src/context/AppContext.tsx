@@ -19,6 +19,7 @@ interface AppState {
   corner: Corner
   timerState: TimerState | null
   showConfetti: boolean
+  lastUsedDuration: number;  // in seconds, defaults to 20m
 }
 
 interface AppContextValue extends AppState {
@@ -42,6 +43,9 @@ interface AppContextValue extends AppState {
 
   // UI
   clearConfetti: () => void
+
+  // Last used duration (in memory only)
+  lastUsedDuration: number;
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -65,6 +69,7 @@ export function AppProvider({
     corner: 'bottom-right',
     timerState: null,
     showConfetti: false,
+    lastUsedDuration: 20 * 60,  // Default to 20 minutes
   })
 
   // Timer engine - runs at app level so it persists across screens
@@ -86,6 +91,7 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'timer',
+      lastUsedDuration: predictedSeconds,  // Remember this duration
       timerState: {
         focusText,
         predictedSeconds,

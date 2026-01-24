@@ -5,17 +5,32 @@ import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text';
 import { Heading } from '../components/catalyst/heading';
-import { saveActiveSession } from '../lib/storage'
+import { saveActiveSession } from '../lib/storage';
 import confetti from 'canvas-confetti'
 
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hours > 0) {
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  }
+  return `${mins}m`;
+}
+
 export function NewFocus() {
-  const { startTimer, showConfetti, clearConfetti } = useApp()
+  const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
   const focusInputRef = useRef<HTMLInputElement>(null)
+  const timeInputRef = useRef<HTMLInputElement>(null)
 
   const parsedSeconds = parseTime(timeInput)
   const isValid = focusText.trim() && parsedSeconds !== null && parsedSeconds > 0
+
+  // Initialize with last used duration
+  useEffect(() => {
+    setTimeInput(formatTime(lastUsedDuration));
+  }, [lastUsedDuration])
 
   // Fire confetti on mount if we just completed a session
   useEffect(() => {
@@ -66,15 +81,25 @@ export function NewFocus() {
         predictedSeconds: parsedSeconds,
       })
     } catch (err) {
-      console.error('Failed to save active session:', err)
+      console.error('Failed to save session data:', err)
     }
 
     startTimer(focusText.trim(), parsedSeconds)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && isValid) {
-      handleStart()
+  const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      timeInputRef.current?.focus();
+    }
+  };
+
+  const handleTimeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isValid) {
+        handleStart();
+      }
     }
   }
 
@@ -86,7 +111,7 @@ export function NewFocus() {
           <Text>What will you accomplish?</Text>
         </div>
 
-        <div className="space-y-6" onKeyDown={handleKeyDown}>
+        <div className="space-y-6">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-zinc-300">
               I'll focus on...
@@ -96,6 +121,7 @@ export function NewFocus() {
               type="text"
               value={focusText}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFocusText(e.target.value)}
+              onKeyDown={handleFocusKeyDown}
               placeholder="Writing the intro section"
               className="text-lg"
             />
@@ -106,9 +132,11 @@ export function NewFocus() {
               I'll be done in...
             </label>
             <Input
+              ref={timeInputRef}
               type="text"
               value={timeInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTimeInput(e.target.value)}
+              onKeyDown={handleTimeKeyDown}
               placeholder="25m"
               className="text-lg"
             />
@@ -131,8 +159,8 @@ export function NewFocus() {
             >
               Start Focus
             </Button>
-            <Text className="text-center text-xs mt-2">
-              or press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd>
+            <Text className="text-center text-xs mt-2 text-zinc-400">
+              Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
             </Text>
           </div>
         </div>
