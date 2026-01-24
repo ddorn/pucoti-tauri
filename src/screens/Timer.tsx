@@ -1,13 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
 import { formatCountdown, formatDuration } from '../lib/format'
-import { appendSession, clearActiveSession } from '../lib/storage'
-import { playBell, showNotification } from '../lib/sound'
 import { setSmallMode, setNormalMode, toggleFullscreen, nextCorner } from '../lib/window'
 import { Text } from '../components/catalyst/text'
 import clsx from 'clsx'
-
-const BELL_REPEAT_INTERVAL = 20000 // 20 seconds
 
 export function Timer() {
   const {
@@ -19,145 +15,22 @@ export function Timer() {
     adjustTimer,
     completeTimer,
     cancelTimer,
+    elapsed,
+    remaining,
+    isOvertime,
   } = useApp()
 
-  const [elapsed, setElapsed] = useState(0)
-  const [hasNotified, setHasNotified] = useState(false)
-  const [wasOvertime, setWasOvertime] = useState(false) // Track if we were in overtime
-  const bellIntervalRef = useRef<number | null>(null)
-
-  // Compute remaining time
   const predicted = timerState?.predictedSeconds ?? 0
-  const adjustment = timerState?.adjustmentSeconds ?? 0
-  const remaining = predicted + adjustment - elapsed
-  const isOvertime = remaining < 0
-
-  // Timer tick
-  useEffect(() => {
-    if (!timerState) return
-
-    const tick = () => {
-      const now = Date.now()
-      const start = timerState.startTime.getTime()
-      setElapsed(Math.floor((now - start) / 1000))
-    }
-
-    tick() // Immediate first tick
-    const interval = setInterval(tick, 200) // Update frequently for accuracy
-    return () => clearInterval(interval)
-  }, [timerState])
-
-  // Handle initial timer completion (first notification)
-  useEffect(() => {
-    if (isOvertime && !hasNotified && timerState) {
-      setHasNotified(true)
-      setWasOvertime(true)
-      playBell()
-      showNotification('Time\'s up!', timerState.focusText)
-    }
-  }, [isOvertime, hasNotified, timerState])
-
-  // Handle bell ringing every time we cross into overtime (including after j/k adjustments)
-  useEffect(() => {
-    if (isOvertime && !wasOvertime && timerState) {
-      // Just crossed into overtime (e.g., after adding time with k then it ran out again)
-      playBell()
-      setWasOvertime(true)
-    } else if (!isOvertime && wasOvertime) {
-      // Exited overtime (e.g., added time with k)
-      setWasOvertime(false)
-    }
-  }, [isOvertime, wasOvertime, timerState])
-
-  // Repeating bell every 20 seconds while in overtime
-  useEffect(() => {
-    if (isOvertime && timerState) {
-      // Start repeating bell
-      if (!bellIntervalRef.current) {
-        bellIntervalRef.current = window.setInterval(playBell, BELL_REPEAT_INTERVAL)
-      }
-    } else {
-      // Stop repeating bell
-      if (bellIntervalRef.current) {
-        clearInterval(bellIntervalRef.current)
-        bellIntervalRef.current = null
-      }
-    }
-
-    return () => {
-      if (bellIntervalRef.current) {
-        clearInterval(bellIntervalRef.current)
-        bellIntervalRef.current = null
-      }
-    }
-  }, [isOvertime, timerState])
-
-  // Handle complete/cancel actions
-  const handleComplete = useCallback(async () => {
-    if (!timerState) return
-
-    // Stop bell
-    if (bellIntervalRef.current) {
-      clearInterval(bellIntervalRef.current)
-      bellIntervalRef.current = null
-    }
-
-    // Save session
-    try {
-      await appendSession({
-        timestamp: timerState.startTime,
-        focusText: timerState.focusText,
-        predictedSeconds: timerState.predictedSeconds,
-        actualSeconds: elapsed,
-        status: 'completed',
-        tags: [],
-      })
-      await clearActiveSession()
-    } catch (err) {
-      console.error('Failed to save session:', err)
-    }
-
-    // Reset window mode if needed
-    if (timerMode !== 'normal') {
-      await setNormalMode()
-    }
-
-    completeTimer()
-  }, [timerState, elapsed, timerMode, completeTimer])
-
-  const handleCancel = useCallback(async () => {
-    if (!timerState) return
-
-    // Stop bell
-    if (bellIntervalRef.current) {
-      clearInterval(bellIntervalRef.current)
-      bellIntervalRef.current = null
-    }
-
-    // Save as canceled
-    try {
-      await appendSession({
-        timestamp: timerState.startTime,
-        focusText: timerState.focusText,
-        predictedSeconds: timerState.predictedSeconds,
-        actualSeconds: elapsed,
-        status: 'canceled',
-        tags: [],
-      })
-      await clearActiveSession()
-    } catch (err) {
-      console.error('Failed to save session:', err)
-    }
-
-    // Reset window mode if needed
-    if (timerMode !== 'normal') {
-      await setNormalMode()
-    }
-
-    cancelTimer()
-  }, [timerState, elapsed, timerMode, cancelTimer])
 
   // Keyboard shortcuts
+  const handleComplete = useCallback(async () => {
+    await completeTimer()
+  }, [completeTimer])
+
+  const handleCancel = useCallback(async () => {
+    await cancelTimer()
+  }, [cancelTimer])
+
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       // Ignore if typing in an input

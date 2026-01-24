@@ -1,4 +1,4 @@
-import Neutralino, { Icon } from '@neutralinojs/lib'
+import Neutralino from '@neutralinojs/lib'
 
 let bellAudio: HTMLAudioElement | null = null
 

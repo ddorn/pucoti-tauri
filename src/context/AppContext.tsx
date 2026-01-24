@@ -1,15 +1,17 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import { recoverOrphanedSession } from '../lib/storage'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
+import { useTimerEngine } from '../hooks/useTimerEngine'
+import { setNormalMode } from '../lib/window'
 
-export type Screen = 'new-focus' | 'timer' | 'history'
+export type Screen = 'new-focus' | 'timer' | 'history' | 'settings'
 export type TimerMode = 'normal' | 'presentation' | 'small'
 export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
 
-interface TimerState {
+export interface TimerState {
   focusText: string
   predictedSeconds: number
   startTime: Date
-  adjustmentSeconds: number // Manual ±1 minute adjustments
+  adjustmentSeconds: number
 }
 
 interface AppState {
@@ -21,13 +23,25 @@ interface AppState {
 }
 
 interface AppContextValue extends AppState {
+  // Navigation
   setScreen: (screen: Screen) => void
+
+  // Timer mode (presentation, small, normal)
   setTimerMode: (mode: TimerMode) => void
   setCorner: (corner: Corner) => void
+
+  // Timer actions
   startTimer: (focusText: string, predictedSeconds: number) => void
   adjustTimer: (seconds: number) => void
-  completeTimer: () => void
-  cancelTimer: () => void
+  completeTimer: () => Promise<void>
+  cancelTimer: () => Promise<void>
+
+  // Timer engine values (computed from hook)
+  elapsed: number
+  remaining: number
+  isOvertime: boolean
+
+  // UI
   clearConfetti: () => void
 }
 
@@ -41,6 +55,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     timerState: null,
     showConfetti: false,
   })
+
+  // Timer engine - runs at app level so it persists across screens
+  const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
 
   // Recover orphaned sessions on mount
   useEffect(() => {
@@ -77,7 +94,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const completeTimer = () => {
+  const completeTimer = useCallback(async () => {
+    const { timerState, timerMode } = state
+    if (!timerState) return
+
+    // Stop bell
+    stopBell()
+
+    // Save session
+    try {
+      await appendSession({
+        timestamp: timerState.startTime,
+        focusText: timerState.focusText,
+        predictedSeconds: timerState.predictedSeconds,
+        actualSeconds: elapsed,
+        status: 'completed',
+        tags: [],
+      })
+      await clearActiveSession()
+    } catch (err) {
+      console.error('Failed to save session:', err)
+    }
+
+    // Reset window mode if needed
+    if (timerMode !== 'normal') {
+      await setNormalMode()
+    }
+
     setState(s => ({
       ...s,
       screen: 'new-focus',
@@ -85,9 +128,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timerState: null,
       showConfetti: true,
     }))
-  }
+  }, [state, elapsed, stopBell])
 
-  const cancelTimer = () => {
+  const cancelTimer = useCallback(async () => {
+    const { timerState, timerMode } = state
+    if (!timerState) return
+
+    // Stop bell
+    stopBell()
+
+    // Save as canceled
+    try {
+      await appendSession({
+        timestamp: timerState.startTime,
+        focusText: timerState.focusText,
+        predictedSeconds: timerState.predictedSeconds,
+        actualSeconds: elapsed,
+        status: 'canceled',
+        tags: [],
+      })
+      await clearActiveSession()
+    } catch (err) {
+      console.error('Failed to save session:', err)
+    }
+
+    // Reset window mode if needed
+    if (timerMode !== 'normal') {
+      await setNormalMode()
+    }
+
     setState(s => ({
       ...s,
       screen: 'new-focus',
@@ -95,7 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timerState: null,
       showConfetti: false,
     }))
-  }
+  }, [state, elapsed, stopBell])
 
   const clearConfetti = () => setState(s => ({ ...s, showConfetti: false }))
 
@@ -110,6 +179,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         adjustTimer,
         completeTimer,
         cancelTimer,
+        elapsed,
+        remaining,
+        isOvertime,
         clearConfetti,
       }}
     >
