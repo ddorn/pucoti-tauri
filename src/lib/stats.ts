@@ -174,3 +174,65 @@ export function linearRegression(
 
   return { slope, intercept, rSquared }
 }
+
+export interface AdjustmentCurve {
+    /** Adjustment percentages (x-axis) */
+    adjustments: number[];
+    /** On-time rate for each adjustment (y-axis) */
+    onTimeRates: number[];
+    /** Adjustment percentage needed for 80% on-time rate */
+    adjustment80: number | null;
+}
+
+/**
+ * Compute the adjustment curve: for each adjustment percentage,
+ * calculate what proportion of sessions would be "on time" (actual < predicted * multiplier).
+ * Also finds the specific adjustment needed for 80% on-time rate.
+ */
+export function computeAdjustmentCurve(sessions: Session[]): AdjustmentCurve | null {
+    const completed = sessions.filter(s => s.status === 'completed');
+    if (completed.length === 0) return null;
+
+    // Generate adjustment percentages from -50% to +200%
+    const adjustments: number[] = [];
+    for (let adj = -50; adj <= 200; adj += 2) {
+        adjustments.push(adj);
+    }
+
+    const onTimeRates: number[] = [];
+
+    for (const adj of adjustments) {
+        const multiplier = 1 + adj / 100;
+        const onTimeCount = completed.filter(s =>
+            s.actualSeconds <= s.predictedSeconds * multiplier
+        ).length;
+        const onTimeRate = (onTimeCount / completed.length) * 100;
+        onTimeRates.push(onTimeRate);
+    }
+
+    // Find adjustment for 80% on-time using interpolation
+    let adjustment80: number | null = null;
+    for (let i = 0; i < onTimeRates.length - 1; i++) {
+        const rate1 = onTimeRates[i];
+        const rate2 = onTimeRates[i + 1];
+
+        if ((rate1 <= 80 && rate2 >= 80) || (rate1 >= 80 && rate2 <= 80)) {
+            const adj1 = adjustments[i];
+            const adj2 = adjustments[i + 1];
+
+            // Linear interpolation
+            if (rate2 !== rate1) {
+                adjustment80 = adj1 + ((80 - rate1) / (rate2 - rate1)) * (adj2 - adj1);
+            } else {
+                adjustment80 = adj1;
+            }
+            break;
+        }
+    }
+
+    return {
+        adjustments,
+        onTimeRates,
+        adjustment80,
+    };
+}

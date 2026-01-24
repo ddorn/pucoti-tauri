@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { loadSessions, exportSessionsCSV, type Session } from '../lib/storage'
 import { formatDuration, formatTime } from '../lib/format';
-import { computeCalibrationStats, computeRegressionWithCI } from '../lib/stats';
+import { computeCalibrationStats, computeRegressionWithCI, computeAdjustmentCurve } from '../lib/stats';
 import { Button } from '../components/catalyst/button'
 import { Badge } from '../components/catalyst/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/catalyst/table'
@@ -16,6 +16,7 @@ export function Stats() {
   const [error, setError] = useState<string | null>(null)
   const [relativeTime, setRelativeTime] = useState(true)
   const plotContainerRef = useRef<HTMLDivElement | null>(null)
+  const adjustmentPlotRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     loadSessions()
@@ -47,6 +48,99 @@ export function Stats() {
     () => computeCalibrationStats(sessions),
     [sessions]
   )
+
+  // Compute adjustment curve for the main headline
+  const adjustmentCurve = useMemo(
+    () => computeAdjustmentCurve(sessions),
+    [sessions]
+  );
+
+  // Draw adjustment curve plot
+  useEffect(() => {
+    if (!adjustmentCurve) return;
+    const container = adjustmentPlotRef.current;
+    if (!container) return;
+
+    const traces: Plotly.Data[] = [
+      {
+        x: adjustmentCurve.adjustments,
+        y: adjustmentCurve.onTimeRates,
+        mode: 'lines',
+        type: 'scatter',
+        name: 'On-time rate',
+        line: {
+          color: '#f59e0b',
+          width: 3,
+        },
+        hovertemplate: 'Adjustment: %{x:+.0f}%<br>On-time: %{y:.0f}%<extra></extra>',
+      },
+      {
+        x: [adjustmentCurve.adjustments[0], adjustmentCurve.adjustments[adjustmentCurve.adjustments.length - 1]],
+        y: [80, 80],
+        mode: 'lines',
+        type: 'scatter',
+        name: '80% target',
+        line: {
+          color: '#22c55e',
+          width: 2,
+          dash: 'dash',
+        },
+        hoverinfo: 'skip',
+      },
+    ];
+
+    // Add vertical line at the 80% adjustment if found
+    if (adjustmentCurve.adjustment80 !== null) {
+      traces.push({
+        x: [adjustmentCurve.adjustment80, adjustmentCurve.adjustment80],
+        y: [0, 100],
+        mode: 'lines',
+        type: 'scatter',
+        name: 'Target adjustment',
+        line: {
+          color: '#22c55e',
+          width: 2,
+          dash: 'dot',
+        },
+        hoverinfo: 'skip',
+      });
+    }
+
+    const layout: Partial<Plotly.Layout> = {
+      paper_bgcolor: 'transparent',
+      plot_bgcolor: 'transparent',
+      font: { color: '#a1a1aa', family: 'system-ui' },
+      margin: { l: 60, r: 20, t: 40, b: 60 },
+      xaxis: {
+        title: 'Adjustment (%)',
+        gridcolor: '#27272a',
+        zerolinecolor: '#3f3f46',
+      },
+      yaxis: {
+        title: 'On-time rate (%)',
+        gridcolor: '#27272a',
+        zerolinecolor: '#3f3f46',
+        range: [0, 100],
+      },
+      legend: {
+        x: 0.02,
+        y: 0.98,
+        bgcolor: 'transparent',
+      },
+      showlegend: true,
+    };
+
+    const config: Partial<Plotly.Config> = {
+      displayModeBar: false,
+      responsive: true,
+    };
+
+    Plotly.newPlot(container, traces, layout, config);
+
+    return () => {
+      Plotly.purge(container);
+    };
+  }, [adjustmentCurve])
 
   // Draw calibration plot
   useEffect(() => {
@@ -194,6 +288,84 @@ export function Stats() {
         </div>
       ) : (
         <>
+            {/* Main Headline: 80% On-Time Adjustment */}
+            {adjustmentCurve && adjustmentCurve.adjustment80 !== null && (
+              <section className="bg-surface-raised rounded-lg p-8">
+                <div className="text-center">
+                  <div className="text-lg mb-4">To be on time 80% of the time</div>
+                  <div className="text-5xl font-bold mb-2">
+                    {adjustmentCurve.adjustment80 > 0 ? (
+                      <>
+                        <span className="text-amber-400">Add {Math.round(adjustmentCurve.adjustment80)}%</span>
+                        <span> to your estimates</span>
+                      </>
+                    ) : adjustmentCurve.adjustment80 < 0 ? (
+                      <>
+                        <span className="text-emerald-400">Subtract {Math.round(Math.abs(adjustmentCurve.adjustment80))}%</span>
+                        <span> from your estimates</span>
+                      </>
+                    ) : (
+                      <span className="text-emerald-400">Your estimates are spot on!</span>
+                    )}
+                  </div>
+                  <div className="text-lg mt-2 text-zinc-400">
+                    Based on {completedSessions.length} completed sessions
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Main Analysis: Adjustment Curve + Calibration Plot */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Adjustment Curve Plot */}
+              <div className="bg-surface-raised rounded-lg p-4">
+                <Subheading level={2} className="mb-4">Adjustment Impact</Subheading>
+                {adjustmentCurve ? (
+                  <>
+                    <div ref={adjustmentPlotRef} className="w-full h-72" />
+                    <Text className="text-sm mt-2 text-center text-zinc-400">
+                      How adjusting your estimates affects your on-time rate
+                    </Text>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-72">
+                    <Text>Complete more sessions to see adjustment analysis</Text>
+                  </div>
+                )}
+              </div>
+
+              {/* Calibration Plot */}
+              <div className="bg-surface-raised rounded-lg p-4">
+                <Subheading level={2} className="mb-4">Calibration</Subheading>
+                {completedSessions.length < 2 ? (
+                  <div className="flex items-center justify-center h-72">
+                    <Text>Complete at least 2 sessions to see calibration</Text>
+                  </div>
+                ) : (
+                  <>
+                    <div ref={plotContainerRef} className="w-full h-72" />
+                    {regression && (
+                      <Text className="text-sm mt-2 text-center">
+                        {regression.slope > 1.1 ? (
+                          <>You tend to <span className="text-amber-400">underestimate</span> time needed</>
+                        ) : regression.slope < 0.9 ? (
+                          <>You tend to <span className="text-emerald-400">overestimate</span> time needed</>
+                        ) : (
+                          <>Your estimates are <span className="text-emerald-400">well calibrated</span>!</>
+                        )}
+                        {' '}— slope: {regression.slope.toFixed(2)}
+                        {regression.slopeCI && (
+                          <span className="text-zinc-500">
+                            {' '}(±{((regression.slopeCI.high - regression.slopeCI.low) / 2).toFixed(2)})
+                          </span>
+                        )}
+                      </Text>
+                    )}
+                  </>
+                )}
+              </div>
+            </section>
+
             {/* Stats Cards */}
             {stats && (
               <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,39 +396,6 @@ export function Stats() {
                 />
               </section>
             )}
-
-          {/* Calibration Plot */}
-          <section>
-              <Subheading level={2} className="mb-4">Calibration</Subheading>
-            {completedSessions.length < 2 ? (
-              <div className="bg-surface-raised rounded-lg p-8 text-center">
-                  <Text>
-                  Complete at least 2 sessions to see your calibration plot.
-                  </Text>
-              </div>
-            ) : (
-              <div className="bg-surface-raised rounded-lg p-4">
-                    <div ref={plotContainerRef} className="w-full h-72" />
-                {regression && (
-                      <Text className="text-sm mt-2 text-center">
-                    {regression.slope > 1.1 ? (
-                      <>You tend to <span className="text-amber-400">underestimate</span> time needed</>
-                    ) : regression.slope < 0.9 ? (
-                      <>You tend to <span className="text-emerald-400">overestimate</span> time needed</>
-                    ) : (
-                      <>Your estimates are <span className="text-emerald-400">well calibrated</span>!</>
-                    )}
-                        {' '}— slope: {regression.slope.toFixed(2)}
-                        {regression.slopeCI && (
-                          <span className="text-zinc-500">
-                            {' '}(±{((regression.slopeCI.high - regression.slopeCI.low) / 2).toFixed(2)})
-                          </span>
-                        )}
-                      </Text>
-                )}
-              </div>
-            )}
-          </section>
 
           {/* Session Table */}
           <section>
