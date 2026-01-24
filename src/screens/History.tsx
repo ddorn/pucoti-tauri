@@ -5,6 +5,8 @@ import { linearRegression } from '../lib/regression'
 import { Button } from '../components/catalyst/button'
 import { Badge } from '../components/catalyst/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/catalyst/table'
+import { Text } from '../components/catalyst/text';
+import { Heading, Subheading } from '../components/catalyst/heading';
 import Plotly from 'plotly.js-dist-min'
 
 export function History() {
@@ -154,7 +156,7 @@ export function History() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-zinc-500">Loading history...</p>
+        <Text>Loading history...</Text>
       </div>
     )
   }
@@ -163,7 +165,7 @@ export function History() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
         <p className="text-red-400 text-lg mb-2">Error loading history</p>
-        <p className="text-zinc-500 text-sm">{error}</p>
+        <Text className="text-sm">{error}</Text>
       </div>
     )
   }
@@ -171,7 +173,7 @@ export function History() {
   return (
     <div className="p-6 space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-100">Session History</h1>
+        <Heading level={1} className="font-bold">Session History</Heading>
         <Button outline onClick={handleExport} disabled={sessions.length === 0}>
           Export CSV
         </Button>
@@ -179,25 +181,25 @@ export function History() {
 
       {sessions.length === 0 ? (
         <div className="text-center py-16">
-          <p className="text-zinc-500 text-lg">No sessions yet</p>
-          <p className="text-zinc-600 mt-1">Complete your first focus session to see your calibration data here.</p>
+          <Text className="text-lg">No sessions yet</Text>
+          <Text className="mt-1">Complete your first focus session to see your calibration data here.</Text>
         </div>
       ) : (
         <>
           {/* Calibration Plot */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-200 mb-4">Calibration</h2>
+              <Subheading level={2} className="mb-4">Calibration</Subheading>
             {completedSessions.length < 2 ? (
               <div className="bg-surface-raised rounded-lg p-8 text-center">
-                <p className="text-zinc-500">
+                  <Text>
                   Complete at least 2 sessions to see your calibration plot.
-                </p>
+                  </Text>
               </div>
             ) : (
               <div className="bg-surface-raised rounded-lg p-4">
                     <div ref={plotContainerRef} className="w-full h-72" />
                 {regression && (
-                  <p className="text-sm text-zinc-500 mt-2 text-center">
+                      <Text className="text-sm mt-2 text-center">
                     {regression.slope > 1.1 ? (
                       <>You tend to <span className="text-amber-400">underestimate</span> time needed</>
                     ) : regression.slope < 0.9 ? (
@@ -206,7 +208,7 @@ export function History() {
                       <>Your estimates are <span className="text-emerald-400">well calibrated</span>!</>
                     )}
                     {' '}(slope: {regression.slope.toFixed(2)})
-                  </p>
+                      </Text>
                 )}
               </div>
             )}
@@ -214,7 +216,7 @@ export function History() {
 
           {/* Session Table */}
           <section>
-            <h2 className="text-lg font-semibold text-zinc-200 mb-4">All Sessions</h2>
+              <Subheading level={2} className="mb-4">All Sessions</Subheading>
             <div className="rounded-lg border border-zinc-800 overflow-hidden">
               <Table>
                 <TableHead>
@@ -229,16 +231,16 @@ export function History() {
                 <TableBody>
                   {sessions.slice().reverse().map((session, i) => (
                     <TableRow key={i}>
-                      <TableCell className="text-zinc-400 whitespace-nowrap">
+                      <TableCell className="whitespace-nowrap">
                         {formatTimestamp(session.timestamp).slice(0, 16)}
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {session.focusText}
                       </TableCell>
-                      <TableCell className="text-zinc-300">
+                      <TableCell>
                         {formatDuration(session.predictedSeconds)}
                       </TableCell>
-                      <TableCell className="text-zinc-300">
+                      <TableCell>
                         {formatDuration(session.actualSeconds)}
                       </TableCell>
                       <TableCell>

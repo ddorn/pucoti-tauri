@@ -16,6 +16,9 @@
   --color-success: #22c55e;
 }
 
+/* Dark mode is when a .dark class is present. We have one on root. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @font-face {
   font-family: 'DM Sans';
   font-style: normal;

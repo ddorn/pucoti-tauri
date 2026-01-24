@@ -4,6 +4,7 @@ import { formatCountdown, formatDuration } from '../lib/format'
 import { appendSession, clearActiveSession } from '../lib/storage'
 import { playBell, showNotification } from '../lib/sound'
 import { setSmallMode, setNormalMode, toggleFullscreen, nextCorner } from '../lib/window'
+import { Text } from '../components/catalyst/text'
 import clsx from 'clsx'
 
 const BELL_REPEAT_INTERVAL = 20000 // 20 seconds
@@ -218,7 +219,11 @@ export function Timer() {
   }, [timerMode, corner, setTimerMode, setCorner, adjustTimer, handleComplete, handleCancel])
 
   if (!timerState) {
-    return <div className="flex items-center justify-center h-full text-zinc-500">No active timer</div>
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Text>No active timer</Text>
+      </div>
+    )
   }
 
   // Small mode: compact display with prominent intent
@@ -279,12 +284,12 @@ export function Timer() {
         </p>
 
         {/* Elapsed / Predicted */}
-        <p className="font-timer text-zinc-500 text-xl md:text-2xl mt-6">
+        <p className="font-timer text-xl md:text-2xl mt-6">
           {formatDuration(elapsed)} / {formatDuration(predicted)}
         </p>
 
         {/* Shortcut hints */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm text-zinc-500 mt-12">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
           <Shortcut keys={['Tab']} label="Presentation mode" />
           <Shortcut keys={['Space']} label="Small corner mode" />
           <Shortcut keys={['j', 'k']} label="±1 minute" />
@@ -310,7 +315,7 @@ function Shortcut({ keys, label }: { keys: string[]; label: string }) {
           </kbd>
         ))}
       </span>
-      <span>{label}</span>
+      <Text className="text-sm">{label}</Text>
     </div>
   )
 }

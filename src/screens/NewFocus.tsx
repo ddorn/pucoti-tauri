@@ -3,6 +3,8 @@ import { useApp } from '../context/AppContext'
 import { parseTime, formatTimePreview } from '../lib/time-parser'
 import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
+import { Text } from '../components/catalyst/text';
+import { Heading } from '../components/catalyst/heading';
 import { saveActiveSession } from '../lib/storage'
 import confetti from 'canvas-confetti'
 
@@ -80,8 +82,8 @@ export function NewFocus() {
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-zinc-100">New Focus Session</h1>
-          <p className="text-zinc-400">What will you accomplish?</p>
+          <Heading level={1} className="text-3xl font-bold">New Focus Session</Heading>
+          <Text>What will you accomplish?</Text>
         </div>
 
         <div className="space-y-6" onKeyDown={handleKeyDown}>
@@ -110,14 +112,14 @@ export function NewFocus() {
               placeholder="25m"
               className="text-lg"
             />
-            <p className="text-sm text-zinc-500 h-5">
+            <Text className="text-sm h-5">
               {parsedSeconds !== null && parsedSeconds > 0 && (
                 <span className="text-accent">{formatTimePreview(parsedSeconds)}</span>
               )}
               {timeInput && parsedSeconds === null && (
                 <span className="text-red-400">Invalid format. Try "25m", "1h 30m", "45:00"</span>
               )}
-            </p>
+            </Text>
           </div>
 
           <div className="pt-4">
@@ -129,9 +131,9 @@ export function NewFocus() {
             >
               Start Focus
             </Button>
-            <p className="text-center text-xs text-zinc-500 mt-2">
+            <Text className="text-center text-xs mt-2">
               or press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd>
-            </p>
+            </Text>
           </div>
         </div>
       </div>
