@@ -10,6 +10,11 @@ interface TimerState {
   adjustmentSeconds: number
 }
 
+interface TimerEngineOptions {
+  timerState: TimerState | null
+  notificationCommand?: string
+}
+
 interface TimerEngineResult {
   elapsed: number
   remaining: number
@@ -26,7 +31,7 @@ interface TimerEngineResult {
  *
  * This hook should be used at the App level so it persists across screen changes.
  */
-export function useTimerEngine(timerState: TimerState | null): TimerEngineResult {
+export function useTimerEngine({ timerState, notificationCommand }: TimerEngineOptions): TimerEngineResult {
   const [elapsed, setElapsed] = useState(0)
   const [hasNotified, setHasNotified] = useState(false)
   const [wasOvertime, setWasOvertime] = useState(false)
@@ -75,9 +80,9 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
       setHasNotified(true)
       setWasOvertime(true)
       playBell()
-      showNotification('Time\'s up!', timerState.focusText)
+      showNotification('Time\'s up!', timerState.focusText, notificationCommand)
     }
-  }, [isOvertime, hasNotified, timerState])
+  }, [isOvertime, hasNotified, timerState, notificationCommand])
 
   // Handle bell ringing every time we cross into overtime (including after j/k adjustments)
   useEffect(() => {

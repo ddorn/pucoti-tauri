@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
 import { useTimerEngine } from '../hooks/useTimerEngine'
-import { setNormalMode } from '../lib/window'
 
 export type Screen = 'new-focus' | 'timer' | 'history' | 'settings'
 export type TimerMode = 'normal' | 'presentation' | 'small'
@@ -47,7 +46,19 @@ interface AppContextValue extends AppState {
 
 const AppContext = createContext<AppContextValue | null>(null)
 
-export function AppProvider({ children }: { children: ReactNode }) {
+interface AppProviderProps {
+  children: ReactNode
+  notificationCommand?: string
+  onTimerComplete?: () => Promise<void>
+  onTimerCancel?: () => Promise<void>
+}
+
+export function AppProvider({
+  children,
+  notificationCommand,
+  onTimerComplete,
+  onTimerCancel,
+}: AppProviderProps) {
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
     timerMode: 'normal',
@@ -57,7 +68,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   })
 
   // Timer engine - runs at app level so it persists across screens
-  const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
+  const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine({
+    timerState: state.timerState,
+    notificationCommand,
+  })
 
   // Recover orphaned sessions on mount
   useEffect(() => {
@@ -95,7 +109,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const completeTimer = useCallback(async () => {
-    const { timerState, timerMode } = state
+    const { timerState } = state
     if (!timerState) return
 
     // Stop bell
@@ -116,9 +130,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save session:', err)
     }
 
-    // Reset window mode if needed
-    if (timerMode !== 'normal') {
-      await setNormalMode()
+    // Let parent handle window mode reset (it has access to settings)
+    if (onTimerComplete) {
+      await onTimerComplete()
     }
 
     setState(s => ({
@@ -128,10 +142,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timerState: null,
       showConfetti: true,
     }))
-  }, [state, elapsed, stopBell])
+  }, [state, elapsed, stopBell, onTimerComplete])
 
   const cancelTimer = useCallback(async () => {
-    const { timerState, timerMode } = state
+    const { timerState } = state
     if (!timerState) return
 
     // Stop bell
@@ -152,9 +166,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save session:', err)
     }
 
-    // Reset window mode if needed
-    if (timerMode !== 'normal') {
-      await setNormalMode()
+    // Let parent handle window mode reset (it has access to settings)
+    if (onTimerCancel) {
+      await onTimerCancel()
     }
 
     setState(s => ({
@@ -164,7 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       timerState: null,
       showConfetti: false,
     }))
-  }, [state, elapsed, stopBell])
+  }, [state, elapsed, stopBell, onTimerCancel])
 
   const clearConfetti = () => setState(s => ({ ...s, showConfetti: false }))
 

@@ -1,9 +1,8 @@
 import Neutralino from '@neutralinojs/lib'
+import type { Settings } from './settings'
 
 export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
 
-const SMALL_WIDTH = 320
-const SMALL_HEIGHT = 120
 const MARGIN = 16
 
 /**
@@ -52,12 +51,17 @@ async function getDisplaySize(): Promise<{ width: number; height: number }> {
 /**
  * Set window to small corner mode using Sway-specific commands
  */
-async function setSwayCornerMode(corner: Corner): Promise<void> {
+async function setSwayCornerMode(
+  corner: Corner,
+  width: number,
+  height: number,
+  borderless: boolean
+): Promise<void> {
   const display = await getDisplaySize()
   const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - SMALL_WIDTH - MARGIN, y: display.height - SMALL_HEIGHT - MARGIN },
-    'bottom-left': { x: MARGIN, y: display.height - SMALL_HEIGHT - MARGIN },
-    'top-right': { x: display.width - SMALL_WIDTH - MARGIN, y: MARGIN },
+    'bottom-right': { x: display.width - width - MARGIN, y: display.height - height - MARGIN },
+    'bottom-left': { x: MARGIN, y: display.height - height - MARGIN },
+    'top-right': { x: display.width - width - MARGIN, y: MARGIN },
     'top-left': { x: MARGIN, y: MARGIN },
   }
 
@@ -66,10 +70,17 @@ async function setSwayCornerMode(corner: Corner): Promise<void> {
   // Sway commands: make floating, set size, set position, enable sticky
   const commands = [
     'floating enable',
-    `resize set ${SMALL_WIDTH} ${SMALL_HEIGHT}`,
+    `resize set ${width} ${height}`,
     `move position ${pos.x} ${pos.y}`,
     'sticky enable',
   ]
+
+  // Add border command for Sway
+  if (borderless) {
+    commands.push('border none')
+  } else {
+    commands.push('border normal')
+  }
 
   for (const cmd of commands) {
     await Neutralino.os.execCommand(`swaymsg '${cmd}'`)
@@ -79,9 +90,10 @@ async function setSwayCornerMode(corner: Corner): Promise<void> {
 /**
  * Set window to normal mode in Sway
  */
-async function setSwayNormalMode(): Promise<void> {
+async function setSwayNormalMode(width: number, height: number): Promise<void> {
   const commands = [
     'sticky disable',
+    'border normal',
     'floating disable',
   ]
 
@@ -90,45 +102,54 @@ async function setSwayNormalMode(): Promise<void> {
   }
 
   // Center and resize after unfloating
-  await Neutralino.window.setSize({ width: 600, height: 500 })
+  await Neutralino.window.setSize({ width, height })
   await Neutralino.window.center()
 }
 
 /**
  * Set window to small corner mode
  */
-export async function setSmallMode(corner: Corner): Promise<void> {
+export async function setSmallMode(
+  corner: Corner,
+  settings: Pick<Settings, 'smallWindowWidth' | 'smallWindowHeight' | 'smallWindowBorderless'>
+): Promise<void> {
+  const { smallWindowWidth, smallWindowHeight, smallWindowBorderless } = settings
+
   if (await isSway()) {
-    await setSwayCornerMode(corner)
+    await setSwayCornerMode(corner, smallWindowWidth, smallWindowHeight, smallWindowBorderless)
     return
   }
 
   // Generic Neutralino fallback
   const display = await getDisplaySize()
   const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - SMALL_WIDTH - MARGIN, y: display.height - SMALL_HEIGHT - MARGIN },
-    'bottom-left': { x: MARGIN, y: display.height - SMALL_HEIGHT - MARGIN },
-    'top-right': { x: display.width - SMALL_WIDTH - MARGIN, y: MARGIN },
+    'bottom-right': { x: display.width - smallWindowWidth - MARGIN, y: display.height - smallWindowHeight - MARGIN },
+    'bottom-left': { x: MARGIN, y: display.height - smallWindowHeight - MARGIN },
+    'top-right': { x: display.width - smallWindowWidth - MARGIN, y: MARGIN },
     'top-left': { x: MARGIN, y: MARGIN },
   }
 
   const pos = positions[corner]
   await Neutralino.window.setAlwaysOnTop(true)
-  await Neutralino.window.setSize({ width: SMALL_WIDTH, height: SMALL_HEIGHT })
+  await Neutralino.window.setSize({ width: smallWindowWidth, height: smallWindowHeight })
   await Neutralino.window.move(pos.x, pos.y)
 }
 
 /**
  * Set window to normal mode
  */
-export async function setNormalMode(): Promise<void> {
+export async function setNormalMode(
+  settings: Pick<Settings, 'normalWindowWidth' | 'normalWindowHeight'>
+): Promise<void> {
+  const { normalWindowWidth, normalWindowHeight } = settings
+
   if (await isSway()) {
-    await setSwayNormalMode()
+    await setSwayNormalMode(normalWindowWidth, normalWindowHeight)
     return
   }
 
   await Neutralino.window.setAlwaysOnTop(false)
-  await Neutralino.window.setSize({ width: 600, height: 500 })
+  await Neutralino.window.setSize({ width: normalWindowWidth, height: normalWindowHeight })
   await Neutralino.window.center()
 }
 

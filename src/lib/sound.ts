@@ -1,4 +1,5 @@
 import Neutralino from '@neutralinojs/lib'
+import { executeCustomNotification } from './settings'
 
 let bellAudio: HTMLAudioElement | null = null
 
@@ -12,11 +13,27 @@ export function playBell(): void {
   })
 }
 
-export function showNotification(title: string, body: string): void {
-  Neutralino.os.showNotification(title, body).catch(() => {
+/**
+ * Show notification using custom command if configured, else OS default.
+ */
+export async function showNotification(
+  title: string,
+  body: string,
+  customCommand?: string
+): Promise<void> {
+  // Try custom command first if provided
+  if (customCommand) {
+    const success = await executeCustomNotification(title, body, customCommand)
+    if (success) return
+  }
+
+  // Fall back to Neutralino notification
+  try {
+    await Neutralino.os.showNotification(title, body)
+  } catch {
     // Fall back to browser notification
     fallbackNotification(title, body)
-  })
+  }
 }
 
 function fallbackNotification(title: string, body: string): void {

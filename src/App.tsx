@@ -1,8 +1,12 @@
+import { useCallback } from 'react'
 import { AppProvider, useApp } from './context/AppContext'
+import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { NewFocus } from './screens/NewFocus'
 import { Timer } from './screens/Timer'
 import { History } from './screens/History'
+import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
+import { setNormalMode } from './lib/window'
 import clsx from 'clsx'
 
 function AppContent() {
@@ -56,7 +60,7 @@ function AppContent() {
         {screen === 'new-focus' && <NewFocus />}
         {screen === 'timer' && <Timer />}
         {screen === 'history' && <History />}
-        {screen === 'settings' && <SettingsPlaceholder />}
+        {screen === 'settings' && <Settings />}
       </main>
     </div>
   )
@@ -91,19 +95,39 @@ function NavButton({
   )
 }
 
-// Temporary placeholder until Settings screen is implemented
-function SettingsPlaceholder() {
+/**
+ * Bridge component that connects SettingsContext to AppProvider
+ */
+function AppWithSettings({ children }: { children: React.ReactNode }) {
+  const { settings } = useSettings()
+
+  const handleTimerComplete = useCallback(async () => {
+    // Reset window to normal mode with current settings
+    await setNormalMode(settings)
+  }, [settings])
+
+  const handleTimerCancel = useCallback(async () => {
+    // Reset window to normal mode with current settings
+    await setNormalMode(settings)
+  }, [settings])
+
   return (
-    <div className="flex items-center justify-center min-h-[400px]">
-      <p className="text-zinc-500">Settings coming soon...</p>
-    </div>
+    <AppProvider
+      notificationCommand={settings.notificationCommand}
+      onTimerComplete={handleTimerComplete}
+      onTimerCancel={handleTimerCancel}
+    >
+      {children}
+    </AppProvider>
   )
 }
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <SettingsProvider>
+      <AppWithSettings>
+        <AppContent />
+      </AppWithSettings>
+    </SettingsProvider>
   )
 }

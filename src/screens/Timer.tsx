@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
+import { useSettings } from '../context/SettingsContext'
 import { formatCountdown, formatDuration } from '../lib/format'
 import { setSmallMode, setNormalMode, toggleFullscreen, nextCorner } from '../lib/window'
 import { Text } from '../components/catalyst/text'
@@ -20,6 +21,7 @@ export function Timer() {
     isOvertime,
   } = useApp()
 
+  const { settings } = useSettings()
   const predicted = timerState?.predictedSeconds ?? 0
 
   // Keyboard shortcuts
@@ -54,10 +56,10 @@ export function Timer() {
           e.preventDefault()
           if (timerMode === 'small') {
             setTimerMode('normal')
-            await setNormalMode()
+            await setNormalMode(settings)
           } else if (timerMode === 'normal') {
             setTimerMode('small')
-            await setSmallMode(corner)
+            await setSmallMode(corner, settings)
           }
           break
 
@@ -65,7 +67,7 @@ export function Timer() {
           if (timerMode === 'small') {
             const newCorner = nextCorner(corner)
             setCorner(newCorner)
-            await setSmallMode(newCorner)
+            await setSmallMode(newCorner, settings)
           }
           break
 
@@ -89,7 +91,7 @@ export function Timer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [timerMode, corner, setTimerMode, setCorner, adjustTimer, handleComplete, handleCancel])
+  }, [timerMode, corner, settings, setTimerMode, setCorner, adjustTimer, handleComplete, handleCancel])
 
   if (!timerState) {
     return (
