@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { parseTime, formatTimePreview } from '../lib/time-parser'
-import { Button } from '../components/catalyst/button'
-import { Input } from '../components/catalyst/input'
+import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
-import { Heading } from '../components/catalyst/heading';
 import { saveActiveSession } from '../lib/storage';
 import confetti from 'canvas-confetti'
 
@@ -41,6 +39,38 @@ const QUESTIONS = [
   'What will you be proud of at your next break?',
   'Where does your heart tell you to go?',
 ]
+
+function BlankInput({
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+  inputRef,
+  minWidth = '8ch',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  minWidth?: string;
+}) {
+  return (
+    <span className="inline-block relative">
+      <input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        style={{ minWidth, width: `${Math.max(value.length, placeholder.length)}ch` }}
+        className="bg-transparent border-0 border-b-2 border-zinc-600 focus:border-accent outline-none
+                   font-inherit px-1 transition-colors placeholder:text-zinc-600 text-accent"
+      />
+    </span>
+  );
+}
 
 export function NewFocus() {
   const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
@@ -122,82 +152,75 @@ export function NewFocus() {
   const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      timeInputRef.current?.focus();
+      timeInputRef.current?.focus()
     }
-  };
+  }
 
   const handleTimeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
+      e.preventDefault()
       if (isValid) {
-        handleStart();
+        handleStart()
       }
     }
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <Heading level={1} className="text-3xl font-bold">{question}</Heading>
-        </div>
+    <div className="flex flex-col items-center justify-center flex-1 p-8">
+      <div className="w-full max-w-2xl">
+        {/* Small colored question */}
+        <p className="text-xl lg:text-2xl font-medium text-zinc-400 mb-4">{question}</p>
 
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-300">
-              I want to focus on...
-            </label>
-            <Input
-              ref={focusInputRef}
-              type="text"
-              value={focusText}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFocusText(e.target.value)}
-              onKeyDown={handleFocusKeyDown}
-              placeholder="Writing the intro section"
-              className="text-lg"
-            />
-          </div>
+        {/* Fill in the blanks sentence */}
+        <p className="text-3xl lg:text-4xl font-medium text-zinc-100 leading-relaxed mb-12">
+          I want to{' '}
+          <BlankInput
+            value={focusText}
+            onChange={setFocusText}
+            onKeyDown={handleFocusKeyDown}
+            placeholder="write the intro"
+            inputRef={focusInputRef}
+            minWidth="12ch"
+          />
+          .<br /> There's 80% chance I'll be<br />done in{' '}
+          <BlankInput
+            value={timeInput}
+            onChange={setTimeInput}
+            onKeyDown={handleTimeKeyDown}
+            placeholder="25m"
+            inputRef={timeInputRef}
+            minWidth="4ch"
+          />
+          .
+        </p>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-zinc-300">
-              I'll be done in...
-            </label>
-            <Input
-              ref={timeInputRef}
-              type="text"
-              value={timeInput}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTimeInput(e.target.value)}
-              onKeyDown={handleTimeKeyDown}
-              placeholder="25m"
-              className="text-lg"
-            />
-            <Text className="text-sm h-5">
-              {parsedSeconds !== null && parsedSeconds > 0 && (
-                <>
-                  <span className="text-accent">{formatTimePreview(parsedSeconds)}</span>
-                  <span className="px-2">·</span>
-                  <span className="text-zinc-400">You'll be done at {getCompletionTime(parsedSeconds)}</span>
-                </>
-              )}
-              {timeInput && parsedSeconds === null && (
-                <span className="text-red-400">Invalid format. Try "25m", "1h 30m", "45:00"</span>
-              )}
-            </Text>
-          </div>
+        {/* Hints */}
+        <Text className="text-sm h-5 text-center">
+          {parsedSeconds !== null && parsedSeconds > 0 && (
+            <>
+              <span className="">Parsed as {formatTimePreview(parsedSeconds)}</span>
+              <span className="px-2 ">·</span>
+              <span className="">Done at {getCompletionTime(parsedSeconds)}</span>
+            </>
+          )}
+          {timeInput && parsedSeconds === null && (
+            <span className="text-red-400">Invalid format. Try "25m", "1h 30m", "45:00"</span>
+          )}
+        </Text>
 
-          <div className="pt-4">
-            <Button
-              color="amber"
-              className="w-full py-3 text-lg"
-              disabled={!isValid}
-              onClick={handleStart}
-            >
-              Start Focus
-            </Button>
-            <Text className="text-center text-xs mt-2 text-zinc-400">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
-            </Text>
-          </div>
+        {/* Start button */}
+        <div className="pt-4">
+          <Button
+            color="amber"
+            className="w-full py-3 text-lg"
+            disabled={!isValid}
+            onClick={handleStart}
+          >
+            Start Focus
+          </Button>
+          <Text className="text-center text-xs mt-2 text-zinc-400">
+            Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
+          </Text>
         </div>
       </div>
     </div>
