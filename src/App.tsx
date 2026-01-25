@@ -118,8 +118,6 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
 
   return (
     <AppProvider
-      notificationCommand={settings.notificationCommand}
-      autoSmallOnStart={settings.autoSmallOnStart}
       onTimerStart={handleTimerStart}
       onTimerComplete={handleTimerComplete}
       onTimerCancel={handleTimerCancel}

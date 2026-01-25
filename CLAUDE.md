@@ -51,9 +51,9 @@ The app uses React Context for global state with two primary providers:
    - Core timer state and navigation
    - Timer modes: 'normal', 'zen', 'small' (affects UI and window behavior)
    - Timer lifecycle: start, adjust, complete, cancel
-   - Lives inside SettingsProvider to access settings for window mode changes
+   - Lives inside SettingsProvider and calls `useSettings()` directly for access to all settings
 
-**Bridge Pattern**: `App.tsx` contains `AppWithSettings` component that bridges SettingsProvider and AppProvider. This allows AppProvider to receive settings-dependent callbacks (e.g., `onTimerComplete` needs current settings to reset window mode).
+**Bridge Component**: `App.tsx` contains `AppWithSettings` that provides lifecycle callbacks (onTimerStart, onTimerComplete, onTimerCancel) to AppProvider for window management. AppProvider accesses settings directly via `useSettings()` hook.
 
 ### Timer Engine (`src/hooks/useTimerEngine.ts`)
 
@@ -127,6 +127,8 @@ Minimal Rust backend (`src-tauri/src/lib.rs`) provides:
 
 Frontend communicates via `@tauri-apps/api` and plugin imports.
 
+**Platform Support**: The application targets Windows, macOS, and Linux and should be compatible with all three platforms. Code should be written with cross-platform compatibility in mind.
+
 ## UI Components
 
 - Custom component library in `src/components/catalyst/` (Tailwind-based)
@@ -155,12 +157,23 @@ import { Command } from '@tauri-apps/plugin-shell'
 const cmd = Command.create('run-sh', ['-c', 'your command'])
 ```
 
-### Settings Updates
-Always use `updateSettings()` from SettingsContext to ensure persistence:
+### Settings Architecture
+
+Settings are managed via SettingsContext and accessed through the `useSettings()` hook:
+
 ```typescript
 const { settings, updateSettings } = useSettings()
 await updateSettings({ normalWindowWidth: 800 })
 ```
+
+**Adding a New Setting:**
+
+1. Add the property to the `Settings` interface in `src/lib/settings.ts`
+2. Add the default value to `DEFAULT_SETTINGS` in the same file
+3. Add UI control in `src/screens/Settings.tsx` (if user-configurable)
+4. Use the setting anywhere via `useSettings()` hook - no prop drilling needed
+
+All components (including AppProvider) access settings via the same hook pattern for consistency.
 
 ### Session Management
 - Start timer: saves to `pucoti_active_session.json`

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
 import { useTimerEngine } from '../hooks/useTimerEngine'
+import { useSettings } from './SettingsContext'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
 export type TimerMode = 'normal' | 'zen' | 'small';
@@ -49,8 +50,6 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 interface AppProviderProps {
   children: ReactNode
-  notificationCommand?: string
-  autoSmallOnStart?: boolean
   onTimerStart?: (corner: Corner) => Promise<void>
   onTimerComplete?: () => Promise<void>
   onTimerCancel?: () => Promise<void>
@@ -58,12 +57,11 @@ interface AppProviderProps {
 
 export function AppProvider({
   children,
-  notificationCommand,
-  autoSmallOnStart = false,
   onTimerStart,
   onTimerComplete,
   onTimerCancel,
 }: AppProviderProps) {
+  const { settings } = useSettings()
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
     timerMode: 'normal',
@@ -76,7 +74,7 @@ export function AppProvider({
   // Timer engine - runs at app level so it persists across screens
   const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine({
     timerState: state.timerState,
-    notificationCommand,
+    notificationCommand: settings.notificationCommand,
   })
 
   // Recover orphaned sessions on mount
@@ -94,7 +92,7 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'timer',
-      timerMode: autoSmallOnStart ? 'small' : s.timerMode,
+      timerMode: settings.autoSmallOnStart ? 'small' : s.timerMode,
       lastUsedDuration: predictedSeconds,  // Remember this duration
       timerState: {
         focusText,
@@ -105,10 +103,10 @@ export function AppProvider({
     }))
 
     // Trigger window resize if auto-small is enabled
-    if (autoSmallOnStart && onTimerStart) {
+    if (settings.autoSmallOnStart && onTimerStart) {
       await onTimerStart(currentCorner)
     }
-  }, [autoSmallOnStart, onTimerStart, state.corner])
+  }, [settings.autoSmallOnStart, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {
