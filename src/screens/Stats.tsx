@@ -1,4 +1,5 @@
-import { exportSessionsCSV } from '../lib/storage';
+import { useState, useEffect } from 'react';
+import { exportSessionsCSV, getCSVPath } from '../lib/storage';
 import { formatDuration } from '../lib/format';
 import { useSessions } from '../hooks/useSessions';
 import { useStats } from '../hooks/useStats';
@@ -15,6 +16,11 @@ import { SessionTable } from '../components/SessionTable'
 export function Stats() {
   const { sessions, loading, error } = useSessions();
   const { completedSessions, regression, stats, adjustmentCurve } = useStats(sessions)
+  const [csvPath, setCsvPath] = useState<string>('')
+
+  useEffect(() => {
+    getCSVPath().then(setCsvPath).catch(console.error)
+  }, [])
 
   const handleExport = async () => {
     try {
@@ -118,6 +124,11 @@ export function Stats() {
               <Text className="text-sm text-zinc-400">
                 Download all your predictions for further analysis
               </Text>
+              {csvPath && (
+                <Text className="text-xs text-zinc-500">
+                  You can also find this CSV at {csvPath}
+                </Text>
+              )}
               <Button outline onClick={handleExport} disabled={sessions.length === 0}>
                 Export CSV
               </Button>
