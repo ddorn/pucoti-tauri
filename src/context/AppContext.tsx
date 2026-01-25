@@ -2,10 +2,10 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
 import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useSettings } from './SettingsContext'
+import type { Corner } from '../lib/window'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
-export type TimerMode = 'normal' | 'zen' | 'small';
-export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+export type TimerMode = 'normal' | 'zen' | 'small'
 
 export interface TimerState {
   focusText: string

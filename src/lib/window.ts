@@ -100,7 +100,7 @@ async function setSwayCornerMode(
   width: number,
   height: number,
   borderless: boolean,
-  margins: Pick<Settings, 'cornerMarginTop' | 'cornerMarginRight' | 'cornerMarginBottom' | 'cornerMarginLeft'>
+  margins: { cornerMarginTop: number; cornerMarginRight: number; cornerMarginBottom: number; cornerMarginLeft: number }
 ): Promise<void> {
   const display = await getDisplaySize();
   const { cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = margins;
@@ -148,7 +148,7 @@ async function setSwayNormalMode(width: number, height: number): Promise<void> {
  */
 export async function setSmallMode(
   corner: Corner,
-  settings: Pick<Settings, 'smallWindowWidth' | 'smallWindowHeight' | 'smallWindowBorderless' | 'cornerMarginTop' | 'cornerMarginRight' | 'cornerMarginBottom' | 'cornerMarginLeft'>
+  settings: Settings
 ): Promise<void> {
   const { smallWindowWidth, smallWindowHeight, smallWindowBorderless, cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = settings
 
@@ -193,7 +193,7 @@ export async function setSmallMode(
  * Set window to normal mode
  */
 export async function setNormalMode(
-  settings: Pick<Settings, 'normalWindowWidth' | 'normalWindowHeight'>
+  settings: Settings
 ): Promise<void> {
   const { normalWindowWidth, normalWindowHeight } = settings
 

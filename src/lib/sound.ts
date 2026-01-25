@@ -8,8 +8,8 @@ export function playBell(): void {
     bellAudio = new Audio('/bell.mp3')
   }
   bellAudio.currentTime = 0
-  bellAudio.play().catch(() => {
-    // Autoplay might be blocked, that's ok
+  bellAudio.play().catch((err) => {
+    console.error('Bell play failed:', err)
   })
 }
 

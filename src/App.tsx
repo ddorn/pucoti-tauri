@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
-import { AppProvider, useApp, type Corner } from './context/AppContext'
+import { AppProvider, useApp } from './context/AppContext'
 import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { NewFocus } from './screens/NewFocus'
 import { Timer } from './screens/Timer'
 import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
-import { setNormalMode, setSmallMode } from './lib/window'
+import { setNormalMode, setSmallMode, type Corner } from './lib/window'
 import clsx from 'clsx'
 
 function AppContent() {
