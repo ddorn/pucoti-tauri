@@ -50,6 +50,8 @@ const AppContext = createContext<AppContextValue | null>(null)
 interface AppProviderProps {
   children: ReactNode
   notificationCommand?: string
+  autoSmallOnStart?: boolean
+  onTimerStart?: (corner: Corner) => Promise<void>
   onTimerComplete?: () => Promise<void>
   onTimerCancel?: () => Promise<void>
 }
@@ -57,6 +59,8 @@ interface AppProviderProps {
 export function AppProvider({
   children,
   notificationCommand,
+  autoSmallOnStart = false,
+  onTimerStart,
   onTimerComplete,
   onTimerCancel,
 }: AppProviderProps) {
@@ -84,10 +88,13 @@ export function AppProvider({
   const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
   const setCorner = (corner: Corner) => setState(s => ({ ...s, corner }))
 
-  const startTimer = (focusText: string, predictedSeconds: number) => {
+  const startTimer = useCallback(async (focusText: string, predictedSeconds: number) => {
+    const currentCorner = state.corner
+
     setState(s => ({
       ...s,
       screen: 'timer',
+      timerMode: autoSmallOnStart ? 'small' : s.timerMode,
       lastUsedDuration: predictedSeconds,  // Remember this duration
       timerState: {
         focusText,
@@ -96,7 +103,12 @@ export function AppProvider({
         adjustmentSeconds: 0,
       },
     }))
-  }
+
+    // Trigger window resize if auto-small is enabled
+    if (autoSmallOnStart && onTimerStart) {
+      await onTimerStart(currentCorner)
+    }
+  }, [autoSmallOnStart, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {

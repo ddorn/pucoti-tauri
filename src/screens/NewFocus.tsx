@@ -161,7 +161,7 @@ export function NewFocus() {
       console.error('Failed to save session data:', err)
     }
 
-    startTimer(focusText.trim(), parsedSeconds)
+    await startTimer(focusText.trim(), parsedSeconds)
   }
 
   const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

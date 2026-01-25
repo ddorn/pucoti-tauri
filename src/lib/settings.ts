@@ -14,6 +14,7 @@ export interface Settings {
 
   // Small window behavior
   smallWindowBorderless: boolean
+  autoSmallOnStart: boolean
 
   // Corner margins
   cornerMarginTop: number
@@ -29,6 +30,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smallWindowWidth: 220,
   smallWindowHeight: 80,
   smallWindowBorderless: false,
+  autoSmallOnStart: false,
   cornerMarginTop: 16,
   cornerMarginRight: 16,
   cornerMarginBottom: 16,

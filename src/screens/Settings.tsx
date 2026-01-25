@@ -152,6 +152,19 @@ export function Settings() {
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
+            checked={settings.autoSmallOnStart}
+            onChange={(e) => updateSettings({ autoSmallOnStart: e.target.checked })}
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
+          />
+          <span className="text-sm text-zinc-300">Automatically switch to small mode when starting timer</span>
+        </label>
+        <Text className="text-xs">
+          When enabled, the window will automatically switch to small corner mode when you start a new focus session.
+        </Text>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
             checked={settings.smallWindowBorderless}
             onChange={(e) => updateSettings({ smallWindowBorderless: e.target.checked })}
             className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
