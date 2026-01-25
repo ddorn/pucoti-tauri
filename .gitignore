@@ -1,22 +1,36 @@
 # Dependencies
 node_modules/
 
-# Build output
-build/
-dist/
-
-# Neutralino
-bin/
-.tmp/
+# Build outputs
+build
+dist
+target/
 *.log
+
+# Tauri generated files
+src-tauri/gen/
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # OS
-.DS_Store
 Thumbs.db
+.DS_Store
 
-# Env
-.env
+# Test coverage
+coverage/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
