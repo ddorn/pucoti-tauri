@@ -2,7 +2,7 @@
 
 Stay on task with PUCOTI, a countdown timer built for simplicity, purpose, and overcoming the planning fallacy.
 
-![New Focus Screen](docs/screenshots/new-focus.png)
+![New Focus Screen](docs/screenshots/new-focus.webp)
 
 ## Why Pucoti?
 
@@ -10,7 +10,7 @@ Most of us are terrible at estimating how long tasks will take. Pucoti helps you
 
 ## Features
 
-![Timer Screen](docs/screenshots/timer.png)
+![Timer Screen](docs/screenshots/timer.webp)
 
 ### Timer Features
 - **No Pause**: Time always moves forward. Just like reality.
@@ -18,17 +18,18 @@ Most of us are terrible at estimating how long tasks will take. Pucoti helps you
 - **Bell Alert**: Rings when you hit zero, then every 20 seconds until acknowledged.
 - **Always Visible Goal**: Your task stays in a corner of the screen to keep you focused.
 
+![Small Mode](docs/screenshots/small-mode.webp)
+
 ### Calibration & Learning
 - **Predictions**: Record how long you think each task will take.
 - **Statistics**: See your estimation accuracy and learn to calibrate over time.
 - **Export**: Export sessions as CSV for deeper analysis.
 
+![Stats Screen](docs/screenshots/stats.webp)
+
 ### Privacy & Customization
 - **Local Storage**: Everything stored locally. No network access.
 - **Configurable**: Change bell sounds, colors, window sizes, and more.
-
-![Stats Screen](docs/screenshots/stats.png)
-![Small Mode](docs/screenshots/small-mode.png)
 
 ## Installation
 
