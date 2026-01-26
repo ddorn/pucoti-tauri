@@ -72,11 +72,7 @@ export function AppProvider({
   })
 
   // Timer engine - runs at app level so it persists across screens
-  const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine({
-    timerState: state.timerState,
-    notificationCommand: settings.notificationCommand,
-    bellRepeatIntervalSeconds: settings.bellRepeatIntervalSeconds,
-  })
+  const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
 
   // Recover orphaned sessions on mount
   useEffect(() => {

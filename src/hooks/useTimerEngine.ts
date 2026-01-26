@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { playBell, showNotification } from '../lib/sound'
+import { useSettings } from '../context/SettingsContext'
 
 const TIMER_TICK_INTERVAL = 200; // milliseconds - update frequency for timer display
 
@@ -8,12 +9,6 @@ interface TimerState {
   predictedSeconds: number
   startTime: Date
   adjustmentSeconds: number
-}
-
-interface TimerEngineOptions {
-  timerState: TimerState | null
-  notificationCommand?: string
-  bellRepeatIntervalSeconds?: number; // How frequently the bell repeats during overtime (in seconds)
 }
 
 interface TimerEngineResult {
@@ -32,12 +27,13 @@ interface TimerEngineResult {
  *
  * This hook should be used at the App level so it persists across screen changes.
  */
-export function useTimerEngine({ timerState, notificationCommand, bellRepeatIntervalSeconds = 20 }: TimerEngineOptions): TimerEngineResult {
+export function useTimerEngine(timerState: TimerState | null): TimerEngineResult {
+  const { settings } = useSettings()
   const [elapsed, setElapsed] = useState(0)
   const [hasNotified, setHasNotified] = useState(false)
   const [wasOvertime, setWasOvertime] = useState(false)
   const bellIntervalRef = useRef<number | null>(null)
-  const prevBellIntervalRef = useRef<number>(bellRepeatIntervalSeconds)
+  const prevBellIntervalRef = useRef<number>(settings.bellRepeatIntervalSeconds)
 
   // Compute remaining time
   const predicted = timerState?.predictedSeconds ?? 0
@@ -82,9 +78,9 @@ export function useTimerEngine({ timerState, notificationCommand, bellRepeatInte
       setHasNotified(true)
       setWasOvertime(true)
       playBell()
-      showNotification('Time\'s up!', timerState.focusText, notificationCommand)
+      showNotification('Time\'s up!', timerState.focusText, settings.notificationCommand)
     }
-  }, [isOvertime, hasNotified, timerState, notificationCommand])
+  }, [isOvertime, hasNotified, timerState, settings.notificationCommand])
 
   // Handle bell ringing every time we cross into overtime (including after j/k adjustments)
   useEffect(() => {
@@ -105,9 +101,9 @@ export function useTimerEngine({ timerState, notificationCommand, bellRepeatInte
     if (isOvertime && timerState) {
       // Start repeating bell
       if (!bellIntervalRef.current) {
-        const intervalMs = bellRepeatIntervalSeconds * 1000;
+        const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
         bellIntervalRef.current = window.setInterval(playBell, intervalMs);
-        prevBellIntervalRef.current = bellRepeatIntervalSeconds
+        prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds
       }
     } else {
       // Stop repeating bell
@@ -123,20 +119,20 @@ export function useTimerEngine({ timerState, notificationCommand, bellRepeatInte
         bellIntervalRef.current = null
       }
     }
-  }, [isOvertime, timerState])
+  }, [isOvertime, timerState, settings.bellRepeatIntervalSeconds])
 
   // Restart interval when setting changes while in overtime
   useEffect(() => {
     if (isOvertime && timerState && bellIntervalRef.current) {
-      if (prevBellIntervalRef.current !== bellRepeatIntervalSeconds) {
+      if (prevBellIntervalRef.current !== settings.bellRepeatIntervalSeconds) {
         // Setting changed - restart with new interval
         clearInterval(bellIntervalRef.current);
-        const intervalMs = bellRepeatIntervalSeconds * 1000;
+        const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
         bellIntervalRef.current = window.setInterval(playBell, intervalMs);
-        prevBellIntervalRef.current = bellRepeatIntervalSeconds;
+        prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds;
       }
     }
-  }, [bellRepeatIntervalSeconds, isOvertime, timerState])
+  }, [settings.bellRepeatIntervalSeconds, isOvertime, timerState])
 
   // Cleanup on unmount
   useEffect(() => {
