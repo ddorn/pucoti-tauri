@@ -132,7 +132,7 @@ async function setSwayCornerMode(
 async function setSwayNormalMode(width: number, height: number): Promise<void> {
   // Combine all commands, including resize, into a single swaymsg call
   const command = [
-    'sticky disable',
+    // 'sticky disable',
     // 'border normal',  // uncomment if needed
     // 'floating disable', // uncomment if needed
     `resize set ${width} ${height}`,

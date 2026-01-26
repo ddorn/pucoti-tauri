@@ -20,9 +20,7 @@ interface AppState {
   timerMode: TimerMode
   corner: Corner
   timerState: TimerState | null
-  showConfetti: boolean
-  lastUsedDuration: number;  // in seconds, defaults to 20m
-  lastUsedMode: 'predict' | 'timebox' | 'ai-ab';  // defaults to 'predict'
+  showConfetti: boolean;
 }
 
 interface AppContextValue extends AppState {
@@ -63,15 +61,13 @@ export function AppProvider({
   onTimerComplete,
   onTimerCancel,
 }: AppProviderProps) {
-  const { settings } = useSettings()
+  const { settings, updateSettings } = useSettings()
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
     timerMode: 'normal',
     corner: 'bottom-right',
     timerState: null,
     showConfetti: false,
-    lastUsedDuration: 20 * 60,  // Default to 20 minutes
-    lastUsedMode: 'predict',  // Default to predict mode
   })
 
   // Timer engine - runs at app level so it persists across screens
@@ -93,8 +89,6 @@ export function AppProvider({
       ...s,
       screen: 'timer',
       timerMode: settings.autoSmallOnStart ? 'small' : s.timerMode,
-      lastUsedDuration: predictedSeconds,  // Remember this duration
-      lastUsedMode: mode,  // Remember this mode
       timerState: {
         focusText,
         predictedSeconds,
@@ -104,11 +98,17 @@ export function AppProvider({
       },
     }))
 
+    // Save last used values to settings (persist across restarts)
+    await updateSettings({
+      lastUsedDuration: predictedSeconds,
+      lastUsedMode: mode,
+    })
+
     // Trigger window resize if auto-small is enabled
     if (settings.autoSmallOnStart && onTimerStart) {
       await onTimerStart(currentCorner)
     }
-  }, [settings.autoSmallOnStart, onTimerStart, state.corner])
+  }, [settings.autoSmallOnStart, updateSettings, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {

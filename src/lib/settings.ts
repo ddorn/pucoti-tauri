@@ -27,6 +27,10 @@ export interface Settings {
 
   // AI Productivity Experiment
   enableAiProductivityExperiment: boolean;
+
+  // Last used values
+  lastUsedDuration: number; // in seconds
+  lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -43,6 +47,8 @@ export const DEFAULT_SETTINGS: Settings = {
   cornerMarginBottom: 16,
   cornerMarginLeft: 16,
   enableAiProductivityExperiment: false,
+  lastUsedDuration: 20 * 60, // 20 minutes
+  lastUsedMode: 'predict',
 }
 
 let dataDir: string | null = null

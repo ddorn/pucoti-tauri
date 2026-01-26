@@ -93,7 +93,7 @@ function BlankInput({
 }
 
 export function NewFocus() {
-  const { startTimer, showConfetti, clearConfetti, lastUsedDuration, lastUsedMode } = useApp()
+  const { startTimer, showConfetti, clearConfetti } = useApp()
   const { settings } = useSettings()
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
@@ -113,13 +113,13 @@ export function NewFocus() {
 
   // Initialize with last used duration
   useEffect(() => {
-    setTimeInput(formatTime(lastUsedDuration));
-  }, [lastUsedDuration])
+    setTimeInput(formatTime(settings.lastUsedDuration));
+  }, [settings.lastUsedDuration])
 
   // Initialize with last used mode
   useEffect(() => {
-    setMode(lastUsedMode);
-  }, [lastUsedMode])
+    setMode(settings.lastUsedMode);
+  }, [settings.lastUsedMode])
 
   // Fire confetti on mount if we just completed a session
   useEffect(() => {
