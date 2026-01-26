@@ -15,6 +15,7 @@
     "core:window:allow-is-fullscreen",
     "core:window:allow-close",
     "core:path:allow-resolve-directory",
+    "dialog:allow-open",
     "fs:read-all",
     "fs:allow-write-file",
     "fs:allow-read-dir",

@@ -7,10 +7,13 @@ import { Heading } from '../components/catalyst/heading'
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
 import { sendNotification } from '@tauri-apps/plugin-notification'
+import { open } from '@tauri-apps/plugin-dialog';
+import { playBell } from '../lib/sound'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
   const [testingNotification, setTestingNotification] = useState(false)
+  const [testingBell, setTestingBell] = useState(false)
 
   if (loading) {
     return (
@@ -39,6 +42,41 @@ export function Settings() {
       console.error('Notification test failed:', err)
     } finally {
       setTestingNotification(false)
+    }
+  }
+
+  const handleSelectBell = async () => {
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{
+          name: 'Audio',
+          extensions: ['mp3']
+        }]
+      });
+
+      if (selected && typeof selected === 'string') {
+        await updateSettings({ customBellPath: selected });
+      }
+    } catch (err) {
+      console.error('File selection failed:', err);
+    }
+  };
+
+  const handleClearBell = async () => {
+    await updateSettings({ customBellPath: '' });
+  };
+
+  const handleTestBell = async () => {
+    setTestingBell(true);
+    try {
+      playBell(settings.customBellPath);
+      // Wait a bit before re-enabling button
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (err) {
+      console.error('Bell test failed:', err);
+    } finally {
+      setTestingBell(false);
     }
   }
 
@@ -85,13 +123,61 @@ export function Settings() {
           </Text>
         </div>
 
-        <Button
-          outline
-          onClick={handleTestNotification}
-          disabled={testingNotification}
-        >
-          {testingNotification ? 'Sending...' : 'Test Notification'}
-        </Button>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Custom bell sound
+          </label>
+          {settings.customBellPath ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  value={settings.customBellPath}
+                  readOnly
+                  className="flex-1"
+                />
+                <Button
+                  outline
+                  onClick={handleClearBell}
+                >
+                  Clear
+                </Button>
+              </div>
+              <Text className="text-xs text-zinc-400">
+                Using custom bell sound
+              </Text>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Button
+                outline
+                onClick={handleSelectBell}
+              >
+                Select Custom Bell
+              </Button>
+              <Text className="text-xs">
+                Choose a custom MP3 sound file. Leave empty to use default bell.
+              </Text>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            outline
+            onClick={handleTestNotification}
+            disabled={testingNotification}
+          >
+            {testingNotification ? 'Sending...' : 'Test Notification'}
+          </Button>
+          <Button
+            outline
+            onClick={handleTestBell}
+            disabled={testingBell}
+          >
+            {testingBell ? 'Playing...' : 'Test Bell'}
+          </Button>
+        </div>
       </section>
 
       {/* Window Size Settings */}

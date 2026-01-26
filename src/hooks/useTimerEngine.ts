@@ -77,10 +77,10 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
     if (isOvertime && !hasNotified && timerState) {
       setHasNotified(true)
       setWasOvertime(true)
-      playBell()
+      playBell(settings.customBellPath)
       showNotification('Time\'s up!', timerState.focusText, settings.notificationCommand)
     }
-  }, [isOvertime, hasNotified, timerState, settings.notificationCommand])
+  }, [isOvertime, hasNotified, timerState, settings.notificationCommand, settings.customBellPath])
 
   // Handle bell ringing every time we cross into overtime (including after j/k adjustments)
   useEffect(() => {
@@ -88,13 +88,13 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
 
     if (isOvertime && !wasOvertime) {
       // Just crossed into overtime (e.g., after adding time with k then it ran out again)
-      playBell()
+      playBell(settings.customBellPath)
       setWasOvertime(true)
     } else if (!isOvertime && wasOvertime) {
       // Exited overtime (e.g., added time with k)
       setWasOvertime(false)
     }
-  }, [isOvertime, wasOvertime, timerState])
+  }, [isOvertime, wasOvertime, timerState, settings.customBellPath])
 
   // Start/stop repeating bell when entering/exiting overtime
   useEffect(() => {
@@ -102,7 +102,7 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
       // Start repeating bell (only if interval > 0)
       if (!bellIntervalRef.current && settings.bellRepeatIntervalSeconds > 0) {
         const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
-        bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+        bellIntervalRef.current = window.setInterval(() => playBell(settings.customBellPath), intervalMs);
         prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds
       }
     } else {
@@ -119,7 +119,7 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
         bellIntervalRef.current = null
       }
     }
-  }, [isOvertime, timerState, settings.bellRepeatIntervalSeconds])
+  }, [isOvertime, timerState, settings.bellRepeatIntervalSeconds, settings.customBellPath])
 
   // Restart interval when setting changes while in overtime
   useEffect(() => {
@@ -132,12 +132,12 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
         }
         if (settings.bellRepeatIntervalSeconds > 0) {
           const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
-          bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+          bellIntervalRef.current = window.setInterval(() => playBell(settings.customBellPath), intervalMs);
         }
         prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds;
       }
     }
-  }, [settings.bellRepeatIntervalSeconds, isOvertime, timerState])
+  }, [settings.bellRepeatIntervalSeconds, isOvertime, timerState, settings.customBellPath])
 
   // Cleanup on unmount
   useEffect(() => {

@@ -1,32 +1,41 @@
 use tauri::Manager;
-use rodio::Source;
 
 #[tauri::command]
-fn play_bell(app: tauri::AppHandle) {
+fn play_bell(app: tauri::AppHandle, custom_bell_path: Option<String>) {
   // Spawn a thread to avoid blocking the main thread
   std::thread::spawn(move || {
-    if let Err(e) = play_bell_internal(&app) {
+    if let Err(e) = play_bell_internal(&app, custom_bell_path) {
       log::error!("Failed to play bell: {}", e);
     }
   });
 }
 
-fn play_bell_internal(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-  // Get the resource path for the bell.mp3 file
-  let resource_path = app.path().resource_dir()?.join("bell.mp3");
+fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+  // Determine which bell to play
+  let bell_path = if let Some(custom_path) = custom_bell_path {
+    if !custom_path.is_empty() && std::path::Path::new(&custom_path).exists() {
+      std::path::PathBuf::from(custom_path)
+    } else {
+      // Custom path specified but invalid, fall back to bundled
+      log::warn!("Custom bell path invalid or not found, using bundled bell");
+      app.path().resource_dir()?.join("bell.mp3")
+    }
+  } else {
+    // No custom path, use bundled
+    app.path().resource_dir()?.join("bell.mp3")
+  };
 
   // Read the audio file
-  let file = std::fs::File::open(resource_path)?;
+  let file = std::fs::File::open(bell_path)?;
   let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
 
-  // Get an output stream and play the sound
+  // Get an output stream and create a sink for playback control
   let (_stream, stream_handle) = rodio::OutputStream::try_default()?;
-  stream_handle.play_raw(source.convert_samples())?;
+  let sink = rodio::Sink::try_new(&stream_handle)?;
 
-  // Sleep to allow the sound to finish playing
-  // MP3 duration detection is complex, so we use a fixed duration
-  // The bell.mp3 should be short (< 2 seconds)
-  std::thread::sleep(std::time::Duration::from_secs(2));
+  // Append the audio source and wait until it finishes playing
+  sink.append(source);
+  sink.sleep_until_end();
 
   Ok(())
 }
@@ -47,6 +56,7 @@ pub fn run() {
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_fs::init())
+    .plugin(tauri_plugin_dialog::init())
     .invoke_handler(tauri::generate_handler![play_bell])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

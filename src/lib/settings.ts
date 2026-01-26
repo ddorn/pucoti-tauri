@@ -9,6 +9,7 @@ export interface Settings {
 
   // Bell behavior
   bellRepeatIntervalSeconds: number; // How frequently the bell repeats during overtime (in seconds)
+  customBellPath: string; // Path to custom bell sound file (empty = use default)
 
   // Window sizes
   normalWindowWidth: number
@@ -37,6 +38,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   notificationCommand: '', // Empty = use default OS notification
   bellRepeatIntervalSeconds: 20,
+  customBellPath: '', // Empty = use bundled default bell
   normalWindowWidth: 600,
   normalWindowHeight: 500,
   smallWindowWidth: 220,

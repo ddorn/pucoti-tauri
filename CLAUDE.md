@@ -124,6 +124,7 @@ Minimal Rust backend (`src-tauri/src/lib.rs`) provides:
 - Filesystem access via tauri-plugin-fs
 - OS notifications via tauri-plugin-notification
 - Custom shell commands: `run-sh`, `run-swaymsg` (defined in tauri.conf.json's shell scope)
+- Add capabilities to src-tauri/capabilities/default.json to allow the app to access the necessary APIs.
 
 Frontend communicates via `@tauri-apps/api` and plugin imports.
 
