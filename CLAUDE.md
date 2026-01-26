@@ -132,7 +132,8 @@ Frontend communicates via `@tauri-apps/api` and plugin imports.
 
 ## UI Components
 
-- Custom component library in `src/components/catalyst/` (Tailwind-based)
+**Catalyst Components** (`src/components/catalyst/`): Use these when possible instead of creating custom components. Available: alert, auth-layout, avatar, badge, button, checkbox, combobox, description-list, dialog, divider, dropdown, fieldset, heading, input, link, listbox, navbar, pagination, radio, select, sidebar-layout, sidebar, stacked-layout, switch, table, text, textarea.
+
 - Application-specific components in `src/components/`
 - Plotly.js for statistical visualizations
 
