@@ -43,7 +43,7 @@ const QUESTIONS = [
 ]
 
 
-type SessionMode = 'predict' | 'sprint' | 'ai-ab';
+type SessionMode = 'predict' | 'timebox' | 'ai-ab';
 
 function BlankInput({
   value,
@@ -104,7 +104,7 @@ export function NewFocus() {
 
   const parsedSeconds = parseTime(timeInput)
   const isValid = focusText.trim() && parsedSeconds !== null && parsedSeconds > 0
-  const isSprint = mode === 'sprint';
+  const isTimebox = mode === 'timebox';
 
   // Pick a random question on mount
   useEffect(() => {
@@ -206,17 +206,17 @@ export function NewFocus() {
             {mode === 'predict' && <span className="text-xs font-medium">Predict</span>}
           </button>
           <button
-            onClick={() => setMode('sprint')}
-            title="Sprint mode (no prediction)"
+            onClick={() => setMode('timebox')}
+            title="Time box mode (no prediction)"
             className={clsx(
               "h-8 rounded-full flex items-center justify-center transition-all text-sm",
-              mode === 'sprint'
+              mode === 'timebox'
                 ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/50 px-3 gap-1.5"
                 : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
             )}
           >
             <span>🎯</span>
-            {mode === 'sprint' && <span className="text-xs font-medium">Sprint</span>}
+            {mode === 'timebox' && <span className="text-xs font-medium">Time Box</span>}
           </button>
           {settings.enableAiProductivityExperiment && (
             <button
@@ -252,7 +252,7 @@ export function NewFocus() {
             className="max-w-[90%]"
           />
           .<br />
-          {isSprint ? (
+          {isTimebox ? (
             <>I'll focus for{' '}</>
           ) : (
             <>It's 80% likely I'll be done<br />in{' '}</>
