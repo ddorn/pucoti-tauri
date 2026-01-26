@@ -173,7 +173,7 @@ export function Timer() {
         </p>
 
         {/* Elapsed / Predicted */}
-        <p className="font-timer text-xl md:text-2xl mt-6">
+        <p className="text-xl md:text-2xl mt-6">
           {formatDuration(elapsed)} / {formatDuration(predicted)}
         </p>
 

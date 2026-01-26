@@ -21,7 +21,7 @@ export function MiniTimer() {
       )}
       title="Go to timer"
     >
-      <span className="text-amber-400 text-sm font-medium truncate max-w-[120px]">
+      <span className="text-accent text-sm font-medium truncate max-w-[120px]">
         {timerState.focusText}
       </span>
       <span

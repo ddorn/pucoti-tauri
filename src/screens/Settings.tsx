@@ -244,7 +244,7 @@ export function Settings() {
             type="checkbox"
             checked={settings.autoSmallOnStart}
             onChange={(e) => updateSettings({ autoSmallOnStart: e.target.checked })}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
           />
           <span className="text-sm text-zinc-300">Automatically switch to small mode when starting timer</span>
         </label>
@@ -257,7 +257,7 @@ export function Settings() {
             type="checkbox"
             checked={settings.smallWindowBorderless}
             onChange={(e) => updateSettings({ smallWindowBorderless: e.target.checked })}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
           />
           <span className="text-sm text-zinc-300">Borderless small window</span>
         </label>
@@ -325,7 +325,7 @@ export function Settings() {
       <section className="space-y-4">
         <div className="flex items-center gap-2">
           <Heading level={2}>AI Productivity Experiment</Heading>
-          <span className="text-xs text-amber-500 font-medium px-2 py-0.5 rounded-full bg-amber-500/10 ring-1 ring-amber-500/30">
+          <span className="text-xs text-accent font-medium px-2 py-0.5 rounded-full bg-accent/10 ring-1 ring-accent/30">
             Coming Soon
           </span>
         </div>
@@ -336,7 +336,7 @@ export function Settings() {
             checked={settings.enableAiProductivityExperiment}
             onChange={(e) => updateSettings({ enableAiProductivityExperiment: e.target.checked })}
             disabled
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
           />
           <span className="text-sm text-zinc-300">Enable AI productivity experiment mode</span>
         </label>
@@ -347,7 +347,7 @@ export function Settings() {
             href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-amber-500 hover:text-amber-400 underline"
+            className="text-accent hover:text-accent/80 underline"
           >METR AI developer study</a>, but personalized to your own work patterns.
         </Text>
       </section>

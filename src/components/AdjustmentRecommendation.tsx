@@ -23,7 +23,7 @@ export function AdjustmentRecommendation({
         <div className="text-4xl font-bold mb-2">
           {adjustmentCurve.adjustment80 > 0 ? (
             <>
-              <span className="text-amber-400">Add {Math.round(adjustmentCurve.adjustment80)}%</span>
+              <span className="text-accent">Add {Math.round(adjustmentCurve.adjustment80)}%</span>
               <span> to your estimates</span>
             </>
           ) : adjustmentCurve.adjustment80 < 0 ? (
