@@ -235,6 +235,37 @@ export function Settings() {
         </div>
       </section>
 
+      {/* AI Productivity Experiment */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Heading level={2}>AI Productivity Experiment</Heading>
+          <span className="text-xs text-amber-500 font-medium px-2 py-0.5 rounded-full bg-amber-500/10 ring-1 ring-amber-500/30">
+            Coming Soon
+          </span>
+        </div>
+
+        <label className="flex items-center gap-3 cursor-not-allowed opacity-60">
+          <input
+            type="checkbox"
+            checked={settings.enableAiProductivityExperiment}
+            onChange={(e) => updateSettings({ enableAiProductivityExperiment: e.target.checked })}
+            disabled
+            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500 focus:ring-offset-zinc-900"
+          />
+          <span className="text-sm text-zinc-300">Enable AI productivity experiment mode</span>
+        </label>
+        <Text className="text-xs">
+          Track your productivity with and without AI assistance. When enabled, you'll be randomly allowed or forbidden
+          to use AI tools before starting each task, then compare actual time taken against your predictions.
+          Based on the <a
+            href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-amber-500 hover:text-amber-400 underline"
+          >METR AI developer study</a>, but personalized to your own work patterns.
+        </Text>
+      </section>
+
       {/* Reset */}
       <section className="pt-4 border-t border-zinc-800">
         <Button

@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
+import { useSettings } from '../context/SettingsContext';
 import { parseTime, formatTimePreview } from '../lib/time-parser';
 import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
@@ -93,6 +94,7 @@ function BlankInput({
 
 export function NewFocus() {
   const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
+  const { settings } = useSettings()
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
   const [question, setQuestion] = useState(QUESTIONS[0])
@@ -216,19 +218,21 @@ export function NewFocus() {
             <span>🎯</span>
             {mode === 'sprint' && <span className="text-xs font-medium">Sprint</span>}
           </button>
-          <button
-            onClick={() => setMode('ai-ab')}
-            title="AI A/B experiment"
-            className={clsx(
-              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
-              mode === 'ai-ab'
-                ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/50 px-3 gap-1.5"
-                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
-            )}
-          >
-            <span>🎲</span>
-            {mode === 'ai-ab' && <span className="text-xs font-medium">A/B</span>}
-          </button>
+          {settings.enableAiProductivityExperiment && (
+            <button
+              onClick={() => setMode('ai-ab')}
+              title="AI Productivity Experiment"
+              className={clsx(
+                "h-8 rounded-full flex items-center justify-center transition-all text-sm",
+                mode === 'ai-ab'
+                  ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/50 px-3 gap-1.5"
+                  : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
+              )}
+            >
+              <span>🎲</span>
+              {mode === 'ai-ab' && <span className="text-xs font-medium">AI Productivity</span>}
+            </button>
+          )}
         </div>
 
         {/* Question */}

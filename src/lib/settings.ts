@@ -24,6 +24,9 @@ export interface Settings {
   cornerMarginRight: number
   cornerMarginBottom: number
   cornerMarginLeft: number
+
+  // AI Productivity Experiment
+  enableAiProductivityExperiment: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -39,6 +42,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cornerMarginRight: 16,
   cornerMarginBottom: 16,
   cornerMarginLeft: 16,
+  enableAiProductivityExperiment: false,
 }
 
 let dataDir: string | null = null
