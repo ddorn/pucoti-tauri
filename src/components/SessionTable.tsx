@@ -6,6 +6,22 @@ import { Text } from './catalyst/text'
 import { Subheading } from './catalyst/heading'
 import { Switch } from './catalyst/switch'
 import { StatusBadge } from './StatusBadge'
+import { Badge } from './catalyst/badge'
+
+const badgeColors = [
+  'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
+  'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'
+] as const
+
+function getTagColor(tag: string): typeof badgeColors[number] {
+  // Simple hash function to deterministically assign colors
+  let hash = 0
+  for (let i = 0; i < tag.length; i++) {
+    hash = ((hash << 5) - hash) + tag.charCodeAt(i)
+    hash = hash & hash // Convert to 32-bit integer
+  }
+  return badgeColors[Math.abs(hash) % badgeColors.length]
+}
 
 export function SessionTable({ sessions }: { sessions: Session[] }) {
   const [relativeTime, setRelativeTime] = useState(true)
@@ -28,6 +44,7 @@ export function SessionTable({ sessions }: { sessions: Session[] }) {
               <TableHeader>Predicted</TableHeader>
               <TableHeader>Actual</TableHeader>
               <TableHeader>Status</TableHeader>
+              <TableHeader>Tags</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -47,6 +64,22 @@ export function SessionTable({ sessions }: { sessions: Session[] }) {
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={session.status} />
+                </TableCell>
+                <TableCell>
+                  {session.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {session.tags.map((tag, tagIdx) => (
+                        <Badge
+                          key={tagIdx}
+                          color={getTagColor(tag)}
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className="text-zinc-500 text-sm">—</Text>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
