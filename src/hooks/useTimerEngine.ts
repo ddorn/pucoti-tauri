@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { playBell, showNotification } from '../lib/sound'
 
-const BELL_REPEAT_INTERVAL = 20000 // 20 seconds
 const TIMER_TICK_INTERVAL = 200; // milliseconds - update frequency for timer display
 
 interface TimerState {
@@ -14,6 +13,7 @@ interface TimerState {
 interface TimerEngineOptions {
   timerState: TimerState | null
   notificationCommand?: string
+  bellRepeatIntervalSeconds?: number; // How frequently the bell repeats during overtime (in seconds)
 }
 
 interface TimerEngineResult {
@@ -32,11 +32,12 @@ interface TimerEngineResult {
  *
  * This hook should be used at the App level so it persists across screen changes.
  */
-export function useTimerEngine({ timerState, notificationCommand }: TimerEngineOptions): TimerEngineResult {
+export function useTimerEngine({ timerState, notificationCommand, bellRepeatIntervalSeconds = 20 }: TimerEngineOptions): TimerEngineResult {
   const [elapsed, setElapsed] = useState(0)
   const [hasNotified, setHasNotified] = useState(false)
   const [wasOvertime, setWasOvertime] = useState(false)
   const bellIntervalRef = useRef<number | null>(null)
+  const prevBellIntervalRef = useRef<number>(bellRepeatIntervalSeconds)
 
   // Compute remaining time
   const predicted = timerState?.predictedSeconds ?? 0
@@ -99,12 +100,14 @@ export function useTimerEngine({ timerState, notificationCommand }: TimerEngineO
     }
   }, [isOvertime, wasOvertime, timerState])
 
-  // Repeating bell every 20 seconds while in overtime
+  // Start/stop repeating bell when entering/exiting overtime
   useEffect(() => {
     if (isOvertime && timerState) {
       // Start repeating bell
       if (!bellIntervalRef.current) {
-        bellIntervalRef.current = window.setInterval(playBell, BELL_REPEAT_INTERVAL)
+        const intervalMs = bellRepeatIntervalSeconds * 1000;
+        bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+        prevBellIntervalRef.current = bellRepeatIntervalSeconds
       }
     } else {
       // Stop repeating bell
@@ -121,6 +124,19 @@ export function useTimerEngine({ timerState, notificationCommand }: TimerEngineO
       }
     }
   }, [isOvertime, timerState])
+
+  // Restart interval when setting changes while in overtime
+  useEffect(() => {
+    if (isOvertime && timerState && bellIntervalRef.current) {
+      if (prevBellIntervalRef.current !== bellRepeatIntervalSeconds) {
+        // Setting changed - restart with new interval
+        clearInterval(bellIntervalRef.current);
+        const intervalMs = bellRepeatIntervalSeconds * 1000;
+        bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+        prevBellIntervalRef.current = bellRepeatIntervalSeconds;
+      }
+    }
+  }, [bellRepeatIntervalSeconds, isOvertime, timerState])
 
   // Cleanup on unmount
   useEffect(() => {

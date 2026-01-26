@@ -69,6 +69,24 @@ export function Settings() {
           </Text>
         </div>
 
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Bell repeat interval (seconds)
+          </label>
+          <Input
+            type="number"
+            value={settings.bellRepeatIntervalSeconds}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              updateSettings({ bellRepeatIntervalSeconds: parseInt(e.target.value) || 20 })
+            }
+            min={1}
+            max={300}
+          />
+          <Text className="text-xs">
+            How frequently the bell repeats during overtime. Default is 20 seconds.
+          </Text>
+        </div>
+
         <Button
           outline
           onClick={handleTestNotification}

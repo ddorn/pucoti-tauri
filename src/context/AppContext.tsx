@@ -75,6 +75,7 @@ export function AppProvider({
   const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine({
     timerState: state.timerState,
     notificationCommand: settings.notificationCommand,
+    bellRepeatIntervalSeconds: settings.bellRepeatIntervalSeconds,
   })
 
   // Recover orphaned sessions on mount

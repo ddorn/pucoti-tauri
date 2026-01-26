@@ -6,6 +6,9 @@ export interface Settings {
   // Notification
   notificationCommand: string // Custom command with {title} and {body} placeholders
 
+  // Bell behavior
+  bellRepeatIntervalSeconds: number; // How frequently the bell repeats during overtime (in seconds)
+
   // Window sizes
   normalWindowWidth: number
   normalWindowHeight: number
@@ -25,6 +28,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   notificationCommand: '', // Empty = use default OS notification
+  bellRepeatIntervalSeconds: 20,
   normalWindowWidth: 600,
   normalWindowHeight: 500,
   smallWindowWidth: 220,
