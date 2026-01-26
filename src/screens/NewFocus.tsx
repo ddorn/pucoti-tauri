@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
-import { parseTime, formatTimePreview } from '../lib/time-parser'
+import { parseTime, formatTimePreview } from '../lib/time-parser';
 import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
 import { saveActiveSession } from '../lib/storage';
@@ -41,11 +41,6 @@ const QUESTIONS = [
   'Where does your heart tell you to go?',
 ]
 
-const SPRINT_QUESTIONS = [
-  'What do you want to focus on?',
-  'What deserves your full attention?',
-  'What will you work on without distraction?',
-]
 
 type SessionMode = 'predict' | 'sprint' | 'ai-ab';
 
@@ -101,7 +96,6 @@ export function NewFocus() {
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
   const [question, setQuestion] = useState(QUESTIONS[0])
-  const [sprintQuestion, setSprintQuestion] = useState(SPRINT_QUESTIONS[0])
   const [mode, setMode] = useState<SessionMode>('predict')
   const focusInputRef = useRef<HTMLInputElement>(null)
   const timeInputRef = useRef<HTMLInputElement>(null)
@@ -109,12 +103,10 @@ export function NewFocus() {
   const parsedSeconds = parseTime(timeInput)
   const isValid = focusText.trim() && parsedSeconds !== null && parsedSeconds > 0
   const isSprint = mode === 'sprint';
-  const isAiAb = mode === 'ai-ab'
 
-  // Pick random questions on mount
+  // Pick a random question on mount
   useEffect(() => {
     setQuestion(QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]);
-    setSprintQuestion(SPRINT_QUESTIONS[Math.floor(Math.random() * SPRINT_QUESTIONS.length)]);
   }, [])
 
   // Initialize with last used duration
@@ -202,43 +194,46 @@ export function NewFocus() {
             onClick={() => setMode('predict')}
             title="Prediction mode"
             className={clsx(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all text-sm",
+              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
               mode === 'predict'
-                ? "bg-amber-500/15 text-amber-500/80 ring-1 ring-amber-500/30"
-                : "text-zinc-600 hover:text-zinc-500 hover:bg-zinc-800/50"
+                ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50 px-3 gap-1.5"
+                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
             )}
           >
-            ⏱️
+            <span>⏱️</span>
+            {mode === 'predict' && <span className="text-xs font-medium">Predict</span>}
           </button>
           <button
             onClick={() => setMode('sprint')}
             title="Sprint mode (no prediction)"
             className={clsx(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all text-sm",
+              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
               mode === 'sprint'
-                ? "bg-emerald-500/15 text-emerald-500/80 ring-1 ring-emerald-500/30"
-                : "text-zinc-600 hover:text-zinc-500 hover:bg-zinc-800/50"
+                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/50 px-3 gap-1.5"
+                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
             )}
           >
-            🎯
+            <span>🎯</span>
+            {mode === 'sprint' && <span className="text-xs font-medium">Sprint</span>}
           </button>
           <button
             onClick={() => setMode('ai-ab')}
             title="AI A/B experiment"
             className={clsx(
-              "w-8 h-8 rounded-full flex items-center justify-center transition-all text-sm",
+              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
               mode === 'ai-ab'
-                ? "bg-purple-500/15 text-purple-500/80 ring-1 ring-purple-500/30"
-                : "text-zinc-600 hover:text-zinc-500 hover:bg-zinc-800/50"
+                ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/50 px-3 gap-1.5"
+                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
             )}
           >
-            🎲
+            <span>🎲</span>
+            {mode === 'ai-ab' && <span className="text-xs font-medium">A/B</span>}
           </button>
         </div>
 
         {/* Question */}
         <p className="text-xl lg:text-2xl font-medium text-zinc-400 mb-4">
-          {isSprint ? sprintQuestion : question}
+          {question}
         </p>
 
         {/* Fill in the blanks sentence */}
@@ -268,13 +263,6 @@ export function NewFocus() {
           .
         </p>
 
-        {/* AI mode hint */}
-        {isAiAb && (
-          <div className="mb-4 text-center text-xs text-zinc-600">
-            AI will be randomly allowed or forbidden
-          </div>
-        )}
-
         {/* Hints */}
         <Text className="text-sm h-5 text-center">
           {parsedSeconds !== null && parsedSeconds > 0 && (
@@ -297,7 +285,7 @@ export function NewFocus() {
             disabled={!isValid}
             onClick={handleStart}
           >
-            {isSprint ? 'Start Sprint' : 'Start Focus'}
+            Start Focus
           </Button>
           <Text className="text-center text-xs mt-2 text-zinc-400">
             Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
