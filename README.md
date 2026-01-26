@@ -37,17 +37,51 @@ Most of us are terrible at estimating how long tasks will take. Pucoti helps you
 
 ## Installation
 
-Built with Tauri for Linux, macOS, and Windows.
+Download the latest release from [GitHub Releases](https://github.com/ddorn/pucoti-tauri/releases).
 
-**Build from source** (requires Node.js 18+ and Rust 1.77.2+):
+### Linux
+
+**Debian/Ubuntu (.deb)**:
+```bash
+sudo apt install ./Pucoti_*_amd64.deb
+```
+
+**Fedora/RHEL/openSUSE (.rpm)**:
+```bash
+sudo rpm -i Pucoti-*.x86_64.rpm
+```
+
+### Windows
+
+Download and run `Pucoti_*_x64_en-US.msi`. Follow the installation wizard.
+
+### macOS
+
+1. Download the appropriate file for your Mac:
+   - **Apple Silicon (M1/M2/M3)**: `Pucoti_aarch64.app.tar.gz`
+   - **Intel**: `Pucoti_x64.app.tar.gz`
+
+2. Extract the archive:
+```bash
+tar -xzf Pucoti_*.app.tar.gz
+```
+
+3. Move `Pucoti.app` to your Applications folder:
+```bash
+mv Pucoti.app /Applications/
+```
+
+4. **First launch**: macOS will block the app since it's not signed. Right-click the app, select "Open", then click "Open" in the dialog to bypass Gatekeeper.
+
+### Build from Source
+
+Requires Node.js 18+ and Rust 1.77.2+:
 
 ```bash
 npm install && npm run tauri:build
 ```
 
-Then copy the executable in `src-tauri/target/release/` to your desktop.
-
-Official releases and installers are coming soon.
+The executable will be in `src-tauri/target/release/`.
 
 ## Alternatives
 

@@ -65,7 +65,24 @@ jobs:
         with:
           tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Pucoti v__VERSION__'
-          releaseBody: 'See the assets to download this version and install.'
+          releaseBody: |
+            ## Installation
+
+            **Linux (Debian/Ubuntu)**:
+            ```bash
+            sudo dpkg -i Pucoti___VERSION___amd64.deb
+            ```
+
+            **Linux (Fedora/RHEL/openSUSE)**:
+            ```bash
+            sudo rpm -i Pucoti-__VERSION__.x86_64.rpm
+            ```
+
+            **Windows**: Download and run `Pucoti___VERSION___x64_en-US.msi`
+
+            **macOS**: Download `Pucoti_aarch64.app.tar.gz` (Apple Silicon) or `Pucoti_x64.app.tar.gz` (Intel), extract, and move to Applications folder. Right-click to open on first launch (app is not signed).
+
+            See the [README](https://github.com/ddorn/pucoti-tauri#installation) for more details.
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
