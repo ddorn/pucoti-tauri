@@ -1,14 +1,9 @@
 import { sendNotification } from '@tauri-apps/plugin-notification'
+import { invoke } from '@tauri-apps/api/core'
 import { executeCustomNotification } from './settings'
 
-let bellAudio: HTMLAudioElement | null = null
-
 export function playBell(): void {
-  if (!bellAudio) {
-    bellAudio = new Audio('/bell.mp3')
-  }
-  bellAudio.currentTime = 0
-  bellAudio.play().catch((err) => {
+  invoke('play_bell').catch((err) => {
     console.error('Bell play failed:', err)
   })
 }
