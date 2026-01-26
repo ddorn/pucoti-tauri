@@ -12,13 +12,18 @@ export function useStats(sessions: Session[]) {
     [sessions]
   )
 
+  const predictionSessions = useMemo(
+    () => completedSessions.filter(s => s.tags.includes('mode:predict')),
+    [completedSessions]
+  )
+
   const regression = useMemo(() => {
-    const points = completedSessions.map(s => ({
+    const points = predictionSessions.map(s => ({
       x: s.predictedSeconds / 60,
       y: s.actualSeconds / 60,
     }))
     return computeRegressionWithCI(points)
-  }, [completedSessions])
+  }, [predictionSessions])
 
   const stats = useMemo(
     () => computeCalibrationStats(sessions),

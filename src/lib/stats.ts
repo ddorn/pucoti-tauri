@@ -20,9 +20,12 @@ export interface CalibrationStats {
 /**
  * Compute calibration statistics from completed sessions.
  * Returns null if no completed sessions.
+ * Only includes prediction sessions (excludes timebox and ai-ab).
  */
 export function computeCalibrationStats(sessions: Session[]): CalibrationStats | null {
-  const completed = sessions.filter(s => s.status === 'completed')
+  const completed = sessions.filter(s =>
+    s.status === 'completed' && s.tags.includes('mode:predict')
+  )
   if (completed.length === 0) return null
 
   const n = completed.length
@@ -209,9 +212,12 @@ export interface AdjustmentCurve {
  * Compute the adjustment curve: for each adjustment percentage,
  * calculate what proportion of sessions would be "on time" (actual < predicted * multiplier).
  * Also finds the specific adjustment needed for 80% on-time rate.
+ * Only includes prediction sessions (excludes timebox and ai-ab).
  */
 export function computeAdjustmentCurve(sessions: Session[]): AdjustmentCurve | null {
-    const completed = sessions.filter(s => s.status === 'completed');
+  const completed = sessions.filter(s =>
+    s.status === 'completed' && s.tags.includes('mode:predict')
+  );
     if (completed.length === 0) return null;
 
     // Generate adjustment percentages from -50% to +200%

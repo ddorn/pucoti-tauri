@@ -12,6 +12,7 @@ export interface TimerState {
   predictedSeconds: number
   startTime: Date
   adjustmentSeconds: number
+  tags: string[];
 }
 
 interface AppState {
@@ -32,7 +33,7 @@ interface AppContextValue extends AppState {
   setCorner: (corner: Corner) => void
 
   // Timer actions
-  startTimer: (focusText: string, predictedSeconds: number) => void
+  startTimer: (focusText: string, predictedSeconds: number, tags: string[]) => void
   adjustTimer: (seconds: number) => void
   completeTimer: () => Promise<void>
   cancelTimer: () => Promise<void>
@@ -83,7 +84,7 @@ export function AppProvider({
   const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
   const setCorner = (corner: Corner) => setState(s => ({ ...s, corner }))
 
-  const startTimer = useCallback(async (focusText: string, predictedSeconds: number) => {
+  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[]) => {
     const currentCorner = state.corner
 
     setState(s => ({
@@ -96,6 +97,7 @@ export function AppProvider({
         predictedSeconds,
         startTime: new Date(),
         adjustmentSeconds: 0,
+        tags,
       },
     }))
 
@@ -133,7 +135,7 @@ export function AppProvider({
         predictedSeconds: timerState.predictedSeconds,
         actualSeconds: elapsed,
         status: 'completed',
-        tags: [],
+        tags: timerState.tags,
       })
       await clearActiveSession()
     } catch (err) {
@@ -170,7 +172,7 @@ export function AppProvider({
         predictedSeconds: timerState.predictedSeconds,
         actualSeconds: elapsed,
         status: 'canceled',
-        tags: [],
+        tags: timerState.tags,
       })
       await clearActiveSession()
     } catch (err) {
