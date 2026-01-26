@@ -1,6 +1,7 @@
-import { appDataDir, resolve } from '@tauri-apps/api/path'
-import { readTextFile, writeTextFile, exists, mkdir, remove } from '@tauri-apps/plugin-fs'
+import { resolve } from '@tauri-apps/api/path';
+import { readTextFile, writeTextFile, exists, remove } from '@tauri-apps/plugin-fs';
 import { formatTimestamp } from './format'
+import { getDataDir } from './paths'
 
 export type SessionStatus = 'completed' | 'canceled' | 'unknown'
 
@@ -17,17 +18,6 @@ export interface ActiveSession {
   startTime: string
   focusText: string
   predictedSeconds: number
-}
-
-let dataDir: string | null = null
-
-async function getDataDir(): Promise<string> {
-  if (dataDir) return dataDir
-  const base = await appDataDir()
-  dataDir = await resolve(base, 'pucoti')
-
-  await mkdir(dataDir, { recursive: true })
-  return dataDir
 }
 
 function escapeCSV(value: string): string {

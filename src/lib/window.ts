@@ -93,6 +93,24 @@ async function getDisplaySize(): Promise<{ width: number; height: number }> {
 }
 
 /**
+ * Calculate corner positions for a window given dimensions and margins
+ */
+function calculateCornerPositions(
+  display: { width: number; height: number },
+  width: number,
+  height: number,
+  margins: { cornerMarginTop: number; cornerMarginRight: number; cornerMarginBottom: number; cornerMarginLeft: number }
+): Record<Corner, { x: number; y: number }> {
+  const { cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = margins;
+  return {
+    'bottom-right': { x: display.width - width - cornerMarginRight, y: display.height - height - cornerMarginBottom },
+    'bottom-left': { x: cornerMarginLeft, y: display.height - height - cornerMarginBottom },
+    'top-right': { x: display.width - width - cornerMarginRight, y: cornerMarginTop },
+    'top-left': { x: cornerMarginLeft, y: cornerMarginTop },
+  };
+}
+
+/**
  * Set window to small corner mode using Sway-specific commands
  */
 async function setSwayCornerMode(
@@ -103,14 +121,7 @@ async function setSwayCornerMode(
   margins: { cornerMarginTop: number; cornerMarginRight: number; cornerMarginBottom: number; cornerMarginLeft: number }
 ): Promise<void> {
   const display = await getDisplaySize();
-  const { cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = margins;
-  const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - width - cornerMarginRight, y: display.height - height - cornerMarginBottom },
-    'bottom-left': { x: cornerMarginLeft, y: display.height - height - cornerMarginBottom },
-    'top-right': { x: display.width - width - cornerMarginRight, y: cornerMarginTop },
-    'top-left': { x: cornerMarginLeft, y: cornerMarginTop },
-  };
-
+  const positions = calculateCornerPositions(display, width, height, margins);
   const pos = positions[corner];
 
   // Combine commands into a single swaymsg invocation
@@ -175,13 +186,12 @@ export async function setSmallMode(
 
   // Generic Tauri fallback
   const display = await getDisplaySize()
-  const positions: Record<Corner, { x: number; y: number }> = {
-    'bottom-right': { x: display.width - smallWindowWidth - cornerMarginRight, y: display.height - smallWindowHeight - cornerMarginBottom },
-    'bottom-left': { x: cornerMarginLeft, y: display.height - smallWindowHeight - cornerMarginBottom },
-    'top-right': { x: display.width - smallWindowWidth - cornerMarginRight, y: cornerMarginTop },
-    'top-left': { x: cornerMarginLeft, y: cornerMarginTop },
-  }
-
+  const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight, {
+    cornerMarginTop,
+    cornerMarginRight,
+    cornerMarginBottom,
+    cornerMarginLeft,
+  })
   const pos = positions[corner]
   const window = getCurrentWindow()
   await window.setAlwaysOnTop(true)

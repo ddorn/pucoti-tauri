@@ -2,20 +2,13 @@ import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext';
 import { parseTime, formatTimePreview } from '../lib/time-parser';
+import { formatDuration } from '../lib/format';
 import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
+import { ModeTabButton } from '../components/ModeTabButton';
 import { saveActiveSession } from '../lib/storage';
 import confetti from 'canvas-confetti'
 import clsx from 'clsx'
-
-function formatTime(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  if (hours > 0) {
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  }
-  return `${mins}m`;
-}
 
 function getCompletionTime(seconds: number): string {
   const completionDate = new Date(Date.now() + seconds * 1000);
@@ -113,7 +106,7 @@ export function NewFocus() {
 
   // Initialize with last used duration
   useEffect(() => {
-    setTimeInput(formatTime(settings.lastUsedDuration));
+    setTimeInput(formatDuration(settings.lastUsedDuration));
   }, [settings.lastUsedDuration])
 
   // Initialize with last used mode
@@ -197,46 +190,34 @@ export function NewFocus() {
       <div className="w-full max-w-md lg:max-w-xl">
         {/* Mode tabs */}
         <div className="flex gap-2 mb-8">
-          <button
+          <ModeTabButton
+            mode="predict"
+            currentMode={mode}
             onClick={() => setMode('predict')}
             title="Prediction mode"
-            className={clsx(
-              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
-              mode === 'predict'
-                ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/50 px-3 gap-1.5"
-                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
-            )}
-          >
-            <span>⏱️</span>
-            {mode === 'predict' && <span className="text-xs font-medium">Predict</span>}
-          </button>
-          <button
+            emoji="⏱️"
+            label="Predict"
+            activeColor="amber"
+          />
+          <ModeTabButton
+            mode="timebox"
+            currentMode={mode}
             onClick={() => setMode('timebox')}
             title="Time box mode (no prediction)"
-            className={clsx(
-              "h-8 rounded-full flex items-center justify-center transition-all text-sm",
-              mode === 'timebox'
-                ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/50 px-3 gap-1.5"
-                : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
-            )}
-          >
-            <span>🎯</span>
-            {mode === 'timebox' && <span className="text-xs font-medium">Time Box</span>}
-          </button>
+            emoji="🎯"
+            label="Time Box"
+            activeColor="emerald"
+          />
           {settings.enableAiProductivityExperiment && (
-            <button
+            <ModeTabButton
+              mode="ai-ab"
+              currentMode={mode}
               onClick={() => setMode('ai-ab')}
               title="AI Productivity Experiment"
-              className={clsx(
-                "h-8 rounded-full flex items-center justify-center transition-all text-sm",
-                mode === 'ai-ab'
-                  ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/50 px-3 gap-1.5"
-                  : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
-              )}
-            >
-              <span>🎲</span>
-              {mode === 'ai-ab' && <span className="text-xs font-medium">AI Productivity</span>}
-            </button>
+              emoji="🎲"
+              label="AI Productivity"
+              activeColor="purple"
+            />
           )}
         </div>
 

@@ -1,6 +1,7 @@
-import { appDataDir, resolve } from '@tauri-apps/api/path'
-import { readTextFile, writeTextFile, exists, mkdir } from '@tauri-apps/plugin-fs'
+import { resolve } from '@tauri-apps/api/path';
+import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell'
+import { getDataDir } from './paths'
 
 export interface Settings {
   // Notification
@@ -51,24 +52,6 @@ export const DEFAULT_SETTINGS: Settings = {
   lastUsedMode: 'predict',
 }
 
-let dataDir: string | null = null
-
-async function getDataDir(): Promise<string> {
-  if (dataDir) return dataDir
-  const base = await appDataDir()
-  dataDir = await resolve(base, 'pucoti')
-
-  try {
-    const dirExists = await exists(dataDir)
-    if (!dirExists) {
-      await mkdir(dataDir, { recursive: true })
-    }
-  } catch {
-    await mkdir(dataDir, { recursive: true })
-  }
-  return dataDir
-}
-
 async function getSettingsPath(): Promise<string> {
   const dir = await getDataDir()
   return await resolve(dir, 'settings.json')
@@ -82,7 +65,7 @@ export async function loadSettings(): Promise<Settings> {
     // Merge with defaults to handle new settings added in updates
     return { ...DEFAULT_SETTINGS, ...saved }
   } catch (err) {
-    console.error('Failed to load settings', err)
+    console.error('Failed to load settings. Using default settings.', err)
     return { ...DEFAULT_SETTINGS }
   }
 }

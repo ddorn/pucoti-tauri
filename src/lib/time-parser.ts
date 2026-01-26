@@ -62,6 +62,8 @@ export function parseTime(input: string): number | null {
   return null
 }
 
+import { parseSeconds } from './format'
+
 /**
  * Format seconds as human-readable interpretation for preview.
  * "12 minutes", "1 hour 30 minutes", etc.
@@ -71,9 +73,7 @@ export function formatTimePreview(seconds: number): string {
     return `${seconds} second${seconds !== 1 ? 's' : ''}`
   }
 
-  const hours = Math.floor(seconds / 3600)
-  const mins = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
+  const { hours, mins, secs } = parseSeconds(seconds)
 
   const parts: string[] = []
   if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`)
