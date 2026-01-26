@@ -2,7 +2,9 @@
 
 Stay on task with PUCOTI, a countdown timer built for simplicity, purpose, and overcoming the planning fallacy.
 
-![New Focus Screen](docs/screenshots/new-focus.webp)
+<div align="center">
+  <img src="docs/screenshots/new-focus.webp" alt="New Focus Screen" width="600">
+</div>
 
 ## Why Pucoti?
 
@@ -10,7 +12,9 @@ Most of us are terrible at estimating how long tasks will take. Pucoti helps you
 
 ## Features
 
-![Timer Screen](docs/screenshots/timer.webp)
+<div align="center">
+  <img src="docs/screenshots/timer.webp" alt="Timer Screen" width="600">
+</div>
 
 ### Timer Features
 - **No Pause**: Time always moves forward. Just like reality.
