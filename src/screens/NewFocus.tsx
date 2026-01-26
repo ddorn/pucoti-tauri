@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext';
-import { parseTime, formatTimePreview } from '../lib/time-parser';
+import { parseTime } from '../lib/time-parser';
 import { formatDuration } from '../lib/format';
 import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
@@ -222,12 +222,12 @@ export function NewFocus() {
         </div>
 
         {/* Question */}
-        <p className="text-xl lg:text-2xl font-medium text-zinc-400 mb-4">
+        <p className="text-xl lg:text-2xl font-medium text-zinc-400 mb-2">
           {question}
         </p>
 
         {/* Fill in the blanks sentence */}
-        <p className="text-3xl lg:text-4xl font-medium text-zinc-100 leading-relaxed mb-12">
+        <p className="text-3xl lg:text-4xl font-medium text-zinc-100 leading-relaxed mb-4">
           I want to{' '}
           <BlankInput
             value={focusText}
@@ -254,21 +254,14 @@ export function NewFocus() {
         </p>
 
         {/* Hints */}
-        <Text className="text-sm h-5 text-center">
-          {parsedSeconds !== null && parsedSeconds > 0 && (
-            <>
-              <span>Parsed as {formatTimePreview(parsedSeconds)}</span>
-              <span className="px-2">·</span>
-              <span>Done at {getCompletionTime(parsedSeconds)}</span>
-            </>
-          )}
+        <Text className="text-sm h-5 text-center mb-2">
           {timeInput && parsedSeconds === null && (
             <span className="text-red-400">Invalid duration format. Try "25m", "1h 30m", or "45:00"</span>
           )}
         </Text>
 
         {/* Start button */}
-        <div className="pt-4">
+        <div>
           <Button
             color="amber"
             className="w-full py-3 text-lg"
@@ -277,8 +270,11 @@ export function NewFocus() {
           >
             Start Focus
           </Button>
-          <Text className="text-center text-xs mt-2 text-zinc-400">
+          <Text className="text-center text-xs mt-4 text-zinc-400">
             Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
+            {parsedSeconds !== null && parsedSeconds > 0 && (
+              <> <span className="px-2">·</span> Done at {getCompletionTime(parsedSeconds)}</>
+            )}
           </Text>
         </div>
       </div>
