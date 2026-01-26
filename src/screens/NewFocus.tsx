@@ -77,6 +77,7 @@ function BlankInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={(e) => e.target.select()}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         style={{ width }}
