@@ -76,14 +76,15 @@ export function Settings() {
           <Input
             type="number"
             value={settings.bellRepeatIntervalSeconds}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              updateSettings({ bellRepeatIntervalSeconds: parseInt(e.target.value) || 20 })
-            }
-            min={1}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const value = parseInt(e.target.value);
+              updateSettings({ bellRepeatIntervalSeconds: isNaN(value) ? 20 : value });
+            }}
+            min={0}
             max={300}
           />
           <Text className="text-xs">
-            How frequently the bell repeats during overtime. Default is 20 seconds.
+            How frequently the bell repeats during overtime. Set to 0 to disable repeat. Default is 20 seconds.
           </Text>
         </div>
 

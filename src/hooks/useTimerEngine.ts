@@ -99,8 +99,8 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
   // Start/stop repeating bell when entering/exiting overtime
   useEffect(() => {
     if (isOvertime && timerState) {
-      // Start repeating bell
-      if (!bellIntervalRef.current) {
+      // Start repeating bell (only if interval > 0)
+      if (!bellIntervalRef.current && settings.bellRepeatIntervalSeconds > 0) {
         const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
         bellIntervalRef.current = window.setInterval(playBell, intervalMs);
         prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds
@@ -123,12 +123,17 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
 
   // Restart interval when setting changes while in overtime
   useEffect(() => {
-    if (isOvertime && timerState && bellIntervalRef.current) {
+    if (isOvertime && timerState) {
       if (prevBellIntervalRef.current !== settings.bellRepeatIntervalSeconds) {
-        // Setting changed - restart with new interval
-        clearInterval(bellIntervalRef.current);
-        const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
-        bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+        // Setting changed - restart with new interval (or stop if 0)
+        if (bellIntervalRef.current) {
+          clearInterval(bellIntervalRef.current);
+          bellIntervalRef.current = null;
+        }
+        if (settings.bellRepeatIntervalSeconds > 0) {
+          const intervalMs = settings.bellRepeatIntervalSeconds * 1000;
+          bellIntervalRef.current = window.setInterval(playBell, intervalMs);
+        }
         prevBellIntervalRef.current = settings.bellRepeatIntervalSeconds;
       }
     }
