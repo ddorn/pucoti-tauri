@@ -7,6 +7,7 @@ import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
 import { ModeTabButton } from '../components/ModeTabButton';
 import { saveActiveSession } from '../lib/storage';
+import { COLOR_PALETTES } from '../lib/colors';
 import confetti from 'canvas-confetti'
 import clsx from 'clsx'
 
@@ -120,20 +121,21 @@ export function NewFocus() {
       const duration = 2000
       const end = Date.now() + duration
 
+      const accentPalette = COLOR_PALETTES[settings.accentColor]
       const frame = () => {
         confetti({
           particleCount: 3,
           angle: 60,
           spread: 55,
           origin: { x: 0, y: 0.7 },
-          colors: ['#f59e0b', '#fbbf24', '#22c55e', '#3b82f6'],
+          colors: [accentPalette.base, accentPalette.hover, '#22c55e', '#3b82f6'],
         })
         confetti({
           particleCount: 3,
           angle: 120,
           spread: 55,
           origin: { x: 1, y: 0.7 },
-          colors: ['#f59e0b', '#fbbf24', '#22c55e', '#3b82f6'],
+          colors: [accentPalette.base, accentPalette.hover, '#22c55e', '#3b82f6'],
         })
 
         if (Date.now() < end) {
@@ -145,7 +147,7 @@ export function NewFocus() {
       const timeout = setTimeout(clearConfetti, duration)
       return () => clearTimeout(timeout)
     }
-  }, [showConfetti, clearConfetti])
+  }, [showConfetti, clearConfetti, settings.accentColor])
 
   // Focus the input on mount
   useEffect(() => {
@@ -197,7 +199,7 @@ export function NewFocus() {
             title="Prediction mode"
             emoji="⏱️"
             label="Predict"
-            activeColor="amber"
+            activeColor={settings.accentColor}
           />
           <ModeTabButton
             mode="timebox"
@@ -263,10 +265,11 @@ export function NewFocus() {
         {/* Start button */}
         <div>
           <Button
-            color="amber"
+            color={settings.accentColor}
             className="w-full py-3 text-lg"
             disabled={!isValid}
             onClick={handleStart}
+            
           >
             Start Focus
           </Button>

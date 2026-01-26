@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext'
 import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { NewFocus } from './screens/NewFocus'
@@ -7,6 +7,7 @@ import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
 import { setNormalMode, setSmallMode, type Corner } from './lib/window'
+import { applyAccentColor } from './lib/colors';
 import clsx from 'clsx'
 
 function AppContent() {
@@ -100,6 +101,11 @@ function NavButton({
  */
 function AppWithSettings({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings()
+
+  // Apply accent color when settings change
+  useEffect(() => {
+    applyAccentColor(settings.accentColor);
+  }, [settings.accentColor])
 
   const handleTimerStart = useCallback(async (corner: Corner) => {
     // Switch to small mode with current settings

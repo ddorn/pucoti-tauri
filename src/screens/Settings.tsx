@@ -11,6 +11,7 @@ import { executeCustomNotification } from '../lib/settings'
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
+import { ColorPicker } from '../components/ColorPicker'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -245,7 +246,7 @@ export function Settings() {
           <Checkbox
             checked={settings.autoSmallOnStart}
             onChange={(checked) => updateSettings({ autoSmallOnStart: checked })}
-            color="amber"
+            color={settings.accentColor}
           />
           <Label>Automatically switch to small mode when starting timer</Label>
           <Description>When enabled, the window will automatically switch to small corner mode when you start a new focus session.</Description>
@@ -255,7 +256,7 @@ export function Settings() {
           <Checkbox
             checked={settings.smallWindowBorderless}
             onChange={(checked) => updateSettings({ smallWindowBorderless: checked })}
-            color="amber"
+            color={settings.accentColor}
           />
           <Label>Borderless small window</Label>
           <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
@@ -317,6 +318,24 @@ export function Settings() {
         </div>
       </section>
 
+      {/* Appearance */}
+      <section className="space-y-4">
+        <Heading level={2}>Appearance</Heading>
+
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-zinc-300">
+            Accent Color
+          </label>
+          <ColorPicker
+            value={settings.accentColor}
+            onChange={(color) => updateSettings({ accentColor: color })}
+          />
+          <Text className="text-xs text-zinc-400">
+            Choose the accent color used throughout the app
+          </Text>
+        </div>
+      </section>
+
       {/* AI Productivity Experiment */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
@@ -330,7 +349,7 @@ export function Settings() {
           <Checkbox
             checked={settings.enableAiProductivityExperiment}
             onChange={(checked) => updateSettings({ enableAiProductivityExperiment: checked })}
-            color="amber"
+            color={settings.accentColor}
             disabled
           />
           <Label>Enable AI productivity experiment mode</Label>

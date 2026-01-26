@@ -30,6 +30,9 @@ export interface Settings {
   // AI Productivity Experiment
   enableAiProductivityExperiment: boolean;
 
+  // Accent color
+  accentColor: 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose';
+
   // Last used values
   lastUsedDuration: number; // in seconds
   lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
@@ -50,6 +53,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cornerMarginBottom: 16,
   cornerMarginLeft: 16,
   enableAiProductivityExperiment: false,
+  accentColor: 'amber',
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
 }
