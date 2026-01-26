@@ -22,6 +22,7 @@ interface AppState {
   timerState: TimerState | null
   showConfetti: boolean
   lastUsedDuration: number;  // in seconds, defaults to 20m
+  lastUsedMode: 'predict' | 'timebox' | 'ai-ab';  // defaults to 'predict'
 }
 
 interface AppContextValue extends AppState {
@@ -33,7 +34,7 @@ interface AppContextValue extends AppState {
   setCorner: (corner: Corner) => void
 
   // Timer actions
-  startTimer: (focusText: string, predictedSeconds: number, tags: string[]) => void
+  startTimer: (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => void
   adjustTimer: (seconds: number) => void
   completeTimer: () => Promise<void>
   cancelTimer: () => Promise<void>
@@ -70,6 +71,7 @@ export function AppProvider({
     timerState: null,
     showConfetti: false,
     lastUsedDuration: 20 * 60,  // Default to 20 minutes
+    lastUsedMode: 'predict',  // Default to predict mode
   })
 
   // Timer engine - runs at app level so it persists across screens
@@ -84,7 +86,7 @@ export function AppProvider({
   const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
   const setCorner = (corner: Corner) => setState(s => ({ ...s, corner }))
 
-  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[]) => {
+  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => {
     const currentCorner = state.corner
 
     setState(s => ({
@@ -92,6 +94,7 @@ export function AppProvider({
       screen: 'timer',
       timerMode: settings.autoSmallOnStart ? 'small' : s.timerMode,
       lastUsedDuration: predictedSeconds,  // Remember this duration
+      lastUsedMode: mode,  // Remember this mode
       timerState: {
         focusText,
         predictedSeconds,

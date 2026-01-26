@@ -93,7 +93,7 @@ function BlankInput({
 }
 
 export function NewFocus() {
-  const { startTimer, showConfetti, clearConfetti, lastUsedDuration } = useApp()
+  const { startTimer, showConfetti, clearConfetti, lastUsedDuration, lastUsedMode } = useApp()
   const { settings } = useSettings()
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
@@ -115,6 +115,11 @@ export function NewFocus() {
   useEffect(() => {
     setTimeInput(formatTime(lastUsedDuration));
   }, [lastUsedDuration])
+
+  // Initialize with last used mode
+  useEffect(() => {
+    setMode(lastUsedMode);
+  }, [lastUsedMode])
 
   // Fire confetti on mount if we just completed a session
   useEffect(() => {
@@ -168,7 +173,7 @@ export function NewFocus() {
       console.error('Failed to save session data:', err)
     }
 
-    await startTimer(focusText.trim(), parsedSeconds, [`mode:${mode}`])
+    await startTimer(focusText.trim(), parsedSeconds, [`mode:${mode}`], mode)
   }
 
   const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -253,7 +258,7 @@ export function NewFocus() {
           />
           .<br />
           {isTimebox ? (
-            <>I'll focus for{' '}</>
+            <>I'll focus exclusively on it<br />for{' '}</>
           ) : (
             <>It's 80% likely I'll be done<br />in{' '}</>
           )}
