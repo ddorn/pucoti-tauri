@@ -4,6 +4,8 @@ import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text'
 import { Heading } from '../components/catalyst/heading'
+import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
+import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
 import { sendNotification } from '@tauri-apps/plugin-notification'
@@ -239,31 +241,25 @@ export function Settings() {
       <section className="space-y-4">
         <Heading level={2}>Small Window</Heading>
 
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+        <CheckboxField>
+          <Checkbox
             checked={settings.autoSmallOnStart}
-            onChange={(e) => updateSettings({ autoSmallOnStart: e.target.checked })}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
+            onChange={(checked) => updateSettings({ autoSmallOnStart: checked })}
+            color="amber"
           />
-          <span className="text-sm text-zinc-300">Automatically switch to small mode when starting timer</span>
-        </label>
-        <Text className="text-xs">
-          When enabled, the window will automatically switch to small corner mode when you start a new focus session.
-        </Text>
+          <Label>Automatically switch to small mode when starting timer</Label>
+          <Description>When enabled, the window will automatically switch to small corner mode when you start a new focus session.</Description>
+        </CheckboxField>
 
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+        <CheckboxField>
+          <Checkbox
             checked={settings.smallWindowBorderless}
-            onChange={(e) => updateSettings({ smallWindowBorderless: e.target.checked })}
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
+            onChange={(checked) => updateSettings({ smallWindowBorderless: checked })}
+            color="amber"
           />
-          <span className="text-sm text-zinc-300">Borderless small window</span>
-        </label>
-        <Text className="text-xs">
-          Remove window decorations in small corner mode. May not work on all window managers.
-        </Text>
+          <Label>Borderless small window</Label>
+          <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
+        </CheckboxField>
       </section>
 
       {/* Corner Margins */}
@@ -330,26 +326,25 @@ export function Settings() {
           </span>
         </div>
 
-        <label className="flex items-center gap-3 cursor-not-allowed opacity-60">
-          <input
-            type="checkbox"
+        <CheckboxField disabled>
+          <Checkbox
             checked={settings.enableAiProductivityExperiment}
-            onChange={(e) => updateSettings({ enableAiProductivityExperiment: e.target.checked })}
+            onChange={(checked) => updateSettings({ enableAiProductivityExperiment: checked })}
+            color="amber"
             disabled
-            className="w-4 h-4 rounded border-zinc-600 bg-zinc-800 text-accent focus:ring-accent focus:ring-offset-zinc-900"
           />
-          <span className="text-sm text-zinc-300">Enable AI productivity experiment mode</span>
-        </label>
-        <Text className="text-xs">
-          Track your productivity with and without AI assistance. When enabled, you'll be randomly allowed or forbidden
-          to use AI tools before starting each task, then compare actual time taken against your predictions.
-          Based on the <a
-            href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent hover:text-accent/80 underline"
-          >METR AI developer study</a>, but personalized to your own work patterns.
-        </Text>
+          <Label>Enable AI productivity experiment mode</Label>
+          <Description>
+            Track your productivity with and without AI assistance. When enabled, you'll be randomly allowed or forbidden
+            to use AI tools before starting each task, then compare actual time taken against your predictions.
+            Based on the <a
+              href="https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:text-accent/80 underline"
+            >METR AI developer study</a>, but personalized to your own work patterns.
+          </Description>
+        </CheckboxField>
       </section>
 
       {/* Reset */}
