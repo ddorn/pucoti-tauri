@@ -31,6 +31,40 @@ export function Timer() {
         return
       }
 
+      // Handle digits (0-9) for setting timer duration
+      // Use e.code to detect physical key regardless of Shift state
+      const digitMatch = e.code.match(/^Digit(\d)$/)
+      if (digitMatch) {
+        e.preventDefault()
+        if (!timerState) return
+
+        const digit = parseInt(digitMatch[1])
+        const minutes = e.shiftKey ? digit * 10 : digit
+        const targetSeconds = minutes * 60
+        // Calculate adjustment needed: delta = target_remaining - current_remaining
+        const delta = targetSeconds - remaining
+        adjustTimer(delta)
+        return
+      }
+
+      // Handle j/k case-sensitively: lowercase = ±1 min, uppercase (Shift+j/k) = ±5 min
+      if (e.key === 'j') {
+        adjustTimer(-60) // -1 minute
+        return
+      }
+      if (e.key === 'k') {
+        adjustTimer(60) // +1 minute
+        return
+      }
+      if (e.key === 'J') {
+        adjustTimer(-300) // -5 minutes
+        return
+      }
+      if (e.key === 'K') {
+        adjustTimer(300) // +5 minutes
+        return
+      }
+
       switch (e.key.toLowerCase()) {
         case 'tab':
           e.preventDefault()
@@ -68,14 +102,6 @@ export function Timer() {
           }
           break
 
-        case 'j':
-          adjustTimer(-60) // -1 minute
-          break
-
-        case 'k':
-          adjustTimer(60) // +1 minute
-          break
-
         case 'enter':
           await completeTimer()
           break
@@ -88,7 +114,7 @@ export function Timer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [timerMode, corner, settings, setTimerMode, setCorner, adjustTimer, completeTimer, cancelTimer])
+  }, [timerMode, corner, settings, setTimerMode, setCorner, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
 
   if (!timerState) {
     return (
@@ -154,11 +180,14 @@ export function Timer() {
         {/* Shortcut hints */}
         <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
           <Shortcut keys={['Tab']} label="Zen mode" />
-          <Shortcut keys={['Space']} label="Small corner mode" />
+          <Shortcut keys={['Space']} label="Toggle corner mode" />
           <Shortcut keys={['j', 'k']} label="±1 minute" />
+          <Shortcut keys={['0-9']} label="Set to X minutes" />
+          <Shortcut keys={['J', 'K']} label="±5 minutes" />
+          <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
           <Shortcut keys={['c']} label="Cycle corners" />
-          <Shortcut keys={['Enter']} label="Complete" />
           <Shortcut keys={['q']} label="Cancel" />
+          <Shortcut keys={['Enter']} label="Complete" />
         </div>
       </div>
     </div>
