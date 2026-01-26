@@ -4,6 +4,7 @@ import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text'
 import { Heading } from '../components/catalyst/heading'
+import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
 import { sendNotification } from '@tauri-apps/plugin-notification'
 
@@ -73,13 +74,9 @@ export function Settings() {
           <label className="block text-sm font-medium text-zinc-300">
             Bell repeat interval (seconds)
           </label>
-          <Input
-            type="number"
+          <ValidatedNumericInput
             value={settings.bellRepeatIntervalSeconds}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              const value = parseInt(e.target.value);
-              updateSettings({ bellRepeatIntervalSeconds: isNaN(value) ? 20 : value });
-            }}
+            onChange={(val) => updateSettings({ bellRepeatIntervalSeconds: val })}
             min={0}
             max={300}
           />
@@ -106,12 +103,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Normal width
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.normalWindowWidth}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ normalWindowWidth: parseInt(e.target.value) || 600 })
-              }
+              onChange={(val) => updateSettings({ normalWindowWidth: val })}
               min={300}
               max={2000}
             />
@@ -120,12 +114,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Normal height
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.normalWindowHeight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ normalWindowHeight: parseInt(e.target.value) || 500 })
-              }
+              onChange={(val) => updateSettings({ normalWindowHeight: val })}
               min={200}
               max={2000}
             />
@@ -137,12 +128,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Small mode width
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.smallWindowWidth}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ smallWindowWidth: parseInt(e.target.value) || 320 })
-              }
+              onChange={(val) => updateSettings({ smallWindowWidth: val })}
               min={200}
               max={800}
             />
@@ -151,12 +139,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Small mode height
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.smallWindowHeight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ smallWindowHeight: parseInt(e.target.value) || 120 })
-              }
+              onChange={(val) => updateSettings({ smallWindowHeight: val })}
               min={80}
               max={400}
             />
@@ -207,12 +192,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Top margin
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.cornerMarginTop}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ cornerMarginTop: parseInt(e.target.value) || 0 })
-              }
+              onChange={(val) => updateSettings({ cornerMarginTop: val })}
               min={0}
               max={500}
             />
@@ -221,12 +203,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Right margin
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.cornerMarginRight}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ cornerMarginRight: parseInt(e.target.value) || 0 })
-              }
+              onChange={(val) => updateSettings({ cornerMarginRight: val })}
               min={0}
               max={500}
             />
@@ -235,12 +214,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Bottom margin
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.cornerMarginBottom}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ cornerMarginBottom: parseInt(e.target.value) || 0 })
-              }
+              onChange={(val) => updateSettings({ cornerMarginBottom: val })}
               min={0}
               max={500}
             />
@@ -249,12 +225,9 @@ export function Settings() {
             <label className="block text-sm font-medium text-zinc-300">
               Left margin
             </label>
-            <Input
-              type="number"
+            <ValidatedNumericInput
               value={settings.cornerMarginLeft}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                updateSettings({ cornerMarginLeft: parseInt(e.target.value) || 0 })
-              }
+              onChange={(val) => updateSettings({ cornerMarginLeft: val })}
               min={0}
               max={500}
             />
