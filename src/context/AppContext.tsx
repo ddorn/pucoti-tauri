@@ -153,8 +153,6 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'new-focus',
-      // Preserve zen/small mode, only reset to normal if already in normal
-      timerMode: s.timerMode === 'normal' ? 'normal' : s.timerMode,
       timerState: null,
       showConfetti: true,
     }))
@@ -190,8 +188,6 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'new-focus',
-      // Preserve zen/small mode, only reset to normal if already in normal
-      timerMode: s.timerMode === 'normal' ? 'normal' : s.timerMode,
       timerState: null,
       showConfetti: false,
     }))
