@@ -112,6 +112,14 @@ function calculateCornerPositions(
 
 /**
  * Set window to small corner mode using Sway-specific commands
+ *
+ * Decorations on Sway:
+ * - Sway manages native window decorations (title bar + border edge) via 'border' command
+ *   - 'border none' = no title bar, no edge
+ *   - 'border normal' = Sway's title bar + border edge
+ * - Tauri also renders its own client-side title bar independently
+ * - To avoid double title bars, we disable Tauri decorations and let Sway handle everything
+ *   (done via window.setDecorations() call in the parent function)
  */
 async function setSwayCornerMode(
   corner: Corner,
@@ -124,7 +132,7 @@ async function setSwayCornerMode(
   const positions = calculateCornerPositions(display, width, height, margins);
   const pos = positions[corner];
 
-  // Combine commands into a single swaymsg invocation
+  // 'border none/normal' controls Sway's native decorations (title bar + edge)
   const command = [
     'floating enable',
     `border ${borderless ? 'none' : 'normal'}`,
@@ -139,12 +147,16 @@ async function setSwayCornerMode(
 
 /**
  * Set window to normal mode in Sway
+ *
+ * Note: We don't explicitly set border here - leaving it to user's Sway config defaults.
+ * Decorations are handled by disabling Tauri's client-side decorations (in parent function)
+ * and letting Sway manage window decorations natively.
  */
 async function setSwayNormalMode(width: number, height: number): Promise<void> {
   // Combine all commands, including resize, into a single swaymsg call
   const command = [
     // 'sticky disable',
-    // 'border normal',  // uncomment if needed
+    // 'border normal',  // Let Sway config handle default border style
     // 'floating disable', // uncomment if needed
     `resize set ${width} ${height}`,
     'move absolute position center'
@@ -156,6 +168,22 @@ async function setSwayNormalMode(width: number, height: number): Promise<void> {
 
 /**
  * Set window to small corner mode
+ *
+ * Window Decorations Architecture:
+ *
+ * On Sway:
+ * - Tauri's client-side decorations are ALWAYS disabled (setDecorations(false))
+ * - Sway manages native window decorations via 'border' command:
+ *   - 'border none' = no title bar, no border edge
+ *   - 'border normal' = Sway's native title bar + border edge
+ * - smallWindowBorderless setting controls Sway's 'border' command only
+ *
+ * On other platforms (macOS, Windows, other Linux WMs):
+ * - Tauri renders client-side decorations (title bar with buttons)
+ * - smallWindowBorderless setting controls Tauri's setDecorations():
+ *   - true = no Tauri decorations (borderless window)
+ *   - false = show Tauri decorations (title bar with buttons)
+ * - Normal mode always shows decorations (setDecorations(true))
  */
 export async function setSmallMode(
   corner: Corner,
@@ -181,10 +209,15 @@ export async function setSmallMode(
       cornerMarginBottom,
       cornerMarginLeft,
     })
+    // On Sway: Always disable Tauri's client-side decorations
+    // Sway handles all window decorations natively via 'border' command
+    const window = getCurrentWindow()
+    await window.setDecorations(false)
     return
   }
 
-  // Generic Tauri fallback
+  // Non-Sway platforms (macOS, Windows, other Linux WMs)
+  // Use Tauri's client-side decorations, controlled by smallWindowBorderless setting
   const display = await getDisplaySize()
   const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight, {
     cornerMarginTop,
@@ -194,6 +227,7 @@ export async function setSmallMode(
   })
   const pos = positions[corner]
   const window = getCurrentWindow()
+  await window.setDecorations(!smallWindowBorderless)
   await window.setAlwaysOnTop(true)
   await window.setSize(new LogicalSize(smallWindowWidth, smallWindowHeight))
   await window.setPosition(new LogicalPosition(pos.x, pos.y))
@@ -209,10 +243,17 @@ export async function setNormalMode(
 
   if (await isSway()) {
     await setSwayNormalMode(normalWindowWidth, normalWindowHeight)
+    // On Sway: Always disable Tauri's client-side decorations
+    // Sway handles all window decorations natively
+    const window = getCurrentWindow()
+    await window.setDecorations(false)
     return
   }
 
+  // Non-Sway platforms (macOS, Windows, other Linux WMs)
+  // Always show Tauri's decorations in normal mode
   const window = getCurrentWindow()
+  await window.setDecorations(true)
   await window.setAlwaysOnTop(false)
   await window.setSize(new LogicalSize(normalWindowWidth, normalWindowHeight))
   await window.center()
