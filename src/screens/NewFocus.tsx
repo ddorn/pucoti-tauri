@@ -55,7 +55,7 @@ function BlankInput({
   minWidth?: string;
   className?: string;
 }) {
-  const [width, setWidth] = useState('0');
+  const [width, setWidth] = useState('auto');
   const measureRef = useRef<HTMLSpanElement>(null);
 
   useLayoutEffect(() => {
@@ -269,7 +269,6 @@ export function NewFocus() {
             className="w-full py-3 text-lg"
             disabled={!isValid}
             onClick={handleStart}
-            
           >
             Start Focus
           </Button>
