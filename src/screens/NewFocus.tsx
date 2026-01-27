@@ -43,6 +43,8 @@ function BlankInput({
   value,
   onChange,
   onKeyDown,
+  onFocus,
+  onBlur,
   placeholder,
   inputRef,
   className,
@@ -50,6 +52,8 @@ function BlankInput({
   value: string;
   onChange: (value: string) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   placeholder: string;
   inputRef?: React.RefObject<HTMLInputElement | null>;
   minWidth?: string;
@@ -75,7 +79,11 @@ function BlankInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={(e) => e.target.select()}
+        onFocus={(e) => {
+          e.target.select()
+          onFocus?.()
+        }}
+        onBlur={onBlur}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         style={{ width }}
@@ -93,6 +101,7 @@ export function NewFocus() {
   const [timeInput, setTimeInput] = useState('')
   const [question, setQuestion] = useState(QUESTIONS[0])
   const [mode, setMode] = useState<SessionMode>('predict')
+  const [focusedInput, setFocusedInput] = useState<'focus' | 'time' | null>('focus')
   const focusInputRef = useRef<HTMLInputElement>(null)
   const timeInputRef = useRef<HTMLInputElement>(null)
 
@@ -153,6 +162,18 @@ export function NewFocus() {
   useEffect(() => {
     focusInputRef.current?.focus()
   }, [])
+
+  // Handle Enter key globally to focus intention input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && focusedInput === null) {
+        e.preventDefault()
+        focusInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [focusedInput])
 
   const handleStart = async () => {
     if (!isValid || parsedSeconds === null) return
@@ -235,6 +256,8 @@ export function NewFocus() {
             value={focusText}
             onChange={setFocusText}
             onKeyDown={handleFocusKeyDown}
+            onFocus={() => setFocusedInput('focus')}
+            onBlur={() => setFocusedInput(null)}
             placeholder="write the intro"
             inputRef={focusInputRef}
             className="max-w-[90%]"
@@ -249,6 +272,8 @@ export function NewFocus() {
             value={timeInput}
             onChange={setTimeInput}
             onKeyDown={handleTimeKeyDown}
+            onFocus={() => setFocusedInput('time')}
+            onBlur={() => setFocusedInput(null)}
             placeholder="25m"
             inputRef={timeInputRef}
           />
@@ -273,7 +298,15 @@ export function NewFocus() {
             Start Focus
           </Button>
           <Text className="text-center text-xs mt-4 text-zinc-400">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start
+            {focusedInput === 'focus' && (
+              <>Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to edit duration</>
+            )}
+            {focusedInput === 'time' && (
+              <>Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to start</>
+            )}
+            {focusedInput === null && (
+              <>Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to edit intention</>
+            )}
             {parsedSeconds !== null && parsedSeconds > 0 && (
               <> <span className="px-2">·</span> Done at {getCompletionTime(parsedSeconds)}</>
             )}
