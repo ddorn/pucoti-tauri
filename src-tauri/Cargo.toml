@@ -1,12 +1,15 @@
 [package]
 name = "pucoti"
 version = "1.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "A timer to stay on track and make predictions to overcome the planning fallacy."
+authors = ["Diego Dorn"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/ddorn/pucoti-tauri"
+readme = "README.md"
 edition = "2021"
 rust-version = "1.77.2"
+keywords = ["timer", "productivity", "tauri", "desktop-app", "time-tracking"]
+default-run = "pucoti"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
