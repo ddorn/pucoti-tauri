@@ -183,6 +183,27 @@ export function Settings() {
         </div>
       </section>
 
+      {/* Timer Behavior */}
+      <section className="space-y-4">
+        <Heading level={2}>Timer Behavior</Heading>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Timer start percentage (%)
+          </label>
+          <ValidatedNumericInput
+            value={settings.timerStartPercentage}
+            onChange={(val) => updateSettings({ timerStartPercentage: val })}
+            min={0}
+            max={100}
+          />
+          <Text className="text-xs">
+            Start the timer at a percentage of your prediction. Set to 80 to get a reminder 20% before your predicted time.
+            Only applies to predict mode. The prediction itself stays unchanged for stats tracking.
+          </Text>
+        </div>
+      </section>
+
       {/* Window Size Settings */}
       <section className="space-y-4">
         <Heading level={2}>Window Sizes</Heading>
