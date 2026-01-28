@@ -1,4 +1,4 @@
-import { getCurrentWindow, primaryMonitor, availableMonitors } from '@tauri-apps/api/window'
+import { getCurrentWindow, primaryMonitor, availableMonitors, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
 import { Command } from '@tauri-apps/plugin-shell'
 import type { Settings } from './settings'
@@ -74,32 +74,19 @@ class DefaultPlatform implements WindowPlatform {
   async getDisplaySize(): Promise<{ width: number; height: number; }> {
     // Try to get current window's monitor, fallback to primary monitor
     try {
-      const window = getCurrentWindow()
-      const monitors = await availableMonitors();
-      const windowPos = await window.outerPosition()
-
-      if (monitors && monitors.length > 0) {
-        // Find monitor containing the window
-        const currentMonitor = monitors.find(m => {
-          const pos = m.position;
-          const size = m.size;
-          return windowPos.x >= pos.x && windowPos.x < pos.x + size.width &&
-            windowPos.y >= pos.y && windowPos.y < pos.y + size.height;
-        }) || monitors[0]; // Fallback to first monitor if not found
-
-        if (currentMonitor) {
-          const size = currentMonitor.size
-          console.log('[window] Display:', size.width + 'x' + size.height, '(current monitor)');
-          return { width: size.width, height: size.height }
-        }
+      const monitor = await currentMonitor();
+      if (monitor) {
+        console.log('[window] Current monitor:', monitor);
+        const size = monitor.size;
+        return { width: size.width, height: size.height };
       }
 
       // Fallback to primary monitor
-      const monitor = await primaryMonitor();
-      if (monitor) {
-        const size = monitor.size
-        console.log('[window] Display:', size.width + 'x' + size.height, '(primary monitor)');
-        return { width: size.width, height: size.height }
+      const primaryMon = await primaryMonitor();
+      if (primaryMon) {
+        console.log('[window] Primary monitor (fallback):', primaryMon);
+        const size = primaryMon.size;
+        return { width: size.width, height: size.height };
       }
     } catch (err) {
       console.error('[window] Failed to get monitor info:', err);
