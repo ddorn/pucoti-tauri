@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { playBell, showNotification } from '../lib/sound'
 import { useSettings } from '../context/SettingsContext'
+import { formatDuration } from '../lib/format';
 
 const TIMER_TICK_INTERVAL = 200; // milliseconds - update frequency for timer display
 
@@ -23,14 +24,13 @@ interface TimerEngineResult {
  * - Elapsed time calculation
  * - Overtime detection
  * - Bell ringing (initial + repeating)
- * - Notification on first overtime
+ * - Notification every time timer crosses 0
  *
  * This hook should be used at the App level so it persists across screen changes.
  */
 export function useTimerEngine(timerState: TimerState | null): TimerEngineResult {
   const { settings } = useSettings()
   const [elapsed, setElapsed] = useState(0)
-  const [hasNotified, setHasNotified] = useState(false)
   const [wasOvertime, setWasOvertime] = useState(false)
   const bellIntervalRef = useRef<number | null>(null)
   const prevBellIntervalRef = useRef<number>(settings.bellRepeatIntervalSeconds)
@@ -44,7 +44,6 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
   // Reset state when timer changes (new session started)
   useEffect(() => {
     if (timerState) {
-      setHasNotified(false)
       setWasOvertime(false)
       // Calculate initial elapsed immediately
       const now = Date.now()
@@ -52,7 +51,6 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
       setElapsed(Math.floor((now - start) / 1000))
     } else {
       setElapsed(0)
-      setHasNotified(false)
       setWasOvertime(false)
     }
   }, [timerState?.startTime.getTime()]) // Only reset on new timer, not adjustment changes
@@ -72,29 +70,20 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
     return () => clearInterval(interval)
   }, [timerState])
 
-  // Handle initial timer completion (first notification)
-  useEffect(() => {
-    if (isOvertime && !hasNotified && timerState) {
-      setHasNotified(true)
-      setWasOvertime(true)
-      playBell(settings.customBellPath)
-      showNotification('Time\'s up!', timerState.focusText, settings.notificationCommand)
-    }
-  }, [isOvertime, hasNotified, timerState, settings.notificationCommand, settings.customBellPath])
-
-  // Handle bell ringing every time we cross into overtime (including after j/k adjustments)
+  // Handle bell ringing and notifications every time we cross into overtime (including after j/k adjustments)
   useEffect(() => {
     if (!timerState) return
 
     if (isOvertime && !wasOvertime) {
       // Just crossed into overtime (e.g., after adding time with k then it ran out again)
       playBell(settings.customBellPath)
+      showNotification('Time\'s up!', `You focused on ${timerState.focusText} for ${formatDuration(elapsed)}`, settings.notificationCommand)
       setWasOvertime(true)
     } else if (!isOvertime && wasOvertime) {
       // Exited overtime (e.g., added time with k)
       setWasOvertime(false)
     }
-  }, [isOvertime, wasOvertime, timerState, settings.customBellPath])
+  }, [isOvertime, wasOvertime, timerState, settings.customBellPath, settings.notificationCommand, elapsed])
 
   // Start/stop repeating bell when entering/exiting overtime
   useEffect(() => {
