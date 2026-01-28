@@ -48,12 +48,12 @@
     "linux": {
       "deb": {
         "files": {
-          "../gnome-extension/pucoti@pucoti.dev/": "/usr/share/gnome-shell/extensions/pucoti@pucoti.dev/"
+          "/usr/share/gnome-shell/extensions/pucoti@pucoti.dev/": "../gnome-extension/pucoti@pucoti.dev/"
         }
       },
       "rpm": {
         "files": {
-          "../gnome-extension/pucoti@pucoti.dev/": "/usr/share/gnome-shell/extensions/pucoti@pucoti.dev/"
+          "/usr/share/gnome-shell/extensions/pucoti@pucoti.dev/": "../gnome-extension/pucoti@pucoti.dev/"
         }
       }
     }
