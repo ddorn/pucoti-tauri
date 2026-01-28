@@ -9,7 +9,7 @@ import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
-import { getExtensionStatus, enableExtension, type ExtensionStatus } from '../lib/gnome-extension'
+import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
@@ -329,6 +329,11 @@ export function Settings() {
                   await enableExtension()
                   setEnablingExtension(false)
                   setExtensionStatus('enabled')
+                } else if (!checked && extensionStatus === 'enabled') {
+                  setEnablingExtension(true);
+                  await disableExtension();
+                  setEnablingExtension(false);
+                  setExtensionStatus('disabled')
                 }
               }}
               color={settings.accentColor}
@@ -342,10 +347,10 @@ export function Settings() {
                 <span className="text-amber-400">Extension installed but not loaded. Log out and back in to activate it.</span>
               )}
               {extensionStatus === 'disabled' && (
-                <span>{enablingExtension ? 'Enabling extension...' : 'Extension installed but disabled. Enabling...'}</span>
+                <span>{enablingExtension ? 'Enabling extension...' : 'Extension is setup but disabled.'}</span>
               )}
               {extensionStatus === 'enabled' && (
-                <span className="text-green-400">Extension active. Timer will be visible in top panel when running.</span>
+                <span>{enablingExtension ? 'Disabling extension...' : 'Extension active. Timer will be visible in top panel when running.'}</span>
               )}
             </Description>
           </CheckboxField>

@@ -61,7 +61,8 @@ async function extensionFilesExist(): Promise<boolean> {
     }
 
     return false
-  } catch {
+  } catch (error) {
+    console.error('Failed to check if GNOME extension files exist', error)
     return false
   }
 }
@@ -74,7 +75,22 @@ export async function enableExtension(): Promise<boolean> {
     const cmd = Command.create('run-sh', ['-c', `gnome-extensions enable ${EXTENSION_UUID}`])
     const result = await cmd.execute()
     return result.code === 0
-  } catch {
+  } catch (error) {
+    console.error('Failed to enable GNOME extension', error);
+    return false;
+  }
+}
+
+/**
+ * Try to disable the GNOME extension. Returns true if successful.
+ */
+export async function disableExtension(): Promise<boolean> {
+  try {
+    const cmd = Command.create('run-sh', ['-c', `gnome-extensions disable ${EXTENSION_UUID}`]);
+    const result = await cmd.execute();
+    return result.code === 0;
+  } catch (error) {
+    console.error('Failed to disable GNOME extension', error)
     return false
   }
 }
