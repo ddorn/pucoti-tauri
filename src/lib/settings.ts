@@ -19,10 +19,9 @@ export interface Settings {
 
   // Small window behavior
   smallWindowBorderless: boolean
-  autoSmallOnStart: boolean
 
-  // GNOME panel indicator
-  useGnomePanelIndicator: boolean | null; // null = auto-detect on first run
+  // Timer start behavior
+  onTimerStart: 'nothing' | 'corner' | 'minimize'
 
   // Corner margins
   cornerMarginTop: number
@@ -53,8 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smallWindowWidth: 220,
   smallWindowHeight: 80,
   smallWindowBorderless: false,
-  autoSmallOnStart: false,
-  useGnomePanelIndicator: null, // null = auto-detect on first run
+  onTimerStart: 'nothing',
   cornerMarginTop: 16,
   cornerMarginRight: 16,
   cornerMarginBottom: 16,
@@ -91,20 +89,6 @@ export async function saveSettings(settings: Settings): Promise<void> {
   } catch (err) {
     console.error('Failed to save settings:', err)
     throw err
-  }
-}
-
-/**
- * Detect if running on GNOME desktop environment.
- * Returns true if XDG_CURRENT_DESKTOP contains 'gnome'.
- */
-export async function detectGnome(): Promise<boolean> {
-  try {
-    const cmd = Command.create('run-sh', ['-c', 'echo $XDG_CURRENT_DESKTOP'])
-    const result = await cmd.execute()
-    return result.stdout.trim().toLowerCase().includes('gnome')
-  } catch {
-    return false
   }
 }
 

@@ -5,6 +5,7 @@ import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text'
 import { Heading } from '../components/catalyst/heading'
 import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
+import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
@@ -259,19 +260,37 @@ export function Settings() {
         </div>
       </section>
 
-      {/* Small Window Behavior */}
+      {/* Timer Start Behavior */}
       <section className="space-y-4">
-        <Heading level={2}>Small Window</Heading>
+        <Heading level={2}>Timer Start Behavior</Heading>
+        <Text className="text-sm text-zinc-400">
+          Choose what happens to the window when you start a timer
+        </Text>
 
-        <CheckboxField>
-          <Checkbox
-            checked={settings.autoSmallOnStart}
-            onChange={(checked) => updateSettings({ autoSmallOnStart: checked })}
-            color={settings.accentColor}
-          />
-          <Label>Automatically switch to small mode when starting timer</Label>
-          <Description>When enabled, the window will automatically switch to small corner mode when you start a new focus session.</Description>
-        </CheckboxField>
+        <RadioGroup
+          value={settings.onTimerStart}
+          onChange={(value) => updateSettings({ onTimerStart: value as 'nothing' | 'corner' | 'minimize' })}
+        >
+          <RadioField>
+            <Radio value="nothing" color={settings.accentColor} />
+            <Label>Do nothing</Label>
+            <Description>Keep the window in its current state</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="corner" color={settings.accentColor} />
+            <Label>Switch to corner mode</Label>
+            <Description>Automatically switch to small corner window when starting a timer</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="minimize" color={settings.accentColor} />
+            <Label>Minimize window</Label>
+            <Description>
+              Minimize the window on timer start. This is primarily useful on GNOME when using the panel extension that displays the timer in the top panel.
+            </Description>
+          </RadioField>
+        </RadioGroup>
 
         <CheckboxField>
           <Checkbox
@@ -281,24 +300,6 @@ export function Settings() {
           />
           <Label>Borderless small window</Label>
           <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
-        </CheckboxField>
-      </section>
-
-      {/* GNOME Panel Indicator (Linux only) */}
-      <section className="space-y-4">
-        <Heading level={2}>GNOME Panel Indicator</Heading>
-
-        <CheckboxField>
-          <Checkbox
-            checked={settings.useGnomePanelIndicator ?? false}
-            onChange={(checked) => updateSettings({ useGnomePanelIndicator: checked })}
-            color={settings.accentColor}
-          />
-          <Label>Use GNOME panel indicator</Label>
-          <Description>
-            When enabled, the timer will be shown in the GNOME top panel and the window will auto-minimize when starting a timer.
-            Requires the Pucoti GNOME extension to be installed.
-          </Description>
         </CheckboxField>
       </section>
 

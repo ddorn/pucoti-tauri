@@ -109,14 +109,15 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
   }, [settings.accentColor])
 
   const handleTimerStart = useCallback(async (corner: Corner) => {
-    if (settings.useGnomePanelIndicator) {
-      // Minimize window when using GNOME panel indicator
+    if (settings.onTimerStart === 'minimize') {
+      // Minimize window (useful on GNOME with title bar extension)
       const window = getCurrentWindow();
       await window.minimize();
-    } else if (settings.autoSmallOnStart) {
-      // Switch to small mode with current settings
+    } else if (settings.onTimerStart === 'corner') {
+      // Switch to small mode in corner
       await setSmallMode(corner, settings)
     }
+    // 'nothing' - leave window as-is
   }, [settings])
 
   const handleTimerComplete = useCallback(async () => {

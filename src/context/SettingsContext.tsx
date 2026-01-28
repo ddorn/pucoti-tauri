@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { loadSettings, saveSettings, detectGnome, DEFAULT_SETTINGS, type Settings } from '../lib/settings'
+import { loadSettings, saveSettings, DEFAULT_SETTINGS, type Settings } from '../lib/settings'
 
 interface SettingsContextValue {
   settings: Settings
@@ -19,14 +19,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     async function initSettings() {
       try {
         const loaded = await loadSettings()
-
-        // Auto-detect GNOME on first run (when useGnomePanelIndicator is null)
-        if (loaded.useGnomePanelIndicator === null) {
-          const isGnome = await detectGnome()
-          loaded.useGnomePanelIndicator = isGnome
-          await saveSettings(loaded)
-        }
-
         setSettings(loaded)
       } catch (err) {
         console.error('Failed to load settings:', err)

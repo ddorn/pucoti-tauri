@@ -97,7 +97,7 @@ export function AppProvider({
     setState(s => ({
       ...s,
       screen: 'timer',
-      timerMode: settings.autoSmallOnStart ? 'small' : s.timerMode,
+      timerMode: settings.onTimerStart === 'corner' ? 'small' : s.timerMode,
       timerState: {
         focusText,
         predictedSeconds,
@@ -117,7 +117,7 @@ export function AppProvider({
     if (onTimerStart) {
       await onTimerStart(currentCorner)
     }
-  }, [settings.autoSmallOnStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
+  }, [settings.onTimerStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {
