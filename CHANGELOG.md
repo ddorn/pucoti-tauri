@@ -4,7 +4,7 @@
 
 ### Added
 
-- **GNOME panel indicator**: New panel extension shows timer status in the GNOME top bar. The extension is automatically bundled in .deb/.rpm packages and can be enabled from Settings. When combined with the new "minimize on timer start" option, you can run Pucoti entirely from the panel.
+- **GNOME panel indicator**: New panel extension shows timer status in the GNOME top bar. The extension is automatically bundled in .deb/.rpm packages and can be enabled from Settings. When combined with the new "minimize on timer start" option, you can rely solely on the panel while the timer is running.
 
 - **Corner position persistence**: Your preferred corner for small mode now persists between app runs.
 
