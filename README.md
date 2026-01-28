@@ -103,6 +103,13 @@ PUCOTI is great, but there might be other tools that are better for you. The bes
 
 Open an issue if you know others!
 
+
+## Acknowledgments
+
+A huge thanks to [Felix](https://github.com/felixdorn) for reporting so many things while beta testing and the extremely helpful feedback.
+
+Thanks to [Lucie](https://github.com/Aelerinya) for creating a nice gnome extension, testing and debugging.
+
 ## License
 
 MIT
