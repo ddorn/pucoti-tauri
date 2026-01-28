@@ -35,7 +35,7 @@ export function SessionTable({ sessions }: { sessions: Session[] }) {
           <Switch checked={relativeTime} onChange={setRelativeTime} />
         </div>
       </div>
-      <div className="rounded-lg border border-zinc-800 overflow-hidden">
+      <div className="rounded-lg border border-zinc-800 overflow-hidden overflow-x-auto">
         <Table>
           <TableHead>
             <TableRow>

@@ -55,7 +55,7 @@ export function Stats() {
   }
 
   return (
-    <div className="p-6 space-y-8 mb-12 max-w-9xl mx-auto">
+    <div className="p-4 sm:p-6 space-y-8 mb-12 max-w-9xl lg:mx-auto">
       <Heading level={1} className="font-bold">Session Stats</Heading>
 
       {sessions.length === 0 ? (
