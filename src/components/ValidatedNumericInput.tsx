@@ -4,8 +4,8 @@ import { Input } from './catalyst/input'
 interface ValidatedNumericInputProps {
   value: number
   onChange: (value: number) => void
-  min: number
-  max: number
+  min?: number
+  max?: number
   className?: string
 }
 
@@ -28,7 +28,10 @@ export function ValidatedNumericInput({
   const isValid = (val: string): boolean => {
     if (val === '') return false
     const num = parseInt(val)
-    return !isNaN(num) && num >= min && num <= max
+    if (isNaN(num)) return false
+    if (min !== undefined && num < min) return false
+    if (max !== undefined && num > max) return false
+    return true
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,8 +60,8 @@ export function ValidatedNumericInput({
       onBlur={handleBlur}
       className={className}
       invalid={showError}
-      min={min}
-      max={max}
+      {...(min !== undefined && { min })}
+      {...(max !== undefined && { max })}
     />
   )
 }

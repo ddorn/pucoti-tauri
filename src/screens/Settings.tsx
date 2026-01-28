@@ -440,8 +440,6 @@ export function Settings() {
             <ValidatedNumericInput
               value={settings.cornerMarginTop}
               onChange={(val) => updateSettings({ cornerMarginTop: val })}
-              min={0}
-              max={500}
             />
           </div>
           <div className="space-y-2">
@@ -451,8 +449,6 @@ export function Settings() {
             <ValidatedNumericInput
               value={settings.cornerMarginRight}
               onChange={(val) => updateSettings({ cornerMarginRight: val })}
-              min={0}
-              max={500}
             />
           </div>
           <div className="space-y-2">
@@ -462,8 +458,6 @@ export function Settings() {
             <ValidatedNumericInput
               value={settings.cornerMarginBottom}
               onChange={(val) => updateSettings({ cornerMarginBottom: val })}
-              min={0}
-              max={500}
             />
           </div>
           <div className="space-y-2">
@@ -473,8 +467,6 @@ export function Settings() {
             <ValidatedNumericInput
               value={settings.cornerMarginLeft}
               onChange={(val) => updateSettings({ cornerMarginLeft: val })}
-              min={0}
-              max={500}
             />
           </div>
         </div>
