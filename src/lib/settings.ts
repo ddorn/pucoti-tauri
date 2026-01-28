@@ -43,6 +43,10 @@ export interface Settings {
   lastUsedDuration: number; // in seconds
   lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
 
+  // Default duration behavior
+  defaultDurationMode: 'none' | 'last' | 'fixed'; // How to set default duration in NewFocus screen
+  defaultDurationSeconds: number; // Fixed duration in seconds (used when defaultDurationMode is 'fixed')
+
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
 
@@ -69,6 +73,8 @@ export const DEFAULT_SETTINGS: Settings = {
   accentColor: 'amber',
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
+  defaultDurationMode: 'none', // No default duration
+  defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
   useGnomePanelIndicator: false,
 }

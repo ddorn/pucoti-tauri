@@ -114,10 +114,21 @@ export function NewFocus() {
     setQuestion(QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]);
   }, [])
 
-  // Initialize with last used duration
+  // Initialize with default duration based on settings
   useEffect(() => {
-    setTimeInput(formatDuration(settings.lastUsedDuration));
-  }, [settings.lastUsedDuration])
+    let duration: number | null = null;
+    if (settings.defaultDurationMode === 'last') {
+      duration = settings.lastUsedDuration;
+    } else if (settings.defaultDurationMode === 'fixed') {
+      duration = settings.defaultDurationSeconds;
+    }
+
+    if (duration !== null && duration > 0) {
+      setTimeInput(formatDuration(duration));
+    } else {
+      setTimeInput('');
+    }
+  }, [settings.defaultDurationMode, settings.lastUsedDuration, settings.defaultDurationSeconds])
 
   // Initialize with last used mode
   useEffect(() => {

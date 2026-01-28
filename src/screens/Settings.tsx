@@ -14,6 +14,8 @@ import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
 import { ColorPicker } from '../components/ColorPicker'
+import { parseTime } from '../lib/time-parser';
+import { formatDuration } from '../lib/format'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -21,11 +23,21 @@ export function Settings() {
   const [testingBell, setTestingBell] = useState(false)
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
+  const [defaultDurationInput, setDefaultDurationInput] = useState('')
 
   // Check extension status on mount
   useEffect(() => {
     getExtensionStatus().then(setExtensionStatus)
   }, [])
+
+  // Initialize default duration input when settings load or change
+  useEffect(() => {
+    if (settings.defaultDurationSeconds > 0) {
+      setDefaultDurationInput(formatDuration(settings.defaultDurationSeconds));
+    } else {
+      setDefaultDurationInput('');
+    }
+  }, [settings.defaultDurationSeconds])
 
   if (loading) {
     return (
@@ -211,6 +223,61 @@ export function Settings() {
             Only applies to predict mode. The prediction itself stays unchanged for stats tracking.
           </Text>
         </div>
+      </section>
+
+      {/* Default Duration */}
+      <section className="space-y-4">
+        <Heading level={2}>Default Duration</Heading>
+        <Text className="text-sm text-zinc-400">
+          Choose how the duration field is prefilled when starting a new focus session
+        </Text>
+
+        <RadioGroup
+          value={settings.defaultDurationMode}
+          onChange={(value) => updateSettings({ defaultDurationMode: value as 'none' | 'last' | 'fixed' })}
+        >
+          <RadioField>
+            <Radio value="none" color={settings.accentColor} />
+            <Label>None</Label>
+            <Description>Start with an empty duration field</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="last" color={settings.accentColor} />
+            <Label>Last used</Label>
+            <Description>Use the duration from your last completed session</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="fixed" color={settings.accentColor} />
+            <Label>Fixed duration</Label>
+            <Description>Always use a specific duration</Description>
+          </RadioField>
+        </RadioGroup>
+
+        {settings.defaultDurationMode === 'fixed' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-zinc-300">
+              Fixed duration
+            </label>
+            <Input
+              type="text"
+              value={defaultDurationInput}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDefaultDurationInput(value);
+                const parsed = parseTime(value);
+                if (parsed !== null && parsed > 0) {
+                  updateSettings({ defaultDurationSeconds: parsed });
+                }
+              }}
+              placeholder="25m"
+            />
+            <Text className="text-xs">
+              Enter duration in formats like "25m", "1h 30m", "45:00", or "12" (minutes). Invalid values will be ignored.
+            </Text>
+          </div>
+        )}
       </section>
 
       {/* Window Size Settings */}
