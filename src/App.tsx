@@ -8,7 +8,6 @@ import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
 import { setNormalMode, setSmallMode, initializeWindowForPlatform } from './lib/window';
 import { applyAccentColor } from './lib/colors';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import clsx from 'clsx'
 
 function AppContent() {
