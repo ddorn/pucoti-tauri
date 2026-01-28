@@ -221,7 +221,7 @@ export function NewFocus() {
 
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-8">
-      <div className="w-full max-w-md lg:max-w-xl">
+      <div className="w-full max-w-md lg:max-w-xl 2xl:scale-175 xl:scale-125">
         {/* Mode tabs */}
         <div className="flex gap-2 mb-8">
           <ModeTabButton
