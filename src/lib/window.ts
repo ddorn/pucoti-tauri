@@ -138,6 +138,7 @@ class SwayPlatform implements WindowPlatform {
     // 'border none/normal' controls Sway's native decorations (title bar + edge)
     // smallWindowBorderless setting controls Sway's 'border' command
     const command = [
+      'fullscreen disable',
       'floating enable',
       `border ${smallWindowBorderless ? 'none' : 'normal'}`,
       `resize set ${smallWindowWidth} ${smallWindowHeight}`,
