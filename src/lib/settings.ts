@@ -39,6 +39,9 @@ export interface Settings {
   // Last used values
   lastUsedDuration: number; // in seconds
   lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
+
+  // Timer start percentage
+  timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -60,6 +63,7 @@ export const DEFAULT_SETTINGS: Settings = {
   accentColor: 'amber',
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
+  timerStartPercentage: 100,
 }
 
 async function getSettingsPath(): Promise<string> {

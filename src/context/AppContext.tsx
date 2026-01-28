@@ -89,6 +89,11 @@ export function AppProvider({
   const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => {
     const currentCorner = state.corner
 
+    // Calculate initial adjustment based on timer start percentage (predict mode only)
+    const initialAdjustment = mode === 'predict'
+      ? Math.round(predictedSeconds * (settings.timerStartPercentage / 100 - 1))
+      : 0
+
     setState(s => ({
       ...s,
       screen: 'timer',
@@ -97,7 +102,7 @@ export function AppProvider({
         focusText,
         predictedSeconds,
         startTime: new Date(),
-        adjustmentSeconds: 0,
+        adjustmentSeconds: initialAdjustment,
         tags,
       },
     }))
@@ -112,7 +117,7 @@ export function AppProvider({
     if (settings.autoSmallOnStart && onTimerStart) {
       await onTimerStart(currentCorner)
     }
-  }, [settings.autoSmallOnStart, updateSettings, onTimerStart, state.corner])
+  }, [settings.autoSmallOnStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {

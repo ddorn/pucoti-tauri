@@ -1,36 +1,46 @@
+// Embed the default bell sound at compile time (325KB)
+const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
+
 use tauri::Manager;
 
 #[cfg(target_os = "linux")]
 mod dbus_service;
 
 #[tauri::command]
-fn play_bell(app: tauri::AppHandle, custom_bell_path: Option<String>) {
+fn play_bell(_app: tauri::AppHandle, custom_bell_path: Option<String>) {
   // Spawn a thread to avoid blocking the main thread
   std::thread::spawn(move || {
-    if let Err(e) = play_bell_internal(&app, custom_bell_path) {
+    if let Err(e) = play_bell_internal(custom_bell_path) {
       log::error!("Failed to play bell: {}", e);
     }
   });
 }
 
-fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-  // Determine which bell to play
-  let bell_path = if let Some(custom_path) = custom_bell_path {
+fn play_bell_internal(custom_bell_path: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+  // Try custom bell first if provided
+  if let Some(custom_path) = custom_bell_path {
     if !custom_path.is_empty() && std::path::Path::new(&custom_path).exists() {
-      std::path::PathBuf::from(custom_path)
-    } else {
-      // Custom path specified but invalid, fall back to bundled
-      log::warn!("Custom bell path invalid or not found, using bundled bell");
-      app.path().resource_dir()?.join("bell.mp3")
-    }
-  } else {
-    // No custom path, use bundled
-    app.path().resource_dir()?.join("bell.mp3")
-  };
+      log::info!("Using custom bell path: {}", custom_path);
+      let file = std::fs::File::open(&custom_path)?;
+      let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
 
-  // Read the audio file
-  let file = std::fs::File::open(bell_path)?;
-  let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
+      let (_stream, stream_handle) = rodio::OutputStream::try_default()?;
+      let sink = rodio::Sink::try_new(&stream_handle)?;
+      sink.append(source);
+      sink.sleep_until_end();
+
+      return Ok(());
+    } else {
+      log::warn!("Custom bell path '{}' invalid or not found, using embedded bell", custom_path);
+    }
+  }
+
+  // Use embedded default bell
+  log::info!("Using embedded default bell ({} bytes)", DEFAULT_BELL_MP3.len());
+
+  // Decode the embedded MP3 bytes
+  let cursor = std::io::Cursor::new(DEFAULT_BELL_MP3);
+  let source = rodio::Decoder::new(cursor)?;
 
   // Get an output stream and create a sink for playback control
   let (_stream, stream_handle) = rodio::OutputStream::try_default()?;
@@ -73,13 +83,18 @@ fn update_timer_state(
 pub fn run() {
   tauri::Builder::default()
     .setup(|app| {
-      if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
-      }
+      // Enable logging in both debug and release modes
+      let log_level = if cfg!(debug_assertions) {
+        log::LevelFilter::Debug
+      } else {
+        log::LevelFilter::Info
+      };
+
+      app.handle().plugin(
+        tauri_plugin_log::Builder::default()
+          .level(log_level)
+          .build(),
+      )?;
 
       // Initialize D-Bus service on Linux
       #[cfg(target_os = "linux")]
