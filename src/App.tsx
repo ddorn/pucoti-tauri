@@ -8,6 +8,7 @@ import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
 import { setNormalMode, setSmallMode, type Corner } from './lib/window'
 import { applyAccentColor } from './lib/colors';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import clsx from 'clsx'
 
 function AppContent() {
@@ -108,8 +109,15 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
   }, [settings.accentColor])
 
   const handleTimerStart = useCallback(async (corner: Corner) => {
-    // Switch to small mode with current settings
-    await setSmallMode(corner, settings)
+    if (settings.onTimerStart === 'minimize') {
+      // Minimize window (useful on GNOME with title bar extension)
+      const window = getCurrentWindow();
+      await window.minimize();
+    } else if (settings.onTimerStart === 'corner') {
+      // Switch to small mode in corner
+      await setSmallMode(corner, settings)
+    }
+    // 'nothing' - leave window as-is
   }, [settings])
 
   const handleTimerComplete = useCallback(async () => {

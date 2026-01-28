@@ -1,0 +1,10 @@
+/* Pucoti GNOME Extension Styles */
+
+.pucoti-label {
+    font-weight: bold;
+    padding: 0 8px;
+}
+
+.pucoti-overtime {
+    color: #ef4444; /* red-500 - matches Tailwind red */
+}

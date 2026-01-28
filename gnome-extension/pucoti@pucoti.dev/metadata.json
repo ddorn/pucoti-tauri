@@ -1,0 +1,8 @@
+{
+  "uuid": "pucoti@pucoti.dev",
+  "name": "Pucoti Timer",
+  "description": "Shows Pucoti timer in the top panel. Displays time remaining and focus text, turns red when overtime.",
+  "shell-version": ["45", "46", "47", "48", "49"],
+  "version": 1,
+  "url": "https://github.com/pucoti/pucoti"
+}

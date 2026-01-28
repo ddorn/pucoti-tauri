@@ -35,6 +35,11 @@ Most of us are terrible at estimating how long tasks will take. Pucoti helps you
 - **Local Storage**: Everything stored locally. No network access.
 - **Configurable**: Change bell sounds, colors, window sizes, and more.
 
+### GNOME Panel Indicator (Linux)
+
+![GNOME Panel Indicator](docs/screenshots/gnome-extension.webp)
+On GNOME, Pucoti can show timer status in the top panel. The extension is included with deb/rpm packages. After installing, log out and back in, then enable it in Settings → "Minimize window" on timer start.
+
 ## Installation
 
 Download the latest release from [GitHub Releases](https://github.com/ddorn/pucoti-tauri/releases).
@@ -82,6 +87,13 @@ npm install && npm run tauri:build
 ```
 
 The executable will be in `src-tauri/target/release/`.
+
+**GNOME extension (manual install):**
+```bash
+./gnome-extension/install.sh
+# Log out and back in, then:
+gnome-extensions enable pucoti@pucoti.dev
+```
 
 ## Alternatives
 

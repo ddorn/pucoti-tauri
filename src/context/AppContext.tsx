@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
 import { useTimerEngine } from '../hooks/useTimerEngine'
+import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
 import type { Corner } from '../lib/window'
 
@@ -73,6 +74,9 @@ export function AppProvider({
   // Timer engine - runs at app level so it persists across screens
   const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
 
+  // Sync timer state to D-Bus for GNOME panel indicator (always on Linux)
+  useDbusSync(state.timerState, remaining, isOvertime)
+
   // Recover orphaned sessions on mount
   useEffect(() => {
     recoverOrphanedSession().catch(console.error)
@@ -85,15 +89,20 @@ export function AppProvider({
   const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => {
     const currentCorner = state.corner
 
+    // Calculate initial adjustment based on timer start percentage (predict mode only)
+    const initialAdjustment = mode === 'predict'
+      ? Math.round(predictedSeconds * (settings.timerStartPercentage / 100 - 1))
+      : 0
+
     setState(s => ({
       ...s,
       screen: 'timer',
-      timerMode: settings.autoSmallOnStart ? 'small' : s.timerMode,
+      timerMode: settings.onTimerStart === 'corner' ? 'small' : s.timerMode,
       timerState: {
         focusText,
         predictedSeconds,
         startTime: new Date(),
-        adjustmentSeconds: 0,
+        adjustmentSeconds: initialAdjustment,
         tags,
       },
     }))
@@ -104,11 +113,11 @@ export function AppProvider({
       lastUsedMode: mode,
     })
 
-    // Trigger window resize if auto-small is enabled
-    if (settings.autoSmallOnStart && onTimerStart) {
+    // Trigger window management callback
+    if (onTimerStart) {
       await onTimerStart(currentCorner)
     }
-  }, [settings.autoSmallOnStart, updateSettings, onTimerStart, state.corner])
+  }, [settings.onTimerStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {

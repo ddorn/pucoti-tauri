@@ -19,7 +19,9 @@ export interface Settings {
 
   // Small window behavior
   smallWindowBorderless: boolean
-  autoSmallOnStart: boolean
+
+  // Timer start behavior
+  onTimerStart: 'nothing' | 'corner' | 'minimize'
 
   // Corner margins
   cornerMarginTop: number
@@ -36,6 +38,12 @@ export interface Settings {
   // Last used values
   lastUsedDuration: number; // in seconds
   lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
+
+  // Timer start percentage
+  timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
+
+  // GNOME panel indicator (Linux only)
+  useGnomePanelIndicator: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -47,7 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   smallWindowWidth: 220,
   smallWindowHeight: 80,
   smallWindowBorderless: false,
-  autoSmallOnStart: false,
+  onTimerStart: 'nothing',
   cornerMarginTop: 16,
   cornerMarginRight: 16,
   cornerMarginBottom: 16,
@@ -56,6 +64,8 @@ export const DEFAULT_SETTINGS: Settings = {
   accentColor: 'amber',
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
+  timerStartPercentage: 100,
+  useGnomePanelIndicator: false,
 }
 
 async function getSettingsPath(): Promise<string> {
@@ -86,6 +96,10 @@ export async function saveSettings(settings: Settings): Promise<void> {
   }
 }
 
+/**
+ * Execute custom notification command with placeholder substitution.
+ * Returns true if command was executed, false if no custom command configured.
+ */
 /**
  * Execute custom notification command with placeholder substitution.
  * Returns true if command was executed, false if no custom command configured.

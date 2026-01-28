@@ -1,6 +1,6 @@
 [package]
 name = "pucoti"
-version = "0.1.0"
+version = "1.1.0"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -11,7 +11,7 @@ rust-version = "1.77.2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "app_lib"
+name = "pucoti_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [[bin]]
@@ -32,3 +32,7 @@ tauri-plugin-notification = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-dialog = "2"
 rodio = { version = "0.19", features = ["mp3"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = { version = "4.4", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync"] }

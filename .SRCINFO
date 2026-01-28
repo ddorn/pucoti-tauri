@@ -1,0 +1,23 @@
+pkgbase = pucoti-bin
+	pkgdesc = Desktop timer application for tracking predicted vs actual task durations
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://github.com/ddorn/pucoti-tauri
+	install = pucoti.install
+	arch = x86_64
+	license = unknown
+	depends = cairo
+	depends = desktop-file-utils
+	depends = gdk-pixbuf2
+	depends = glib2
+	depends = gtk3
+	depends = hicolor-icon-theme
+	depends = libsoup
+	depends = pango
+	depends = webkit2gtk-4.1
+	provides = pucoti
+	conflicts = pucoti
+	source_x86_64 = pucoti-bin-1.0.0.deb::https://github.com/ddorn/pucoti-tauri/releases/download/pucoti-v1.0.0/Pucoti_1.0.0_amd64.deb
+	sha256sums_x86_64 = 8e3def7d09048ea62139da9676bfa809be683d2668947c1cfe29f810fcb29cf1
+
+pkgname = pucoti-bin

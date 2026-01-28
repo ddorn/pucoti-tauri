@@ -16,10 +16,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   // Load settings on mount
   useEffect(() => {
-    loadSettings()
-      .then(setSettings)
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    async function initSettings() {
+      try {
+        const loaded = await loadSettings()
+        setSettings(loaded)
+      } catch (err) {
+        console.error('Failed to load settings:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    initSettings()
   }, [])
 
   const updateSettings = useCallback(async (updates: Partial<Settings>) => {

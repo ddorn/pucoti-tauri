@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text'
 import { Heading } from '../components/catalyst/heading'
 import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
+import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
+import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
@@ -17,6 +19,13 @@ export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
+  const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
+  const [enablingExtension, setEnablingExtension] = useState(false)
+
+  // Check extension status on mount
+  useEffect(() => {
+    getExtensionStatus().then(setExtensionStatus)
+  }, [])
 
   if (loading) {
     return (
@@ -183,6 +192,27 @@ export function Settings() {
         </div>
       </section>
 
+      {/* Timer Behavior */}
+      <section className="space-y-4">
+        <Heading level={2}>Timer Behavior</Heading>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Timer start percentage (%)
+          </label>
+          <ValidatedNumericInput
+            value={settings.timerStartPercentage}
+            onChange={(val) => updateSettings({ timerStartPercentage: val })}
+            min={0}
+            max={100}
+          />
+          <Text className="text-xs">
+            Start the timer at a percentage of your prediction. Set to 80 to get a reminder 20% before your predicted time.
+            Only applies to predict mode. The prediction itself stays unchanged for stats tracking.
+          </Text>
+        </div>
+      </section>
+
       {/* Window Size Settings */}
       <section className="space-y-4">
         <Heading level={2}>Window Sizes</Heading>
@@ -238,19 +268,37 @@ export function Settings() {
         </div>
       </section>
 
-      {/* Small Window Behavior */}
+      {/* Timer Start Behavior */}
       <section className="space-y-4">
-        <Heading level={2}>Small Window</Heading>
+        <Heading level={2}>Timer Start Behavior</Heading>
+        <Text className="text-sm text-zinc-400">
+          Choose what happens to the window when you start a timer
+        </Text>
 
-        <CheckboxField>
-          <Checkbox
-            checked={settings.autoSmallOnStart}
-            onChange={(checked) => updateSettings({ autoSmallOnStart: checked })}
-            color={settings.accentColor}
-          />
-          <Label>Automatically switch to small mode when starting timer</Label>
-          <Description>When enabled, the window will automatically switch to small corner mode when you start a new focus session.</Description>
-        </CheckboxField>
+        <RadioGroup
+          value={settings.onTimerStart}
+          onChange={(value) => updateSettings({ onTimerStart: value as 'nothing' | 'corner' | 'minimize' })}
+        >
+          <RadioField>
+            <Radio value="nothing" color={settings.accentColor} />
+            <Label>Do nothing</Label>
+            <Description>Keep the window in its current state</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="corner" color={settings.accentColor} />
+            <Label>Switch to corner mode</Label>
+            <Description>Automatically switch to small corner window when starting a timer</Description>
+          </RadioField>
+
+          <RadioField>
+            <Radio value="minimize" color={settings.accentColor} />
+            <Label>Minimize window</Label>
+            <Description>
+              Minimize the window on timer start. This is primarily useful on GNOME when using the panel extension that displays the timer in the top panel.
+            </Description>
+          </RadioField>
+        </RadioGroup>
 
         <CheckboxField>
           <Checkbox
@@ -262,6 +310,52 @@ export function Settings() {
           <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
         </CheckboxField>
       </section>
+
+      {/* GNOME Panel Indicator - Linux only */}
+      {extensionStatus && extensionStatus !== 'not-gnome' && (
+        <section className="space-y-4">
+          <Heading level={2}>GNOME Panel Indicator</Heading>
+          <Text className="text-sm text-zinc-400">
+            Show timer status in the GNOME top panel.
+          </Text>
+
+          <CheckboxField>
+            <Checkbox
+              checked={settings.useGnomePanelIndicator}
+              onChange={async (checked) => {
+                await updateSettings({ useGnomePanelIndicator: checked })
+                if (checked && (extensionStatus === 'enabled' || extensionStatus === 'disabled')) {
+                  setEnablingExtension(true)
+                  await enableExtension()
+                  setEnablingExtension(false)
+                  setExtensionStatus('enabled')
+                } else if (!checked && extensionStatus === 'enabled') {
+                  setEnablingExtension(true);
+                  await disableExtension();
+                  setEnablingExtension(false);
+                  setExtensionStatus('disabled')
+                }
+              }}
+              color={settings.accentColor}
+            />
+            <Label>Use GNOME panel indicator</Label>
+            <Description>
+              {extensionStatus === 'not-installed' && (
+                <span className="text-amber-400">Extension not found. Install pucoti via deb/rpm package or run ./gnome-extension/install.sh from the source directory</span>
+              )}
+              {extensionStatus === 'not-loaded' && (
+                <span className="text-amber-400">Extension installed but not loaded. Log out and back in to activate it.</span>
+              )}
+              {extensionStatus === 'disabled' && (
+                <span>{enablingExtension ? 'Enabling extension...' : 'Extension is setup but disabled.'}</span>
+              )}
+              {extensionStatus === 'enabled' && (
+                <span>{enablingExtension ? 'Disabling extension...' : 'Extension active. Timer will be visible in top panel when running.'}</span>
+              )}
+            </Description>
+          </CheckboxField>
+        </section>
+      )}
 
       {/* Corner Margins */}
       <section className="space-y-4">
