@@ -39,8 +39,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "bell.mp3"
-    ]
+    "resources": []
   }
 }

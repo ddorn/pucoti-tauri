@@ -1,41 +1,43 @@
 use tauri::Manager;
 
+// Embed the default bell sound at compile time (325KB)
+const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
+
 #[tauri::command]
-fn play_bell(app: tauri::AppHandle, custom_bell_path: Option<String>) {
+fn play_bell(_app: tauri::AppHandle, custom_bell_path: Option<String>) {
   // Spawn a thread to avoid blocking the main thread
   std::thread::spawn(move || {
-    if let Err(e) = play_bell_internal(&app, custom_bell_path) {
+    if let Err(e) = play_bell_internal(custom_bell_path) {
       log::error!("Failed to play bell: {}", e);
     }
   });
 }
 
-fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
-  // Determine which bell to play
-  let bell_path = if let Some(custom_path) = custom_bell_path {
+fn play_bell_internal(custom_bell_path: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
+  // Try custom bell first if provided
+  if let Some(custom_path) = custom_bell_path {
     if !custom_path.is_empty() && std::path::Path::new(&custom_path).exists() {
-      std::path::PathBuf::from(custom_path)
+      log::info!("Using custom bell path: {}", custom_path);
+      let file = std::fs::File::open(&custom_path)?;
+      let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
+
+      let (_stream, stream_handle) = rodio::OutputStream::try_default()?;
+      let sink = rodio::Sink::try_new(&stream_handle)?;
+      sink.append(source);
+      sink.sleep_until_end();
+
+      return Ok(());
     } else {
-      // Custom path specified but invalid, fall back to bundled
-      log::warn!("Custom bell path '{}' invalid or not found, using bundled bell", custom_path);
-      app.path().resource_dir()?.join("bell.mp3")
+      log::warn!("Custom bell path '{}' invalid or not found, using embedded bell", custom_path);
     }
-  } else {
-    // No custom path, use bundled
-    app.path().resource_dir()?.join("bell.mp3")
-  };
-
-  log::info!("Attempting to play bell at: {}", bell_path.display());
-
-  // Check if file exists before trying to open
-  if !bell_path.exists() {
-    log::error!("Bell file does not exist at path: {}", bell_path.display());
-    return Err(format!("Bell file not found: {}", bell_path.display()).into());
   }
 
-  // Read the audio file
-  let file = std::fs::File::open(&bell_path)?;
-  let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
+  // Use embedded default bell
+  log::info!("Using embedded default bell ({} bytes)", DEFAULT_BELL_MP3.len());
+
+  // Decode the embedded MP3 bytes
+  let cursor = std::io::Cursor::new(DEFAULT_BELL_MP3);
+  let source = rodio::Decoder::new(cursor)?;
 
   // Get an output stream and create a sink for playback control
   let (_stream, stream_handle) = rodio::OutputStream::try_default()?;
