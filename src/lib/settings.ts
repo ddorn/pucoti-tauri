@@ -41,6 +41,9 @@ export interface Settings {
 
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
+
+  // GNOME panel indicator (Linux only)
+  useGnomePanelIndicator: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -62,6 +65,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
   timerStartPercentage: 100,
+  useGnomePanelIndicator: false,
 }
 
 async function getSettingsPath(): Promise<string> {
@@ -92,6 +96,10 @@ export async function saveSettings(settings: Settings): Promise<void> {
   }
 }
 
+/**
+ * Execute custom notification command with placeholder substitution.
+ * Returns true if command was executed, false if no custom command configured.
+ */
 /**
  * Execute custom notification command with placeholder substitution.
  * Returns true if command was executed, false if no custom command configured.

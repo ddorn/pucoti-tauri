@@ -4,6 +4,7 @@ import type { TimerState } from '../context/AppContext'
 
 /**
  * Hook to sync timer state to the D-Bus service for GNOME panel indicator.
+ * Always broadcasts on Linux (D-Bus service is running regardless of settings).
  * Updates are throttled to avoid redundant calls.
  * Silently fails on non-Linux platforms.
  */

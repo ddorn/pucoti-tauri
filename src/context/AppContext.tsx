@@ -74,7 +74,7 @@ export function AppProvider({
   // Timer engine - runs at app level so it persists across screens
   const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
 
-  // Sync timer state to D-Bus for GNOME panel indicator
+  // Sync timer state to D-Bus for GNOME panel indicator (always on Linux)
   useDbusSync(state.timerState, remaining, isOvertime)
 
   // Recover orphaned sessions on mount

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
@@ -9,6 +9,7 @@ import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification } from '../lib/settings'
+import { getExtensionStatus, enableExtension, type ExtensionStatus } from '../lib/gnome-extension'
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
@@ -18,6 +19,13 @@ export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
+  const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
+  const [enablingExtension, setEnablingExtension] = useState(false)
+
+  // Check extension status on mount
+  useEffect(() => {
+    getExtensionStatus().then(setExtensionStatus)
+  }, [])
 
   if (loading) {
     return (
@@ -302,6 +310,47 @@ export function Settings() {
           <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
         </CheckboxField>
       </section>
+
+      {/* GNOME Panel Indicator - Linux only */}
+      {extensionStatus && extensionStatus !== 'not-gnome' && (
+        <section className="space-y-4">
+          <Heading level={2}>GNOME Panel Indicator</Heading>
+          <Text className="text-sm text-zinc-400">
+            Show timer status in the GNOME top panel.
+          </Text>
+
+          <CheckboxField>
+            <Checkbox
+              checked={settings.useGnomePanelIndicator}
+              onChange={async (checked) => {
+                await updateSettings({ useGnomePanelIndicator: checked })
+                if (checked && (extensionStatus === 'enabled' || extensionStatus === 'disabled')) {
+                  setEnablingExtension(true)
+                  await enableExtension()
+                  setEnablingExtension(false)
+                  setExtensionStatus('enabled')
+                }
+              }}
+              color={settings.accentColor}
+            />
+            <Label>Use GNOME panel indicator</Label>
+            <Description>
+              {extensionStatus === 'not-installed' && (
+                <span className="text-amber-400">Extension not found. Install pucoti via deb/rpm package or run ./gnome-extension/install.sh from the source directory</span>
+              )}
+              {extensionStatus === 'not-loaded' && (
+                <span className="text-amber-400">Extension installed but not loaded. Log out and back in to activate it.</span>
+              )}
+              {extensionStatus === 'disabled' && (
+                <span>{enablingExtension ? 'Enabling extension...' : 'Extension installed but disabled. Enabling...'}</span>
+              )}
+              {extensionStatus === 'enabled' && (
+                <span className="text-green-400">Extension active. Timer will be visible in top panel when running.</span>
+              )}
+            </Description>
+          </CheckboxField>
+        </section>
+      )}
 
       {/* Corner Margins */}
       <section className="space-y-4">
