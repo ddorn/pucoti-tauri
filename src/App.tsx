@@ -109,13 +109,12 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
   }, [settings.accentColor])
 
   const handleTimerStart = useCallback(async (corner: Corner) => {
-    // FIXME: this does not run when autoSmallOnStart is false, as onTimerStart is not called then
     if (settings.useGnomePanelIndicator) {
       // Minimize window when using GNOME panel indicator
       const window = getCurrentWindow();
       await window.minimize();
-    } else {
-      // Switch to small mode with current settings (default behavior)
+    } else if (settings.autoSmallOnStart) {
+      // Switch to small mode with current settings
       await setSmallMode(corner, settings)
     }
   }, [settings])

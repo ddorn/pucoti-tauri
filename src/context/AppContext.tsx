@@ -113,8 +113,8 @@ export function AppProvider({
       lastUsedMode: mode,
     })
 
-    // Trigger window resize if auto-small is enabled
-    if (settings.autoSmallOnStart && onTimerStart) {
+    // Trigger window management callback
+    if (onTimerStart) {
       await onTimerStart(currentCorner)
     }
   }, [settings.autoSmallOnStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
