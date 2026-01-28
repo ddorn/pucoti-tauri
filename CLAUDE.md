@@ -8,20 +8,18 @@ Pucoti is a Tauri-based desktop timer application focused on tracking predicted 
 
 ## Development Commands
 
+### Tauri Development
+```bash
+npm run tauri:build      # Build Tauri app as .deb package. This is the main command to build the app.
+npm run tauri:dev        # Run Tauri in development mode (includes frontend dev server)
+npm run tauri            # Direct access to Tauri CLI
+```
+
 ### Frontend Development
 ```bash
-npm run dev              # Run Vite dev server
-npm run build            # Build frontend (TypeScript + Vite)
 npm run lint             # Run ESLint
 npm test                 # Run all tests with Vitest
 npm run test:watch       # Run tests in watch mode
-```
-
-### Tauri Development
-```bash
-npm run tauri:dev        # Run Tauri in development mode (includes frontend dev server)
-npm run tauri:build      # Build Tauri app as .deb package
-npm run tauri            # Direct access to Tauri CLI
 ```
 
 ### Testing
