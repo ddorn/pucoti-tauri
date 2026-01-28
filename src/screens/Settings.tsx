@@ -16,6 +16,7 @@ import { playBell } from '../lib/sound'
 import { ColorPicker } from '../components/ColorPicker'
 import { parseTime } from '../lib/time-parser';
 import { formatDuration } from '../lib/format'
+import packageJson from '../../package.json'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -535,6 +536,13 @@ export function Settings() {
         >
           Reset to Defaults
         </Button>
+      </section>
+
+      {/* Version */}
+      <section className="pt-4 text-center">
+        <Text className="text-xs text-zinc-500">
+          Pucoti v{packageJson.version}
+        </Text>
       </section>
     </div>
   )
