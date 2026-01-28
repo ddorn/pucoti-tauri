@@ -17,7 +17,7 @@ fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) 
       std::path::PathBuf::from(custom_path)
     } else {
       // Custom path specified but invalid, fall back to bundled
-      log::warn!("Custom bell path invalid or not found, using bundled bell");
+      log::warn!("Custom bell path '{}' invalid or not found, using bundled bell", custom_path);
       app.path().resource_dir()?.join("bell.mp3")
     }
   } else {
@@ -25,8 +25,16 @@ fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) 
     app.path().resource_dir()?.join("bell.mp3")
   };
 
+  log::info!("Attempting to play bell at: {}", bell_path.display());
+
+  // Check if file exists before trying to open
+  if !bell_path.exists() {
+    log::error!("Bell file does not exist at path: {}", bell_path.display());
+    return Err(format!("Bell file not found: {}", bell_path.display()).into());
+  }
+
   // Read the audio file
-  let file = std::fs::File::open(bell_path)?;
+  let file = std::fs::File::open(&bell_path)?;
   let source = rodio::Decoder::new(std::io::BufReader::new(file))?;
 
   // Get an output stream and create a sink for playback control
@@ -44,13 +52,19 @@ fn play_bell_internal(app: &tauri::AppHandle, custom_bell_path: Option<String>) 
 pub fn run() {
   tauri::Builder::default()
     .setup(|app| {
-      if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
-      }
+      // Enable logging in both debug and release modes
+      let log_level = if cfg!(debug_assertions) {
+        log::LevelFilter::Debug
+      } else {
+        log::LevelFilter::Info
+      };
+
+      app.handle().plugin(
+        tauri_plugin_log::Builder::default()
+          .level(log_level)
+          .build(),
+      )?;
+
       Ok(())
     })
     .plugin(tauri_plugin_shell::init())

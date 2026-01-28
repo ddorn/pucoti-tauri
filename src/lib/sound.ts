@@ -3,8 +3,11 @@ import { invoke } from '@tauri-apps/api/core'
 import { executeCustomNotification } from './settings'
 
 export function playBell(customBellPath?: string): void {
+  console.log('playBell called with customBellPath:', customBellPath || null)
   invoke('play_bell', {
     customBellPath: customBellPath || null
+  }).then(() => {
+    console.log('Bell invoke succeeded')
   }).catch((err) => {
     console.error('Bell play failed:', err)
   })
