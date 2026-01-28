@@ -1,5 +1,3 @@
-use tauri::Manager;
-
 // Embed the default bell sound at compile time (325KB)
 const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
 
