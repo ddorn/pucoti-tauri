@@ -90,6 +90,6 @@ jobs:
             **macOS**: Download `Pucoti_aarch64.app.tar.gz` (Apple Silicon) or `Pucoti_x64.app.tar.gz` (Intel), extract, and move to Applications folder. Right-click to open on first launch (app is not signed).
 
             See the [README](https://github.com/ddorn/pucoti-tauri#installation) for more details.
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
