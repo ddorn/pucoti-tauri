@@ -28,6 +28,7 @@
     "fs:allow-app-write-recursive",
     "fs:scope-appdata",
     "fs:scope-appdata-recursive",
+    "notification:default",
     {
       "identifier": "shell:allow-execute",
       "allow": [
