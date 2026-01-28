@@ -312,6 +312,20 @@ export async function setNormalMode(
 }
 
 /**
+ * Initialize window decorations based on platform
+ * Called at app startup to ensure correct decoration state
+ */
+export async function initializeWindowForPlatform(): Promise<void> {
+  if (await detectSway()) {
+    // On Sway, always disable Tauri's client-side decorations
+    // Sway handles decorations natively via 'border' command
+    const window = getCurrentWindow();
+    await window.setDecorations(false);
+    console.log('[window] Disabled Tauri decorations for Sway');
+  }
+}
+
+/**
  * Cycle through corners
  */
 export function nextCorner(current: Corner): Corner {
