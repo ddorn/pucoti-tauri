@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
 import { useTimerEngine } from '../hooks/useTimerEngine'
+import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
 import type { Corner } from '../lib/window'
 
@@ -72,6 +73,9 @@ export function AppProvider({
 
   // Timer engine - runs at app level so it persists across screens
   const { elapsed, remaining, isOvertime, stopBell } = useTimerEngine(state.timerState)
+
+  // Sync timer state to D-Bus for GNOME panel indicator
+  useDbusSync(state.timerState, remaining, isOvertime)
 
   // Recover orphaned sessions on mount
   useEffect(() => {

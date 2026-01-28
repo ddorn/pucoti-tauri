@@ -263,6 +263,24 @@ export function Settings() {
         </CheckboxField>
       </section>
 
+      {/* GNOME Panel Indicator (Linux only) */}
+      <section className="space-y-4">
+        <Heading level={2}>GNOME Panel Indicator</Heading>
+
+        <CheckboxField>
+          <Checkbox
+            checked={settings.useGnomePanelIndicator ?? false}
+            onChange={(checked) => updateSettings({ useGnomePanelIndicator: checked })}
+            color={settings.accentColor}
+          />
+          <Label>Use GNOME panel indicator</Label>
+          <Description>
+            When enabled, the timer will be shown in the GNOME top panel and the window will auto-minimize when starting a timer.
+            Requires the Pucoti GNOME extension to be installed.
+          </Description>
+        </CheckboxField>
+      </section>
+
       {/* Corner Margins */}
       <section className="space-y-4">
         <Heading level={2}>Corner Margins</Heading>

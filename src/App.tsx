@@ -8,6 +8,7 @@ import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
 import { setNormalMode, setSmallMode, type Corner } from './lib/window'
 import { applyAccentColor } from './lib/colors';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import clsx from 'clsx'
 
 function AppContent() {
@@ -108,8 +109,15 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
   }, [settings.accentColor])
 
   const handleTimerStart = useCallback(async (corner: Corner) => {
-    // Switch to small mode with current settings
-    await setSmallMode(corner, settings)
+    // FIXME: this does not run when autoSmallOnStart is false, as onTimerStart is not called then
+    if (settings.useGnomePanelIndicator) {
+      // Minimize window when using GNOME panel indicator
+      const window = getCurrentWindow();
+      await window.minimize();
+    } else {
+      // Switch to small mode with current settings (default behavior)
+      await setSmallMode(corner, settings)
+    }
   }, [settings])
 
   const handleTimerComplete = useCallback(async () => {
