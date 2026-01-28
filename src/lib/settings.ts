@@ -2,6 +2,7 @@ import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell'
 import { getDataDir } from './paths'
+import type { Corner } from './window'
 
 export interface Settings {
   // Notification
@@ -28,6 +29,9 @@ export interface Settings {
   cornerMarginRight: number
   cornerMarginBottom: number
   cornerMarginLeft: number
+
+  // Small window corner position
+  corner: Corner
 
   // AI Productivity Experiment
   enableAiProductivityExperiment: boolean;
@@ -60,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   cornerMarginRight: 16,
   cornerMarginBottom: 16,
   cornerMarginLeft: 16,
+  corner: 'bottom-right',
   enableAiProductivityExperiment: false,
   accentColor: 'amber',
   lastUsedDuration: 20 * 60, // 20 minutes

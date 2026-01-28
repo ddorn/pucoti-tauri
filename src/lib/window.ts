@@ -10,7 +10,7 @@ export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
  * Each platform (Sway, Hyprland, generic Tauri, etc.) implements this interface
  */
 interface WindowPlatform {
-  setCornerMode(corner: Corner, settings: Settings): Promise<void>;
+  setCornerMode(settings: Settings): Promise<void>;
   setNormalMode(settings: Settings): Promise<void>;
   getDisplaySize(): Promise<{ width: number; height: number; }>;
 }
@@ -38,9 +38,9 @@ function calculateCornerPositions(
  * Used for macOS, Windows, and Linux window managers other than Sway
  */
 class DefaultPlatform implements WindowPlatform {
-  async setCornerMode(corner: Corner, settings: Settings): Promise<void> {
+  async setCornerMode(settings: Settings): Promise<void> {
     const { smallWindowWidth, smallWindowHeight, smallWindowBorderless,
-      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = settings;
+      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
 
     const display = await this.getDisplaySize();
     const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight, {
@@ -123,9 +123,9 @@ class DefaultPlatform implements WindowPlatform {
  * - To avoid double title bars, we disable Tauri decorations and let Sway handle everything
  */
 class SwayPlatform implements WindowPlatform {
-  async setCornerMode(corner: Corner, settings: Settings): Promise<void> {
+  async setCornerMode(settings: Settings): Promise<void> {
     const { smallWindowWidth, smallWindowHeight, smallWindowBorderless,
-      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft } = settings;
+      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
 
     const display = await this.getDisplaySize();
     const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight, {
@@ -282,10 +282,7 @@ async function getPlatform(): Promise<WindowPlatform> {
  *   - false = show Tauri decorations (title bar with buttons)
  * - Normal mode always shows decorations (setDecorations(true))
  */
-export async function setSmallMode(
-  corner: Corner,
-  settings: Settings
-): Promise<void> {
+export async function setSmallMode(settings: Settings): Promise<void> {
   // Exit fullscreen if active (common to all platforms)
   try {
     const window = getCurrentWindow()
@@ -298,7 +295,7 @@ export async function setSmallMode(
   }
 
   const platform = await getPlatform();
-  await platform.setCornerMode(corner, settings);
+  await platform.setCornerMode(settings);
 }
 
 /**

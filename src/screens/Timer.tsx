@@ -10,9 +10,7 @@ export function Timer() {
   const {
     timerState,
     timerMode,
-    corner,
     setTimerMode,
-    setCorner,
     adjustTimer,
     completeTimer,
     cancelTimer,
@@ -21,7 +19,7 @@ export function Timer() {
     isOvertime,
   } = useApp()
 
-  const { settings } = useSettings()
+  const { settings, updateSettings } = useSettings()
   const predicted = timerState?.predictedSeconds ?? 0
 
   useEffect(() => {
@@ -84,21 +82,21 @@ export function Timer() {
             await setNormalMode(settings)
           } else if (timerMode === 'normal') {
             setTimerMode('small')
-            await setSmallMode(corner, settings)
+            await setSmallMode(settings)
           } else if (timerMode === 'zen') {
             setTimerMode('small');
-            await setSmallMode(corner, settings)
+            await setSmallMode(settings)
           }
           break
 
         case 'c':
           if (timerMode === 'small') {
-            const newCorner = nextCorner(corner)
-            setCorner(newCorner)
-            await setSmallMode(newCorner, settings)
+            const newCorner = nextCorner(settings.corner);
+            await updateSettings({ corner: newCorner });
+            await setSmallMode({ ...settings, corner: newCorner })
           } else {
             setTimerMode('small');
-            await setSmallMode(corner, settings)
+            await setSmallMode(settings)
           }
           break
 
@@ -114,7 +112,7 @@ export function Timer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [timerMode, corner, settings, setTimerMode, setCorner, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
+  }, [timerMode, settings, setTimerMode, updateSettings, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
 
   if (!timerState) {
     return (

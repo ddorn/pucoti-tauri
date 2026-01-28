@@ -3,7 +3,6 @@ import { recoverOrphanedSession, appendSession, clearActiveSession } from '../li
 import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
-import type { Corner } from '../lib/window'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
 export type TimerMode = 'normal' | 'zen' | 'small'
@@ -19,7 +18,6 @@ export interface TimerState {
 interface AppState {
   screen: Screen
   timerMode: TimerMode
-  corner: Corner
   timerState: TimerState | null
   showConfetti: boolean;
 }
@@ -30,7 +28,6 @@ interface AppContextValue extends AppState {
 
   // Timer mode (zen, small, normal)
   setTimerMode: (mode: TimerMode) => void
-  setCorner: (corner: Corner) => void
 
   // Timer actions
   startTimer: (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => void
@@ -51,7 +48,7 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 interface AppProviderProps {
   children: ReactNode
-  onTimerStart?: (corner: Corner) => Promise<void>
+  onTimerStart?: () => Promise<void>
   onTimerComplete?: () => Promise<void>
   onTimerCancel?: () => Promise<void>
 }
@@ -66,7 +63,6 @@ export function AppProvider({
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
     timerMode: 'normal',
-    corner: 'bottom-right',
     timerState: null,
     showConfetti: false,
   })
@@ -84,11 +80,8 @@ export function AppProvider({
 
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }))
   const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
-  const setCorner = (corner: Corner) => setState(s => ({ ...s, corner }))
 
   const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => {
-    const currentCorner = state.corner
-
     // Calculate initial adjustment based on timer start percentage (predict mode only)
     const initialAdjustment = mode === 'predict'
       ? Math.round(predictedSeconds * (settings.timerStartPercentage / 100 - 1))
@@ -115,9 +108,9 @@ export function AppProvider({
 
     // Trigger window management callback
     if (onTimerStart) {
-      await onTimerStart(currentCorner)
+      await onTimerStart()
     }
-  }, [settings.onTimerStart, settings.timerStartPercentage, updateSettings, onTimerStart, state.corner])
+  }, [settings.onTimerStart, settings.timerStartPercentage, updateSettings, onTimerStart])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {
@@ -210,7 +203,6 @@ export function AppProvider({
         ...state,
         setScreen,
         setTimerMode,
-        setCorner,
         startTimer,
         adjustTimer,
         completeTimer,
