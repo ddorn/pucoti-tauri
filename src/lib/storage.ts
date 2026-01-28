@@ -76,7 +76,8 @@ export async function loadSessions(): Promise<Session[]> {
   let content: string
   try {
     content = await readTextFile(csvPath)
-  } catch {
+  } catch (err) {
+    console.error('Failed to read sessions CSV (returning empty array):', err)
     return []
   }
 
@@ -181,7 +182,8 @@ export async function exportSessionsCSV(): Promise<string> {
   const csvPath = await getCSVPath()
   try {
     return await readTextFile(csvPath)
-  } catch {
+  } catch (err) {
+    console.error('Failed to read CSV for export (returning header only):', err)
     return 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
   }
 }

@@ -238,7 +238,7 @@ async function detectSway(): Promise<boolean> {
     console.log('[window] Running under Sway:', isSway);
     return isSway;
   } catch (err) {
-    console.log('[window] Sway detection failed:', err);
+    console.error('[window] Sway detection failed:', err);
     return false;
   }
 }
@@ -292,7 +292,7 @@ export async function setSmallMode(
       await window.setFullscreen(false)
     }
   } catch (err) {
-    console.log('[window] Fullscreen check/exit failed (may not be supported on this platform):', err)
+    console.error('[window] Fullscreen check/exit failed (may not be supported on this platform):', err)
   }
 
   const platform = await getPlatform();

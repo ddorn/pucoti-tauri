@@ -30,7 +30,8 @@ export async function showNotification(
   // Fall back to Tauri notification
   try {
     await sendNotification({ title, body })
-  } catch {
+  } catch (err) {
+    console.error('Tauri notification failed, falling back to browser notification:', err)
     // Fall back to browser notification
     fallbackNotification(title, body)
   }
