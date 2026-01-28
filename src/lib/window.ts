@@ -228,13 +228,15 @@ let currentPlatform: WindowPlatform | null = null;
 
 /**
  * Detect if running under Sway window manager
+ * Checks for $SWAYSOCK which Sway always sets to its IPC socket path
  */
 async function detectSway(): Promise<boolean> {
   try {
-    const cmd = Command.create('run-sh', ['-c', 'echo $XDG_CURRENT_DESKTOP']);
+    const cmd = Command.create('run-sh', ['-c', 'echo $SWAYSOCK']);
     const result = await cmd.execute();
-    console.log('[window] Sway detection - code:', result.code, 'stdout:', result.stdout);
-    const isSway = result.stdout.trim().toLowerCase() === 'sway';
+    const swaysock = result.stdout.trim();
+    console.log('[window] Sway detection - SWAYSOCK:', swaysock);
+    const isSway = swaysock.length > 0;
     console.log('[window] Running under Sway:', isSway);
     return isSway;
   } catch (err) {
