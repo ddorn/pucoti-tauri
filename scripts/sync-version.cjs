@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { execSync } = require('child_process');
 const version = require('../package.json').version;
 
 // Update tauri.conf.json
@@ -14,3 +15,12 @@ let cargo = fs.readFileSync(cargoPath, 'utf8');
 cargo = cargo.replace(/^version = ".*"/m, `version = "${version}"`);
 fs.writeFileSync(cargoPath, cargo);
 console.log(`Updated ${cargoPath} to ${version}`);
+
+// Update Cargo.lock
+try {
+  execSync('cargo update -p pucoti --manifest-path src-tauri/Cargo.toml', { stdio: 'inherit' });
+  console.log(`Updated Cargo.lock to ${version}`);
+} catch (error) {
+  console.error('Failed to update Cargo.lock:', error.message);
+  process.exit(1);
+}
