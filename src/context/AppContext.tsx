@@ -7,7 +7,7 @@ import { getRandomAccentColor } from '../lib/colors'
 import { setSmallMode, setNormalMode } from '../lib/window'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
-export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
+export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings' | 'completion';
 export type TimerMode = 'normal' | 'zen' | 'small'
 
 export interface TimerState {
@@ -18,10 +18,18 @@ export interface TimerState {
   tags: string[];
 }
 
+export interface CompletionData {
+  focusText: string;
+  predictedSeconds: number;
+  actualSeconds: number;
+  tags: string[];
+}
+
 interface AppState {
   screen: Screen
   timerMode: TimerMode
   timerState: TimerState | null
+  completionData: CompletionData | null
   showConfetti: boolean;
 }
 
@@ -45,6 +53,7 @@ interface AppContextValue extends AppState {
 
   // UI
   clearConfetti: () => void;
+  clearCompletionData: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -59,6 +68,7 @@ export function AppProvider({ children }: AppProviderProps) {
     screen: 'new-focus',
     timerMode: 'normal',
     timerState: null,
+    completionData: null,
     showConfetti: false,
   })
 
@@ -153,6 +163,14 @@ export function AppProvider({ children }: AppProviderProps) {
     // Stop bell
     stopBell()
 
+    // Prepare completion data
+    const completionData: CompletionData = {
+      focusText: timerState.focusText,
+      predictedSeconds: timerState.predictedSeconds,
+      actualSeconds: elapsed,
+      tags: timerState.tags,
+    }
+
     // Save session
     try {
       await appendSession({
@@ -178,9 +196,10 @@ export function AppProvider({ children }: AppProviderProps) {
 
     setState(s => ({
       ...s,
-      screen: 'new-focus',
+      screen: 'completion',
       timerState: null,
-      showConfetti: true,
+      completionData,
+      showConfetti: false, // Completion screen will handle confetti
     }))
   }, [state, elapsed, stopBell, settings, updateSettings])
 
@@ -217,6 +236,7 @@ export function AppProvider({ children }: AppProviderProps) {
   }, [state, elapsed, stopBell, settings])
 
   const clearConfetti = () => setState(s => ({ ...s, showConfetti: false }))
+  const clearCompletionData = () => setState(s => ({ ...s, completionData: null }))
 
   return (
     <AppContext.Provider
@@ -232,6 +252,7 @@ export function AppProvider({ children }: AppProviderProps) {
         remaining,
         isOvertime,
         clearConfetti,
+        clearCompletionData,
       }}
     >
       {children}

@@ -5,6 +5,7 @@ import { NewFocus } from './screens/NewFocus'
 import { Timer } from './screens/Timer'
 import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
+import { Completion } from './screens/Completion'
 import { MiniTimer } from './components/MiniTimer'
 import { initializeWindowForPlatform } from './lib/window';
 import { applyAccentColor } from './lib/colors';
@@ -62,6 +63,7 @@ function AppContent() {
         {screen === 'timer' && <Timer />}
         {screen === 'stats' && <Stats />}
         {screen === 'settings' && <Settings />}
+        {screen === 'completion' && <Completion />}
       </main>
     </div>
   )
