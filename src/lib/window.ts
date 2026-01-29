@@ -1,4 +1,4 @@
-import { getCurrentWindow, primaryMonitor, availableMonitors, currentMonitor } from '@tauri-apps/api/window'
+import { getCurrentWindow, primaryMonitor, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
 import { Command } from '@tauri-apps/plugin-shell'
 import type { Settings } from './settings'

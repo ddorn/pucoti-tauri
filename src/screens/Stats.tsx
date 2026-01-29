@@ -15,7 +15,7 @@ import { SessionTable } from '../components/SessionTable'
 
 export function Stats() {
   const { sessions, loading, error } = useSessions();
-  const { completedSessions, predictionSessions, regression, stats, adjustmentCurve } = useStats(sessions)
+  const { predictionSessions, regression, stats, adjustmentCurve } = useStats(sessions)
   const [csvPath, setCsvPath] = useState<string>('')
 
   useEffect(() => {
