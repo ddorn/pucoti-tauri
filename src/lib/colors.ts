@@ -112,3 +112,20 @@ export function applyAccentColor(color: AccentColor) {
   document.documentElement.style.setProperty('--color-accent-hover', palette.hover)
   document.documentElement.style.setProperty('--color-accent-muted', palette.muted)
 }
+
+/**
+ * Get a random accent color, optionally excluding the current color
+ */
+export function getRandomAccentColor(excludeColor?: AccentColor): AccentColor {
+  const allColors: AccentColor[] = [
+    'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal',
+    'cyan', 'sky', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'
+  ]
+
+  const availableColors = excludeColor
+    ? allColors.filter(c => c !== excludeColor)
+    : allColors
+
+  const randomIndex = Math.floor(Math.random() * availableColors.length)
+  return availableColors[randomIndex]
+}

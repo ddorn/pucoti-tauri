@@ -482,10 +482,15 @@ export function Settings() {
           </label>
           <ColorPicker
             value={settings.accentColor}
-            onChange={(color) => updateSettings({ accentColor: color })}
+            onChange={(color) => updateSettings({ accentColor: color, randomColorOnCompletion: false })}
+            randomEnabled={settings.randomColorOnCompletion}
+            onRandomToggle={() => updateSettings({ randomColorOnCompletion: true })}
           />
           <Text className="text-xs text-zinc-400">
-            Choose the accent color used throughout the app
+            Choose the accent color used throughout the app.
+            {settings.randomColorOnCompletion && (
+              <span className="text-accent"> Random mode enabled - color will change after each completed timer.</span>
+            )}
           </Text>
         </div>
       </section>

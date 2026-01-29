@@ -38,6 +38,7 @@ export interface Settings {
 
   // Accent color
   accentColor: 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose';
+  randomColorOnCompletion: boolean; // Randomly change accent color on timer completion
 
   // Last used values
   lastUsedDuration: number; // in seconds
@@ -71,6 +72,7 @@ export const DEFAULT_SETTINGS: Settings = {
   corner: 'bottom-right',
   enableAiProductivityExperiment: false,
   accentColor: 'amber',
+  randomColorOnCompletion: false,
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedMode: 'predict',
   defaultDurationMode: 'none', // No default duration

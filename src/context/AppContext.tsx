@@ -3,6 +3,7 @@ import { recoverOrphanedSession, appendSession, clearActiveSession } from '../li
 import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
+import { getRandomAccentColor } from '../lib/colors'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
 export type TimerMode = 'normal' | 'zen' | 'small'
@@ -147,6 +148,12 @@ export function AppProvider({
       console.error('Failed to save session:', err)
     }
 
+    // Change color if random mode is enabled
+    if (settings.randomColorOnCompletion) {
+      const newColor = getRandomAccentColor(settings.accentColor)
+      await updateSettings({ accentColor: newColor })
+    }
+
     // Let parent handle window mode reset (it has access to settings)
     if (onTimerComplete) {
       await onTimerComplete()
@@ -158,7 +165,7 @@ export function AppProvider({
       timerState: null,
       showConfetti: true,
     }))
-  }, [state, elapsed, stopBell, onTimerComplete])
+  }, [state, elapsed, stopBell, settings.randomColorOnCompletion, settings.accentColor, updateSettings, onTimerComplete])
 
   const cancelTimer = useCallback(async () => {
     const { timerState } = state
