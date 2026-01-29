@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.2.0] - 2026-01-29
+
+### Added
+
+- **Completion screen with estimation accuracy feedback**: After completing a predict-mode timer, you now see a visualization showing your estimation accuracy. Features include:
+  - Half-violin plot displaying your historical estimation error distribution
+  - Confetti celebration (try to get within 1% of your prediction!)
+  - Contextual playful remarks based on your accuracy
+
+- **Random accent color option**: New "random" option in the color picker automatically changes your accent color to a random value after each completed timer. The option appears as a gradient shuffle icon in the color picker.
+
+- **Flexible corner margins**: Corner margin settings now support unrestricted numeric values, including negative numbers, giving you complete control over small mode window positioning. Particularly useful when we fail badly to detect screen size/scaling.
+
+### Fixed
+
+- **Session count accuracy**: Stats now correctly distinguish between total completed sessions (all modes) and prediction sessions (predict mode only). Calibration statistics and plots now accurately show only prediction-based data.
+
+- **GNOME extension detection**: Added filesystem permissions to properly detect GNOME panel extension status without "forbidden path" errors.
+
 ## [1.1.0] - 2026-01-28
 
 ### Added
