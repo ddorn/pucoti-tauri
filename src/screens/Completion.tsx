@@ -5,7 +5,7 @@ import { loadSessions, type Session } from '../lib/storage'
 import { EstimationHistogram } from '../components/EstimationHistogram'
 import { getCompletionRemark } from '../lib/completion-remarks'
 import { formatDuration } from '../lib/format'
-import { COLOR_PALETTES, type AccentColor } from '../lib/colors'
+import { COLOR_PALETTES, getRandomAccentColor, type AccentColor } from '../lib/colors';
 import { Text } from '../components/catalyst/text'
 import confetti from 'canvas-confetti'
 
@@ -86,32 +86,17 @@ function startWithinTenConfetti() {
   return () => clearInterval(interval)
 }
 
-const COMPLEMENT_COLORS: Record<AccentColor, AccentColor> = {
-  red: 'cyan',
-  orange: 'blue',
-  amber: 'indigo',
-  yellow: 'violet',
-  lime: 'purple',
-  green: 'pink',
-  emerald: 'fuchsia',
-  teal: 'red',
-  cyan: 'red',
-  sky: 'rose',
-  blue: 'orange',
-  indigo: 'amber',
-  violet: 'yellow',
-  purple: 'lime',
-  fuchsia: 'emerald',
-  pink: 'green',
-  rose: 'sky',
-}
-
 function startSimpleConfetti(accentColor: AccentColor) {
   const duration = 1000
   const end = Date.now() + duration
   const accentPalette = COLOR_PALETTES[accentColor]
-  const complementColor = COMPLEMENT_COLORS[accentColor]
-  const colors = [accentPalette.base, accentPalette.hover, COLOR_PALETTES[complementColor].base]
+  const randomColor1 = getRandomAccentColor(accentColor);
+  // Ensure second color is different from both accent and first random color
+  let randomColor2 = getRandomAccentColor(accentColor);
+  while (randomColor2 === randomColor1) {
+    randomColor2 = getRandomAccentColor(accentColor);
+  }
+  const colors = [accentPalette.base, COLOR_PALETTES[randomColor1].base, COLOR_PALETTES[randomColor2].base]
 
   const frame = () => {
     confetti({

@@ -81,7 +81,7 @@ export function AppProvider({ children }: AppProviderProps) {
   // Handle window close: save current session with status 'unknown' if timer is active
   useEffect(() => {
     const window = getCurrentWindow();
-    const unlisten = window.onCloseRequested(async (event) => {
+    const unlisten = window.onCloseRequested(async () => {
       if (state.timerState) {
         try {
           // Calculate elapsed time from start time
