@@ -4,6 +4,7 @@ import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
 import { getRandomAccentColor } from '../lib/colors'
+import { setSmallMode, setNormalMode } from '../lib/window'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
 export type TimerMode = 'normal' | 'zen' | 'small'
@@ -49,17 +50,9 @@ const AppContext = createContext<AppContextValue | null>(null)
 
 interface AppProviderProps {
   children: ReactNode
-  onTimerStart?: () => Promise<void>
-  onTimerComplete?: () => Promise<void>
-  onTimerCancel?: () => Promise<void>
 }
 
-export function AppProvider({
-  children,
-  onTimerStart,
-  onTimerComplete,
-  onTimerCancel,
-}: AppProviderProps) {
+export function AppProvider({ children }: AppProviderProps) {
   const { settings, updateSettings } = useSettings()
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
@@ -107,11 +100,11 @@ export function AppProvider({
       lastUsedMode: mode,
     })
 
-    // Trigger window management callback
-    if (onTimerStart) {
-      await onTimerStart()
+    // Handle window mode change
+    if (settings.onTimerStart === 'corner') {
+      await setSmallMode(settings)
     }
-  }, [settings.onTimerStart, settings.timerStartPercentage, updateSettings, onTimerStart])
+  }, [settings, updateSettings])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {
@@ -154,10 +147,8 @@ export function AppProvider({
       await updateSettings({ accentColor: newColor })
     }
 
-    // Let parent handle window mode reset (it has access to settings)
-    if (onTimerComplete) {
-      await onTimerComplete()
-    }
+    // Reset window to normal mode
+    await setNormalMode(settings)
 
     setState(s => ({
       ...s,
@@ -165,7 +156,7 @@ export function AppProvider({
       timerState: null,
       showConfetti: true,
     }))
-  }, [state, elapsed, stopBell, settings.randomColorOnCompletion, settings.accentColor, updateSettings, onTimerComplete])
+  }, [state, elapsed, stopBell, settings, updateSettings])
 
   const cancelTimer = useCallback(async () => {
     const { timerState } = state
@@ -189,10 +180,8 @@ export function AppProvider({
       console.error('Failed to save session:', err)
     }
 
-    // Let parent handle window mode reset (it has access to settings)
-    if (onTimerCancel) {
-      await onTimerCancel()
-    }
+    // Reset window to normal mode
+    await setNormalMode(settings)
 
     setState(s => ({
       ...s,
@@ -200,7 +189,7 @@ export function AppProvider({
       timerState: null,
       showConfetti: false,
     }))
-  }, [state, elapsed, stopBell, onTimerCancel])
+  }, [state, elapsed, stopBell, settings])
 
   const clearConfetti = () => setState(s => ({ ...s, showConfetti: false }))
 

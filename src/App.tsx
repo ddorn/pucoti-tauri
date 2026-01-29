@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext'
 import { SettingsProvider, useSettings } from './context/SettingsContext'
 import { NewFocus } from './screens/NewFocus'
@@ -6,7 +6,7 @@ import { Timer } from './screens/Timer'
 import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
 import { MiniTimer } from './components/MiniTimer'
-import { setNormalMode, setSmallMode, initializeWindowForPlatform } from './lib/window';
+import { initializeWindowForPlatform } from './lib/window';
 import { applyAccentColor } from './lib/colors';
 import clsx from 'clsx'
 
@@ -112,27 +112,8 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
     applyAccentColor(settings.accentColor);
   }, [settings.accentColor])
 
-  const handleTimerStart = useCallback(async () => {
-    // Switch to small mode with current settings
-    await setSmallMode(settings)
-  }, [settings])
-
-  const handleTimerComplete = useCallback(async () => {
-    // Reset window to normal mode with current settings
-    await setNormalMode(settings)
-  }, [settings])
-
-  const handleTimerCancel = useCallback(async () => {
-    // Reset window to normal mode with current settings
-    await setNormalMode(settings)
-  }, [settings])
-
   return (
-    <AppProvider
-      onTimerStart={handleTimerStart}
-      onTimerComplete={handleTimerComplete}
-      onTimerCancel={handleTimerCancel}
-    >
+    <AppProvider>
       {children}
     </AppProvider>
   )
