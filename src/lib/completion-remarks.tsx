@@ -1,8 +1,10 @@
+import type React from 'react'
+
 interface RemarkGroup {
   range: [number, number] // [min, max) percentage range (upper bound exclusive)
   absolute?: boolean // if true, apply to |errorPercent|; defaults to false
   weight?: number // probability weight (1 = common, <1 = rare); defaults to 1
-  texts: string[] // array of remark texts that share this range/weight
+  texts: (string | React.ReactElement)[] // array of remark texts that share this range/weight
 }
 
 const REMARKS: RemarkGroup[] = [
@@ -285,7 +287,7 @@ const REMARKS: RemarkGroup[] = [
     texts: [
       "Don't forget to drink water!",
       "If you like it, share it!",
-      "Insert coin to continue",  // TODO: Add paypal link
+      <><a href="https://www.paypal.com/paypalme/diegodorn" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors underline">Insert coin</a> to continue</>,
     ],
   },
   {
@@ -326,7 +328,7 @@ function weightedRandom<T extends { weight: number }>(items: T[]): T {
 /**
  * Generate a contextual remark based on estimation error percentage
  */
-export function getCompletionRemark(errorPercent: number): string {
+export function getCompletionRemark(errorPercent: number): string | React.ReactElement {
   // Filter remark groups that apply to this error percentage
   // errorPercent can be negative (underestimated) or positive (overestimated)
   const applicableGroups = REMARKS.filter((group) => {
