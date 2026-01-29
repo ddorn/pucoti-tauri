@@ -6,7 +6,6 @@ import { formatDuration } from '../lib/format';
 import { Button } from '../components/catalyst/button';
 import { Text } from '../components/catalyst/text';
 import { ModeTabButton } from '../components/ModeTabButton';
-import { saveActiveSession } from '../lib/storage';
 import { COLOR_PALETTES } from '../lib/colors';
 import confetti from 'canvas-confetti'
 import clsx from 'clsx'
@@ -188,17 +187,6 @@ export function NewFocus() {
 
   const handleStart = async () => {
     if (!isValid || parsedSeconds === null) return
-
-    // Save active session for recovery
-    try {
-      await saveActiveSession({
-        startTime: new Date().toISOString(),
-        focusText: focusText.trim(),
-        predictedSeconds: parsedSeconds,
-      })
-    } catch (err) {
-      console.error('Failed to save session data:', err)
-    }
 
     await startTimer(focusText.trim(), parsedSeconds, [`mode:${mode}`], mode)
   }

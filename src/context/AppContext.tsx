@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { recoverOrphanedSession, appendSession, clearActiveSession } from '../lib/storage'
+import { appendSession } from '../lib/storage';
 import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
 import { getRandomAccentColor } from '../lib/colors'
 import { setSmallMode, setNormalMode } from '../lib/window'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings'
 export type TimerMode = 'normal' | 'zen' | 'small'
@@ -67,10 +68,36 @@ export function AppProvider({ children }: AppProviderProps) {
   // Sync timer state to D-Bus for GNOME panel indicator (always on Linux)
   useDbusSync(state.timerState, remaining, isOvertime)
 
-  // Recover orphaned sessions on mount
+  // Handle window close: save current session with status 'unknown' if timer is active
   useEffect(() => {
-    recoverOrphanedSession().catch(console.error)
-  }, [])
+    const window = getCurrentWindow();
+    const unlisten = window.onCloseRequested(async (event) => {
+      if (state.timerState) {
+        try {
+          // Calculate elapsed time from start time
+          const startTime = state.timerState.startTime;
+          const now = new Date();
+          const actualSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+
+          await appendSession({
+            timestamp: startTime,
+            focusText: state.timerState.focusText,
+            predictedSeconds: state.timerState.predictedSeconds,
+            actualSeconds,
+            status: 'unknown',
+            tags: state.timerState.tags,
+          });
+        } catch (err) {
+          console.error('Failed to save session on window close:', err);
+        }
+      }
+      // Don't prevent default - let window close normally
+    });
+
+    return () => {
+      unlisten.then(fn => fn()).catch(console.error);
+    };
+  }, [state.timerState])
 
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }))
   const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
@@ -136,7 +163,6 @@ export function AppProvider({ children }: AppProviderProps) {
         status: 'completed',
         tags: timerState.tags,
       })
-      await clearActiveSession()
     } catch (err) {
       console.error('Failed to save session:', err)
     }
@@ -175,7 +201,6 @@ export function AppProvider({ children }: AppProviderProps) {
         status: 'canceled',
         tags: timerState.tags,
       })
-      await clearActiveSession()
     } catch (err) {
       console.error('Failed to save session:', err)
     }

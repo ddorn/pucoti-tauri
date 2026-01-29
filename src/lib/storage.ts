@@ -1,5 +1,5 @@
 import { resolve } from '@tauri-apps/api/path';
-import { readTextFile, writeTextFile, exists, remove } from '@tauri-apps/plugin-fs';
+import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
 import { formatTimestamp } from './format'
 import { getDataDir } from './paths'
 
@@ -12,12 +12,6 @@ export interface Session {
   actualSeconds: number
   status: SessionStatus
   tags: string[]
-}
-
-export interface ActiveSession {
-  startTime: string
-  focusText: string
-  predictedSeconds: number
 }
 
 function escapeCSV(value: string): string {
@@ -64,11 +58,6 @@ export async function getCSVPath(): Promise<string> {
   const dir = await getDataDir()
   const path = await resolve(dir, 'sessions.csv')
   return path
-}
-
-export async function getActiveSessionPath(): Promise<string> {
-  const dir = await getDataDir()
-  return await resolve(dir, 'pucoti_active_session.json')
 }
 
 export async function loadSessions(): Promise<Session[]> {
@@ -127,55 +116,6 @@ export async function appendSession(session: Session): Promise<void> {
   } else {
     await writeTextFile(csvPath, line + '\n', { append: true })
   }
-}
-
-export async function saveActiveSession(session: ActiveSession): Promise<void> {
-  const path = await getActiveSessionPath()
-  await writeTextFile(path, JSON.stringify(session))
-}
-
-export async function loadActiveSession(): Promise<ActiveSession | null> {
-  const path = await getActiveSessionPath()
-  try {
-    const content = await readTextFile(path)
-    return JSON.parse(content)
-  } catch {
-    return null
-  }
-}
-
-export async function clearActiveSession(): Promise<void> {
-  const path = await getActiveSessionPath()
-  try {
-    await remove(path)
-  } catch {
-    // File might not exist, that's fine
-  }
-}
-
-/**
- * Check for orphaned active session on app launch.
- * If found, mark it as 'unknown' status and append to CSV.
- */
-export async function recoverOrphanedSession(): Promise<void> {
-  const activeSession = await loadActiveSession()
-  if (!activeSession) return
-
-  // Calculate how long the session was active before app quit
-  const startTime = new Date(activeSession.startTime)
-  const now = new Date()
-  const actualSeconds = Math.floor((now.getTime() - startTime.getTime()) / 1000)
-
-  await appendSession({
-    timestamp: startTime,
-    focusText: activeSession.focusText,
-    predictedSeconds: activeSession.predictedSeconds,
-    actualSeconds,
-    status: 'unknown',
-    tags: [],
-  })
-
-  await clearActiveSession()
 }
 
 export async function exportSessionsCSV(): Promise<string> {

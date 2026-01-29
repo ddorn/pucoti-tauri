@@ -69,11 +69,7 @@ Key insight: Timer state includes `adjustmentSeconds` to handle +/- time adjustm
 - All sessions saved to CSV: `~/.local/share/pucoti/sessions.csv`
 - Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags
 - Status types: 'completed', 'canceled', 'unknown'
-
-**Active Session Recovery**:
-- Tracks current timer in `pucoti_active_session.json`
-- On app launch, `recoverOrphanedSession()` checks for crashed sessions
-- Orphaned sessions marked as 'unknown' status with estimated duration
+- On window close: if timer is active, saves session with status 'unknown'
 
 ### Statistics Engine (`src/lib/stats.ts`)
 
@@ -176,9 +172,9 @@ await updateSettings({ normalWindowWidth: 800 })
 All components (including AppProvider) access settings via the same hook pattern for consistency.
 
 ### Session Management
-- Start timer: saves to `pucoti_active_session.json`
-- Complete/Cancel: appends to `sessions.csv`, clears active session
-- On app launch: recovers orphaned session if exists
+- Start timer: creates timer state in memory
+- Complete/Cancel: appends to `sessions.csv`
+- Window close: if timer is active, saves session with status 'unknown'
 
 ## Notes
 - Keep this file (CLAUDE.MD) up to date.
