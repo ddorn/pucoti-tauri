@@ -302,7 +302,7 @@ const REMARKS: RemarkGroup[] = [
     weight: 0.001,
     texts: [
       "Don't eat soup with a fork.",
-      "These pretzels are making me thirsty",
+      "These bretzels are making me thirsty",
     ],
   }
 ]
