@@ -5,34 +5,40 @@ export interface CalibrationStats {
   meanBias: number
   /** Half-width of 95% CI for meanBias, or null if not enough data */
   biasMargin: number | null
-  /** Total seconds tracked */
-  totalSeconds: number
+  /** Total seconds tracked across ALL completed sessions */
+  totalSecondsTracked: number
+  /** Count of ALL completed sessions */
+  completedCount: number
   /** Percentage of sessions that took longer than predicted */
   longerPercent: number
   /** Percentage of estimates within ±10% of actual */
   withinTenPercent: number
-  /** Number of completed sessions */
-  sessionCount: number
+  /** Count of mode:predict sessions (used for calibration statistics) */
+  predictionCount: number
     /** Interquartile range of actual/predicted ratios */
     ratioIQR: { q1: number; median: number; q3: number; } | null;
 }
 
 /**
- * Compute calibration statistics from completed sessions.
- * Returns null if no completed sessions.
- * Only includes prediction sessions (excludes timebox and ai-ab).
+ * Compute calibration statistics from sessions.
+ * Returns null if no prediction sessions.
+ * Calibration stats (bias, accuracy) only use prediction sessions (excludes timebox and ai-ab).
+ * Total time tracked includes ALL completed sessions regardless of mode.
  */
 export function computeCalibrationStats(sessions: Session[]): CalibrationStats | null {
-  const completed = sessions.filter(s =>
-    s.status === 'completed' && s.tags.includes('mode:predict')
-  )
-  if (completed.length === 0) return null
+  // All completed sessions for total time tracking
+  const allCompleted = sessions.filter(s => s.status === 'completed')
 
-  const n = completed.length
+  // Only prediction sessions for calibration statistics
+  const predictionSessions = allCompleted.filter(s => s.tags.includes('mode:predict'))
+
+  if (predictionSessions.length === 0) return null
+
+  const n = predictionSessions.length
 
   // Bias: (actual - predicted) / predicted as percentage
   // Positive means tasks took longer than predicted (underestimate)
-  const biases = completed.map(s =>
+  const biases = predictionSessions.map(s =>
     ((s.actualSeconds - s.predictedSeconds) / s.predictedSeconds) * 100
   )
   const meanBias = biases.reduce((a, b) => a + b, 0) / n
@@ -46,24 +52,24 @@ export function computeCalibrationStats(sessions: Session[]): CalibrationStats |
     biasMargin = tValue * se
   }
 
-  // Total time tracked
-  const totalSeconds = completed.reduce((a, s) => a + s.actualSeconds, 0)
+  // Total time tracked across ALL completed sessions
+  const totalSecondsTracked = allCompleted.reduce((a, s) => a + s.actualSeconds, 0)
 
-  // % sessions taking longer than predicted
-  const longerCount = completed.filter(s => s.actualSeconds > s.predictedSeconds).length
+  // % sessions taking longer than predicted (prediction sessions only)
+  const longerCount = predictionSessions.filter(s => s.actualSeconds > s.predictedSeconds).length
   const longerPercent = (longerCount / n) * 100
 
-  // % estimates within ±10%
-  const withinCount = completed.filter(s => {
+  // % estimates within ±10% (prediction sessions only)
+  const withinCount = predictionSessions.filter(s => {
     const error = Math.abs(s.actualSeconds - s.predictedSeconds) / s.predictedSeconds
     return error <= 0.1
   }).length
   const withinTenPercent = (withinCount / n) * 100
 
-    // Interquartile range of actual/predicted ratios
+    // Interquartile range of actual/predicted ratios (prediction sessions only)
     let ratioIQR: { q1: number; median: number; q3: number; } | null = null;
     if (n >= 3) {
-        const ratios = completed
+        const ratios = predictionSessions
             .map(s => s.actualSeconds / s.predictedSeconds)
             .sort((a, b) => a - b);
 
@@ -81,10 +87,11 @@ export function computeCalibrationStats(sessions: Session[]): CalibrationStats |
   return {
     meanBias,
     biasMargin,
-    totalSeconds,
+    totalSecondsTracked,
+    completedCount: allCompleted.length,
     longerPercent,
     withinTenPercent,
-    sessionCount: n,
+    predictionCount: n,
       ratioIQR,
   }
 }

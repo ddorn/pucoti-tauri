@@ -15,7 +15,7 @@ import { SessionTable } from '../components/SessionTable'
 
 export function Stats() {
   const { sessions, loading, error } = useSessions();
-  const { completedSessions, regression, stats, adjustmentCurve } = useStats(sessions)
+  const { completedSessions, predictionSessions, regression, stats, adjustmentCurve } = useStats(sessions)
   const [csvPath, setCsvPath] = useState<string>('')
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export function Stats() {
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <AdjustmentRecommendation
                 adjustmentCurve={adjustmentCurve}
-                sessionCount={completedSessions.length}
+                sessionCount={stats?.predictionCount ?? 0}
               />
               <AdjustmentPlot
                 adjustmentCurve={adjustmentCurve}
@@ -79,7 +79,7 @@ export function Stats() {
             {/* Calibration analysis */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <CalibrationPlot
-                completedSessions={completedSessions}
+                sessions={predictionSessions}
                 regression={regression}
                 stats={stats}
               />
@@ -98,9 +98,9 @@ export function Stats() {
                   color={Math.abs(stats.meanBias) < 10 ? 'emerald' : 'amber'}
                 />
                 <StatCard
-                  value={formatDuration(stats.totalSeconds)}
+                  value={formatDuration(stats.totalSecondsTracked)}
                   label="Total time tracked"
-                  sublabel={`across ${stats.sessionCount} sessions`}
+                  sublabel={`across ${stats.completedCount} sessions`}
                   color="zinc"
                 />
                 <StatCard

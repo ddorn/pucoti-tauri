@@ -7,26 +7,26 @@ import type { RegressionWithCI, CalibrationStats } from '../lib/stats'
 import { createPlotLayout, createPlotConfig } from '../lib/plot-config'
 
 export function CalibrationPlot({
-  completedSessions,
+  sessions,
   regression,
   stats,
 }: {
-  completedSessions: Session[]
+  sessions: Session[]
   regression: RegressionWithCI | null
   stats: CalibrationStats | null
 }) {
   const plotRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (completedSessions.length < 2) return
+    if (sessions.length < 2) return
     const container = plotRef.current
     if (!container) {
       console.warn('Calibration plot container missing')
       return
     }
 
-    const predicted = completedSessions.map(s => s.predictedSeconds / 60)
-    const actual = completedSessions.map(s => s.actualSeconds / 60)
+    const predicted = sessions.map(s => s.predictedSeconds / 60)
+    const actual = sessions.map(s => s.actualSeconds / 60)
     const maxVal = Math.max(...predicted, ...actual, 5) * 1.1
 
     const traces: Plotly.Data[] = [
@@ -147,12 +147,12 @@ export function CalibrationPlot({
     return () => {
       Plotly.purge(container)
     }
-  }, [completedSessions, regression])
+  }, [sessions, regression])
 
   return (
     <div className="bg-surface-raised rounded-lg p-4">
       <Subheading level={2} className="mb-4">Estimation Accuracy</Subheading>
-      {completedSessions.length < 2 ? (
+      {sessions.length < 2 ? (
         <div className="flex items-center justify-center h-72">
           <Text>Complete at least 2 sessions to see your estimation pattern</Text>
         </div>

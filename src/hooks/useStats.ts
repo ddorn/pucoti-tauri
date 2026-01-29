@@ -37,6 +37,7 @@ export function useStats(sessions: Session[]) {
 
   return {
     completedSessions,
+    predictionSessions,
     regression,
     stats,
     adjustmentCurve,
