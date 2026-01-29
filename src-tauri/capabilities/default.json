@@ -30,6 +30,13 @@
     "fs:allow-app-write-recursive",
     "fs:scope-appdata",
     "fs:scope-appdata-recursive",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "/usr/share/gnome-shell/extensions/pucoti@pucoti.dev/**" },
+        { "path": "$HOME/.local/share/gnome-shell/extensions/pucoti@pucoti.dev/**" }
+      ]
+    },
     "notification:default",
     {
       "identifier": "shell:allow-execute",
