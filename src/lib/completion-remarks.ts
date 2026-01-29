@@ -19,6 +19,7 @@ const REMARKS: RemarkGroup[] = [
       'Did time just... obey you?',
       'Your brain has a built-in atomic clock',
       'Suspiciously accurate',
+      'Flawless victory',
     ],
   },
   {
@@ -27,15 +28,19 @@ const REMARKS: RemarkGroup[] = [
     weight: 0.05,
     texts: [
       'Teach me your ways',
-      'Are you from the well calibrated future?',
+      "You're a wizard, Harry",
       "I'm telling the other timers about you",
       'The Oracle of Delphi has competition',
       'You should be estimating for NASA',
       'Was this a lucky guess or are you actually magic?',
+      "It's super effective!",
+      "Bayes would be proud",
+      "Reference class: consulted",
+      "This was a triumph",
     ],
   },
   {
-    range: [0, 1],
+    range: [0, 0.5],
     absolute: true,
     weight: 0.001,
     texts: [
@@ -53,7 +58,6 @@ const REMARKS: RemarkGroup[] = [
     range: [1, 10],
     absolute: true,
     texts: [
-      'Well calibrated!',
       'Pretty close!',
       'Solid prediction!',
       'My statistics module is pleased',
@@ -64,9 +68,11 @@ const REMARKS: RemarkGroup[] = [
       'Certified calibrated',
       'You\'ve done this before, haven\'t you?',
       'Respectable. Very respectable.',
+      'Most impressive',
     ],
   },
   { range: [1, 10], absolute: true, weight: 0.1, texts: ["That's the way (I like it)!", "Chef's kiss"]},
+  { range: [1, 10], absolute: true, weight: 0.05, texts: ['I find your lack of error... refreshing', 'Precision. German engineering.']},
 
   // Good calibration (10-50%)
   {
@@ -75,7 +81,6 @@ const REMARKS: RemarkGroup[] = [
     texts: [
       'Not bad!',
       'Getting better!',
-      'Pretty decent',
       'Calibration in progress',
       'In the ballpark',
       'Order of magnitude: correct',
@@ -87,11 +92,19 @@ const REMARKS: RemarkGroup[] = [
       'The algorithm approves (barely)',
     ],
   },
-  { range: [10, 50], absolute: true, weight: 0.08, texts: ['Close enough for jazz'] },
+  {
+    range: [10, 50],
+    absolute: true,
+    weight: 0.05,
+    texts: [
+      'Pretty decent for a human',
+    ],
+  },
 
   // Specials at specific values
   { range: [42, 43], absolute: true, weight: 0.2, texts: ['This must be the answer.', "Don't panic!"] },
   { range: [50, 51], absolute: true, weight: 0.15, texts: ['Perfectly balanced, as all things should be'] },
+  { range: [60, 61], absolute: true, weight: 0.15, texts: ['60% of the time, it works every time'] },
   { range: [69, 70], absolute: true, weight: 0.01, texts: ['Nice!'] },
   { range: [69, 70], absolute: true, weight: 0.001, texts: ['Voulez-vous coucher avec moi ce soir?'] },
   { range: [99, 100], absolute: true, weight: 1, texts: ['So close yet so far'] },
@@ -116,9 +129,15 @@ const REMARKS: RemarkGroup[] = [
       'We\'ll call this a learning opportunity',
       'The spirit was willing but the estimate was weak',
       'Room for improvement',
+      'This is fine',
+      'Mistakes were made',
+      'It\'s not a bug, it\'s a feature',
+      "Inside view: betrayed you again",
+      "The map ≠ the territory, apparently",
     ],
   },
   { range: [50, 100], absolute: true, weight: 0.06, texts: ['Ballpark? More like ball-continent'] },
+  { range: [50, 100], absolute: true, weight: 0.01, texts: ['F'] },
 
   // Moderate miscalibration (50-100%) - overestimate only
   {
@@ -128,6 +147,14 @@ const REMARKS: RemarkGroup[] = [
       'Physics got in the way',
       'The universe added a surcharge',
       'Past you had no idea what the universe had in store',
+    ],
+  },
+  // Moderate miscalibration (50-100%) - underestimate only
+  {
+    range: [-100, -50],
+    absolute: false,
+    texts: [
+      'Task failed successfully',
     ],
   },
 
@@ -149,13 +176,17 @@ const REMARKS: RemarkGroup[] = [
       'Planning fallacy sends its regards',
       'Past you was an optimist',
       'The task had other plans',
-      'Ambition: detected',
+      'Ambition detected',
       'This is why agile exists',
       'Somewhere, a project manager felt a disturbance',
       'Optimism is a beautiful thing',
+      'Understandable, have a nice day',
+      "Your confidence intervals need work",
+      "Not bad, for a first attempt"
     ],
   },
-  { range: [100, 200], weight: 0.06, texts: ['Time to recalibrate that crystal ball 🔮'] },
+  { range: [100, 200], weight: 0.1, texts: ['What the fork?', "Moloch sends his regards",] },
+  { range: [100, 200], weight: 0.06, texts: ['Time to recalibrate that crystal ball 🔮', "Epistemic status: confused"] },
 
   // Very significant miscalibration (200%+) - always overestimate
   {
@@ -182,6 +213,8 @@ const REMARKS: RemarkGroup[] = [
       'The real estimate was the friends we made along the way',
       'Time warped on you',
       "Did you time travel the wrong way?",
+      'What a terrible night to have a curse',
+      'It was at this moment he knew... he messed up',
     ],
   },
 
@@ -197,9 +230,9 @@ const REMARKS: RemarkGroup[] = [
 
   // Finished early (underestimate - negative error only)
   {
-    range: [-Infinity, -10],
+    range: [-100, -10],
     absolute: false,
-    weight: 1,
+    weight: 0.3,
     texts: [
       'Speedrun achieved',
       'Under-promise, over-deliver',
@@ -210,7 +243,6 @@ const REMARKS: RemarkGroup[] = [
       'Your past self gave you a gift',
       'Efficiency mode: activated',
       'You hedged and won',
-      'Procrastination budget: unused',
       'The task feared you',
       'You came, you saw, you finished early',
       'Padded estimate? Padded estimate.',
@@ -224,6 +256,25 @@ const REMARKS: RemarkGroup[] = [
       'Rare early bird energy',
       'You overestimated the task\'s power level',
       'The task folded',
+      'Speed. I am speeeed.',
+      'Veni, vidi, vici',
+      'Finally, a moment of rest...',
+    ],
+  },
+  {
+    range: [-100, -90],
+    weight: 100,
+    texts: [
+      "You have failed the marshmallow test",
+    ],
+  },
+
+  {
+    range: [10, Infinity],
+    absolute: true,
+    weight: 0.02,
+    texts: [
+      "Update your priors",
     ],
   },
 
@@ -234,6 +285,14 @@ const REMARKS: RemarkGroup[] = [
     texts: [
       "Don't forget to drink water!",
       "If you like it, share it!",
+      "Insert coin to continue",  // TODO: Add paypal link
+    ],
+  },
+  {
+    range: [-Infinity, Infinity],
+    weight: 0.001,
+    texts: [
+      "You can thank Felix for this!",
     ],
   },
   {
@@ -241,6 +300,7 @@ const REMARKS: RemarkGroup[] = [
     weight: 0.001,
     texts: [
       "Don't eat soup with a fork.",
+      "These pretzels are making me thirsty",
     ],
   }
 ]
