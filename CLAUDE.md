@@ -110,6 +110,7 @@ Flexible duration input supporting:
 2. **Timer** (`src/screens/Timer.tsx`): Active timer display with j/k adjustment keys
 3. **Stats** (`src/screens/Stats.tsx`): Calibration plots and session history
 4. **Settings** (`src/screens/Settings.tsx`): Configure window behavior and notifications
+5. **Completion** (`src/screens/Completion.tsx`): Feedback on estimation accuracy after completing a timer
 
 ## Tauri Backend
 
@@ -176,5 +177,27 @@ All components (including AppProvider) access settings via the same hook pattern
 - Complete/Cancel: appends to `sessions.csv`
 - Window close: if timer is active, saves session with status 'unknown'
 
+## Changelog Management
+
+**The changelog is for users, not developers.**
+
+When updating `CHANGELOG.md`:
+
+1. **Only include user-facing changes**:
+   - ✅ New features users can see and use
+   - ✅ Bug fixes users would notice
+   - ✅ Behavior changes that affect user experience
+   - ❌ Internal refactorings
+   - ❌ Code cleanups or architecture changes
+   - ❌ Developer-only improvements (build process, CI, etc.)
+
+2. **Organization**:
+   - We write changelog entries for minor version only
+   - Use today's date by default for the release date
+   - Write in user-friendly language (avoid technical jargon)
+
+3. **Construct the changelog from the git log**:
+   Commits are usually multi-line, so read the full log entries since the last minor version release.
+
 ## Notes
-- Keep this file (CLAUDE.MD) up to date.
+- Keep this file (CLAUDE.MD) up to date. Document architecture changes, new important features, new folders.
