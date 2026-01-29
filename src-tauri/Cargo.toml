@@ -1,6 +1,6 @@
 [package]
 name = "pucoti"
-version = "1.1.2"
+version = "1.2.0"
 description = "A timer to stay on track and make predictions to overcome the planning fallacy."
 authors = ["Diego Dorn"]
 license = "MIT"
