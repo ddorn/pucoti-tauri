@@ -14,7 +14,7 @@
     "tauri:build": "tauri build --bundles deb",
     "test": "vitest run",
     "test:watch": "vitest",
-    "version": "node scripts/sync-version.cjs && git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock"
+    "version": "node scripts/sync-version.cjs && git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && echo 'Don't forget to git push --tags!'"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.8",
