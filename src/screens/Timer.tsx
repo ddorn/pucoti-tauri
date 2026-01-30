@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
 import { formatCountdown, formatDuration } from '../lib/format'
 import { setSmallMode, setNormalMode, nextCorner } from '../lib/window';
 import { Text } from '../components/catalyst/text'
+import { CommandPalette } from '../components/CommandPalette'
+import { type ParsedCommand } from '../lib/command-parser'
 import clsx from 'clsx'
 
 export function Timer() {
@@ -11,6 +13,7 @@ export function Timer() {
     timerState,
     displayMode,
     setDisplayMode,
+    setIntentAndPrediction,
     adjustTimer,
     completeTimer,
     cancelTimer,
@@ -20,11 +23,13 @@ export function Timer() {
   } = useApp()
 
   const { settings, updateSettings } = useSettings()
-  const predicted = timerState?.predictedSeconds ?? 0
+
+  // Command palette state
+  const [paletteOpen, setPaletteOpen] = useState(false)
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      // Ignore if typing in an input
+      // Ignore if typing in an input (e.g., command palette)
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return
       }
@@ -101,7 +106,14 @@ export function Timer() {
           break
 
         case 'enter':
-          await completeTimer()
+          e.preventDefault()
+          // If there's an intent set, complete the timer
+          // Otherwise, open the command palette
+          if (timerState?.focusText) {
+            await completeTimer()
+          } else {
+            setPaletteOpen(true)
+          }
           break
 
         case 'q':
@@ -113,6 +125,18 @@ export function Timer() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [displayMode, settings, setDisplayMode, updateSettings, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
+
+  const handlePaletteSubmit = useCallback((parsed: ParsedCommand) => {
+    setPaletteOpen(false)
+    // Only update if there's something to set
+    if (parsed.intent || parsed.seconds !== null) {
+      setIntentAndPrediction(parsed.intent, parsed.seconds)
+    }
+  }, [setIntentAndPrediction])
+
+  const handlePaletteClose = useCallback(() => {
+    setPaletteOpen(false)
+  }, [])
 
   if (!timerState) {
     return (
@@ -135,9 +159,11 @@ export function Timer() {
 
     return (
       <div className="flex flex-col items-center justify-center h-screen p-1 xs:p-4 select-none overflow-hidden bg-surface">
-        <p className="text-accent mb-[2vh] text-center max-w-[80vw] font-medium overflow-x-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
-          {timerState.focusText}
-        </p>
+        {timerState.focusText && (
+          <p className="text-accent mb-[2vh] text-center max-w-[80vw] font-medium overflow-x-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
+            {timerState.focusText}
+          </p>
+        )}
         <p
           className={clsx(
             'font-timer font-bold tracking-tight leading-none',
@@ -153,42 +179,57 @@ export function Timer() {
 
   // Normal mode: full UI with viewport-proportional sizing
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 select-none">
-      <div className="flex flex-col items-center w-full max-w-2xl">
-        {/* Intent - prominent */}
-        <p className="text-accent text-2xl md:text-3xl text-center mb-8 font-medium">
-          {timerState.focusText}
-        </p>
+    <>
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 select-none">
+        <div className="flex flex-col items-center w-full max-w-2xl">
+          {/* Intent - prominent (or placeholder if none) */}
+          <p className={clsx(
+            "text-2xl md:text-3xl text-center mb-8 font-medium min-h-[2em]",
+            timerState.focusText ? "text-accent" : "text-zinc-600"
+          )}>
+            {timerState.focusText || 'Press Enter to set intent'}
+          </p>
 
-        {/* Big countdown - viewport proportional */}
-        <p
-          className={clsx(
-            'font-timer text-[18vw] md:text-[12vw] font-bold tracking-tight leading-none',
-            isOvertime ? 'text-red-500' : 'text-zinc-100'
+          {/* Big countdown - viewport proportional */}
+          <p
+            className={clsx(
+              'font-timer text-[18vw] md:text-[12vw] font-bold tracking-tight leading-none',
+              isOvertime ? 'text-red-500' : 'text-zinc-100'
+            )}
+          >
+            {formatCountdown(remaining)}
+          </p>
+
+          {/* Elapsed / Predicted - only show if there's a prediction */}
+          {timerState.predictedSeconds !== null && (
+            <p className="text-xl md:text-2xl mt-6">
+              {formatDuration(elapsed)} / {formatDuration(timerState.predictedSeconds)} predicted
+            </p>
           )}
-        >
-          {formatCountdown(remaining)}
-        </p>
 
-        {/* Elapsed / Predicted */}
-        <p className="text-xl md:text-2xl mt-6">
-          {formatDuration(elapsed)} / {formatDuration(predicted)}
-        </p>
-
-        {/* Shortcut hints */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
-          <Shortcut keys={['Tab']} label="Zen mode" />
-          <Shortcut keys={['Space']} label="Toggle corner mode" />
-          <Shortcut keys={['j', 'k']} label="±1 minute" />
-          <Shortcut keys={['0-9']} label="Set to X minutes" />
-          <Shortcut keys={['J', 'K']} label="±5 minutes" />
-          <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
-          <Shortcut keys={['c']} label="Cycle corners" />
-          <Shortcut keys={['q']} label="Cancel" />
-          <Shortcut keys={['Enter']} label="Complete" />
+          {/* Shortcut hints */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
+            <Shortcut keys={['Tab']} label="Zen mode" />
+            <Shortcut keys={['Space']} label="Toggle corner mode" />
+            <Shortcut keys={['j', 'k']} label="±1 minute" />
+            <Shortcut keys={['0-9']} label="Set to X minutes" />
+            <Shortcut keys={['J', 'K']} label="±5 minutes" />
+            <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
+            <Shortcut keys={['c']} label="Cycle corners" />
+            <Shortcut keys={['q']} label="Cancel" />
+            <Shortcut keys={['Enter']} label={timerState.focusText ? "Complete" : "Set intent"} />
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Command Palette Overlay */}
+      {paletteOpen && (
+        <CommandPalette
+          onSubmit={handlePaletteSubmit}
+          onClose={handlePaletteClose}
+        />
+      )}
+    </>
   )
 }
 
