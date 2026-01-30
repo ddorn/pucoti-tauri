@@ -2,6 +2,11 @@ import { sendNotification } from '@tauri-apps/plugin-notification'
 import { invoke } from '@tauri-apps/api/core'
 import { executeCustomNotification } from './settings'
 
+/**
+ * Plays a bell sound (custom or default).
+ * NOTE: Currently only used when timer crosses 0 (goes into overtime).
+ * If used elsewhere, update the notification settings documentation in Settings.tsx.
+ */
 export function playBell(customBellPath?: string): void {
   console.log('playBell called with customBellPath:', customBellPath || null)
   invoke('play_bell', {

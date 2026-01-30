@@ -129,6 +129,7 @@ export function Settings() {
             placeholder="notify-send {title} {body}"
           />
           <Text className="text-xs">
+            We send a notification when the timer goes into overtime.
             Leave empty for default OS notifications. Use <code className="px-1 py-0.5 rounded bg-zinc-800">{'{title}'}</code> and <code className="px-1 py-0.5 rounded bg-zinc-800">{'{body}'}</code> as placeholders.
           </Text>
         </div>
