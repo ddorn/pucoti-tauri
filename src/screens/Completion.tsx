@@ -128,14 +128,18 @@ export function Completion() {
   const [sessions, setSessions] = useState<Session[]>([])
 
   // Extract data (with defaults to handle null case)
-  const { predictedSeconds = 0, actualSeconds = 0, tags = [], focusText = '' } = completionData || {}
-  const isTimebox = tags.includes('mode:timebox')
+  const { predictedSeconds = null, actualSeconds = 0, tags = [], focusText = '' } = completionData || {}
+  // It's timebox mode if predictedSeconds is null or has the timebox tag
+  const isTimebox = predictedSeconds === null || tags.includes('mode:timebox')
 
   // Calculate error percentage (positive = took longer, negative = finished faster)
-  const errorPercent = ((actualSeconds - predictedSeconds) / predictedSeconds) * 100
+  // Only calculate if we have a prediction (not timebox mode)
+  const errorPercent = predictedSeconds !== null && predictedSeconds > 0
+    ? ((actualSeconds - predictedSeconds) / predictedSeconds) * 100
+    : 0
   const absError = Math.abs(errorPercent)
-  const isWithinOne = absError <= 1
-  const isWithinTen = absError <= 10
+  const isWithinOne = !isTimebox && absError <= 1
+  const isWithinTen = !isTimebox && absError <= 10
 
   // Load sessions on mount
   useEffect(() => {
@@ -144,6 +148,11 @@ export function Completion() {
 
   // Fire confetti on mount
   useEffect(() => {
+    if (isTimebox) {
+      // Timebox gets simple confetti
+      startSimpleConfetti(settings.accentColor)
+      return
+    }
     if (isWithinOne) {
       // Perfect confetti - never stops
       return startPerfectConfetti()
@@ -154,14 +163,14 @@ export function Completion() {
       // Simple side-firing confetti for other cases
       startSimpleConfetti(settings.accentColor)
     }
-  }, [isWithinOne, isWithinTen, settings.accentColor])
+  }, [isTimebox, isWithinOne, isWithinTen, settings.accentColor])
 
   // Listen for Enter key to continue
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
         clearCompletionData()
-        setScreen('new-focus')
+        setScreen('timer')
       }
     }
 
@@ -234,7 +243,7 @@ export function Completion() {
 
         {/* Details */}
         <div className="text-center space-y-1 text-zinc-500 text-lg">
-          <span className="text-zinc-400">{formatDuration(predictedSeconds)}</span> predicted
+          <span className="text-zinc-400">{formatDuration(predictedSeconds ?? 0)}</span> predicted
           {' → '}
           <span className="text-zinc-400">{formatDuration(actualSeconds)}</span> actual
         </div>

@@ -7,7 +7,7 @@ const TIMER_TICK_INTERVAL = 200; // milliseconds - update frequency for timer di
 
 interface TimerState {
   focusText: string
-  predictedSeconds: number
+  predictedSeconds: number | null  // null = timebox mode
   startTime: Date
   adjustmentSeconds: number
 }
@@ -77,7 +77,10 @@ export function useTimerEngine(timerState: TimerState | null): TimerEngineResult
     if (isOvertime && !wasOvertime) {
       // Just crossed into overtime (e.g., after adding time with k then it ran out again)
       playBell(settings.customBellPath)
-      showNotification('Time\'s up!', `You focused on ${timerState.focusText} for ${formatDuration(elapsed)}`, settings.notificationCommand)
+      const message = timerState.focusText
+        ? `You focused on ${timerState.focusText} for ${formatDuration(elapsed)}`
+        : `Timer finished after ${formatDuration(elapsed)}`
+      showNotification('Time\'s up!', message, settings.notificationCommand)
       setWasOvertime(true)
     } else if (!isOvertime && wasOvertime) {
       // Exited overtime (e.g., added time with k)

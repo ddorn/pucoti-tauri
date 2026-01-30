@@ -44,9 +44,9 @@ export interface Settings {
   lastUsedDuration: number; // in seconds
   lastUsedTimerType: 'predict' | 'timebox' | 'ai-ab';
 
-  // Default duration behavior
-  defaultDurationMode: 'none' | 'last' | 'fixed'; // How to set default duration in NewFocus screen
-  defaultDurationSeconds: number; // Fixed duration in seconds (used when defaultDurationMode is 'fixed')
+  // Default duration behavior (currently unused after UI redesign)
+  defaultDurationMode: 'none' | 'last' | 'fixed';
+  defaultDurationSeconds: number; // Fixed duration in seconds
 
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)

@@ -7,20 +7,22 @@ import { getRandomAccentColor } from '../lib/colors'
 import { setSmallMode, setNormalMode } from '../lib/window'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
-export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings' | 'completion';
+export type Screen = 'timer' | 'stats' | 'settings' | 'completion';
 export type DisplayMode = 'normal' | 'zen' | 'small'
 
+const DEFAULT_COUNTDOWN_SECONDS = 300 // 5 minutes
+
 export interface TimerState {
-  focusText: string
-  predictedSeconds: number
+  focusText: string              // Empty string if no intent
+  predictedSeconds: number | null  // null = timebox mode
   startTime: Date
-  adjustmentSeconds: number
+  adjustmentSeconds: number      // The countdown target (default 300, reset when prediction set)
   tags: string[];
 }
 
 export interface CompletionData {
   focusText: string;
-  predictedSeconds: number;
+  predictedSeconds: number | null;  // null for timebox mode
   actualSeconds: number;
   tags: string[];
 }
@@ -41,10 +43,11 @@ interface AppContextValue extends AppState {
   setDisplayMode: (mode: DisplayMode) => void
 
   // Timer actions
-  startTimer: (focusText: string, predictedSeconds: number, tags: string[], timerType: 'predict' | 'timebox' | 'ai-ab') => void
+  setIntentAndPrediction: (intent: string, seconds: number | null) => void
   adjustTimer: (seconds: number) => void
   completeTimer: () => Promise<void>
   cancelTimer: () => Promise<void>
+  resetTimer: () => void  // Reset to default state (5m countdown, no intent)
 
   // Timer engine values (computed from hook)
   elapsed: number
@@ -62,12 +65,22 @@ interface AppProviderProps {
   children: ReactNode
 }
 
+function createDefaultTimerState(): TimerState {
+  return {
+    focusText: '',
+    predictedSeconds: null,
+    startTime: new Date(),
+    adjustmentSeconds: DEFAULT_COUNTDOWN_SECONDS,
+    tags: [],
+  }
+}
+
 export function AppProvider({ children }: AppProviderProps) {
   const { settings, updateSettings } = useSettings()
   const [state, setState] = useState<AppState>({
-    screen: 'new-focus',
+    screen: 'timer',
     displayMode: 'normal',
-    timerState: null,
+    timerState: createDefaultTimerState(),
     completionData: null,
     showConfetti: false,
   })
@@ -78,11 +91,12 @@ export function AppProvider({ children }: AppProviderProps) {
   // Sync timer state to D-Bus for GNOME panel indicator (always on Linux)
   useDbusSync(state.timerState, remaining, isOvertime)
 
-  // Handle window close: save current session with status 'unknown' if timer is active
+  // Handle window close: save current session with status 'unknown' if there's an active intent
   useEffect(() => {
     const window = getCurrentWindow();
     const unlisten = window.onCloseRequested(async () => {
-      if (state.timerState) {
+      // Only save if there's an intent (focusText) set
+      if (state.timerState?.focusText) {
         try {
           // Calculate elapsed time from start time
           const startTime = state.timerState.startTime;
@@ -92,7 +106,7 @@ export function AppProvider({ children }: AppProviderProps) {
           await appendSession({
             timestamp: startTime,
             focusText: state.timerState.focusText,
-            predictedSeconds: state.timerState.predictedSeconds,
+            predictedSeconds: state.timerState.predictedSeconds ?? 0,
             actualSeconds,
             status: 'unknown',
             tags: state.timerState.tags,
@@ -112,36 +126,44 @@ export function AppProvider({ children }: AppProviderProps) {
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }))
   const setDisplayMode = (displayMode: DisplayMode) => setState(s => ({ ...s, displayMode }))
 
-  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], timerType: 'predict' | 'timebox' | 'ai-ab') => {
-    // Calculate initial adjustment based on timer start percentage (predict mode only)
-    const initialAdjustment = timerType === 'predict'
-      ? Math.round(predictedSeconds * (settings.timerStartPercentage / 100 - 1))
-      : 0
+  const setIntentAndPrediction = useCallback(async (intent: string, seconds: number | null) => {
+    // Calculate initial adjustment based on timer start percentage (prediction mode only)
+    const initialAdjustment = seconds !== null
+      ? Math.round(seconds * (settings.timerStartPercentage / 100 - 1))
+      : DEFAULT_COUNTDOWN_SECONDS
+
+    const hasPrediction = seconds !== null
+    const tags = hasPrediction ? ['mode:predict'] : ['mode:timebox']
 
     setState(s => ({
       ...s,
-      screen: 'timer',
       displayMode: settings.onTimerStart === 'corner' ? 'small' : s.displayMode,
       timerState: {
-        focusText,
-        predictedSeconds,
+        focusText: intent,
+        predictedSeconds: seconds,
         startTime: new Date(),
-        adjustmentSeconds: initialAdjustment,
+        adjustmentSeconds: hasPrediction ? initialAdjustment : DEFAULT_COUNTDOWN_SECONDS,
         tags,
       },
     }))
 
-    // Save last used values to settings (persist across restarts)
-    await updateSettings({
-      lastUsedDuration: predictedSeconds,
-      lastUsedTimerType: timerType,
-    })
+    // Save last used duration to settings if prediction was made
+    if (seconds !== null) {
+      await updateSettings({ lastUsedDuration: seconds })
+    }
 
     // Handle window mode change
     if (settings.onTimerStart === 'corner') {
       await setSmallMode(settings)
     }
   }, [settings, updateSettings])
+
+  const resetTimer = useCallback(() => {
+    setState(s => ({
+      ...s,
+      timerState: createDefaultTimerState(),
+    }))
+  }, [])
 
   const adjustTimer = (seconds: number) => {
     setState(s => {
@@ -158,7 +180,8 @@ export function AppProvider({ children }: AppProviderProps) {
 
   const completeTimer = useCallback(async () => {
     const { timerState } = state
-    if (!timerState) return
+    // Can only complete if there's an intent (focusText)
+    if (!timerState || !timerState.focusText) return
 
     // Stop bell
     stopBell()
@@ -176,7 +199,7 @@ export function AppProvider({ children }: AppProviderProps) {
       await appendSession({
         timestamp: timerState.startTime,
         focusText: timerState.focusText,
-        predictedSeconds: timerState.predictedSeconds,
+        predictedSeconds: timerState.predictedSeconds ?? 0,  // Store 0 for timebox sessions
         actualSeconds: elapsed,
         status: 'completed',
         tags: timerState.tags,
@@ -197,7 +220,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setState(s => ({
       ...s,
       screen: 'completion',
-      timerState: null,
+      timerState: createDefaultTimerState(),  // Reset timer instead of null
       completionData,
       showConfetti: false, // Completion screen will handle confetti
     }))
@@ -210,27 +233,29 @@ export function AppProvider({ children }: AppProviderProps) {
     // Stop bell
     stopBell()
 
-    // Save as canceled
-    try {
-      await appendSession({
-        timestamp: timerState.startTime,
-        focusText: timerState.focusText,
-        predictedSeconds: timerState.predictedSeconds,
-        actualSeconds: elapsed,
-        status: 'canceled',
-        tags: timerState.tags,
-      })
-    } catch (err) {
-      console.error('Failed to save session:', err)
+    // Only save session if there was an intent set
+    if (timerState.focusText) {
+      try {
+        await appendSession({
+          timestamp: timerState.startTime,
+          focusText: timerState.focusText,
+          predictedSeconds: timerState.predictedSeconds ?? 0,
+          actualSeconds: elapsed,
+          status: 'canceled',
+          tags: timerState.tags,
+        })
+      } catch (err) {
+        console.error('Failed to save session:', err)
+      }
     }
 
     // Reset window to normal mode
     await setNormalMode(settings)
 
+    // Reset timer to default state (stay on timer screen)
     setState(s => ({
       ...s,
-      screen: 'new-focus',
-      timerState: null,
+      timerState: createDefaultTimerState(),
       showConfetti: false,
     }))
   }, [state, elapsed, stopBell, settings])
@@ -244,10 +269,11 @@ export function AppProvider({ children }: AppProviderProps) {
         ...state,
         setScreen,
         setDisplayMode,
-        startTimer,
+        setIntentAndPrediction,
         adjustTimer,
         completeTimer,
         cancelTimer,
+        resetTimer,
         elapsed,
         remaining,
         isOvertime,
