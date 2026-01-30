@@ -171,6 +171,7 @@ export function Completion() {
       if (e.key === 'Enter') {
         clearCompletionData()
         setScreen('timer')
+        // Note: displayMode is already set to 'normal' in completeTimer
       }
     }
 

@@ -220,6 +220,7 @@ export function AppProvider({ children }: AppProviderProps) {
     setState(s => ({
       ...s,
       screen: 'completion',
+      displayMode: 'normal',  // Explicitly set to normal mode
       timerState: createDefaultTimerState(),  // Reset timer instead of null
       completionData,
       showConfetti: false, // Completion screen will handle confetti

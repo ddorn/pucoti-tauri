@@ -44,6 +44,18 @@ describe('parseCommand', () => {
     it('parses intent with complex compound duration', () => {
       expect(parseCommand('deep work session 2h 15m')).toEqual({ intent: 'deep work session', seconds: 8100 })
     })
+
+    it('parses duration at the start with intent after', () => {
+      expect(parseCommand('1h 30m work')).toEqual({ intent: 'work', seconds: 5400 })
+    })
+
+    it('parses duration at the start with multi-word intent after', () => {
+      expect(parseCommand('45m write the intro')).toEqual({ intent: 'write the intro', seconds: 2700 })
+    })
+
+    it('parses compound duration at the start', () => {
+      expect(parseCommand('2h 15m deep work session')).toEqual({ intent: 'deep work session', seconds: 8100 })
+    })
   })
 
   describe('intent only (no duration)', () => {

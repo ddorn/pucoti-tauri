@@ -36,7 +36,7 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
       onClick={(e) => {
         // Close if clicking backdrop
         if (e.target === e.currentTarget) {
@@ -51,7 +51,7 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="work 25m"
+          placeholder="Set intent and predict duration…"
           className="w-full bg-zinc-900 border-2 border-zinc-700 focus:border-accent rounded-lg
                      text-3xl md:text-4xl text-zinc-100 placeholder-zinc-600
                      px-6 py-4 outline-none transition-colors"
@@ -64,14 +64,14 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
           <div className="mt-4 px-6 py-3 bg-zinc-800/50 rounded-lg text-center">
             {parsed.intent && parsed.seconds !== null && (
               <p className="text-zinc-300 text-lg">
-                Intent: <span className="text-accent font-medium">{parsed.intent}</span>
+                you want to: <span className="text-accent font-medium">{parsed.intent}</span>
                 <span className="mx-3 text-zinc-600">·</span>
-                Duration: <span className="text-accent font-medium">{formatDuration(parsed.seconds)}</span>
+                80% likely to be done in: <span className="text-accent font-medium">{formatDuration(parsed.seconds)}</span>
               </p>
             )}
             {parsed.intent && parsed.seconds === null && (
               <p className="text-zinc-300 text-lg">
-                Intent: <span className="text-accent font-medium">{parsed.intent}</span>
+                you want to: <span className="text-accent font-medium">{parsed.intent}</span>
                 <span className="mx-3 text-zinc-600">·</span>
                 <span className="text-zinc-500">No duration (timebox mode)</span>
               </p>
@@ -80,19 +80,20 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
               <p className="text-zinc-300 text-lg">
                 <span className="text-zinc-500">No intent</span>
                 <span className="mx-3 text-zinc-600">·</span>
-                Duration: <span className="text-accent font-medium">{formatDuration(parsed.seconds)}</span>
+                80% likely to be done in: <span className="text-accent font-medium">{formatDuration(parsed.seconds)}</span>
               </p>
             )}
           </div>
         )}
 
-        <p className="text-center text-zinc-500 text-sm mt-3">
-          Type an intent, duration, or both (e.g., "work 25m")
-          <span className="mx-2">·</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Enter</kbd> to confirm
-          <span className="mx-2">·</span>
-          <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Esc</kbd> to cancel
-        </p>
+        <div className="text-center text-zinc-500 text-sm mt-3">
+          <p>Type an intent, duration, or both (e.g., "thank my friend 12m")</p>
+          <p className="mt-1">
+            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Enter</kbd> to confirm
+            <span className="mx-2">·</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Esc</kbd> to cancel
+          </p>
+        </div>
       </div>
     </div>
   )
