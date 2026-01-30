@@ -112,6 +112,11 @@ export function Timer() {
           if (timerState?.focusText) {
             await completeTimer()
           } else {
+            // If in small mode, transition to normal mode when opening palette
+            if (displayMode === 'small') {
+              setDisplayMode('normal')
+              await setNormalMode(settings)
+            }
             setPaletteOpen(true)
           }
           break
