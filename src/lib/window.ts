@@ -114,8 +114,8 @@ class SwayPlatform implements WindowPlatform {
     const { smallWindowWidth, smallWindowHeight, smallWindowBorderless,
       cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
 
-    const display = await this.getDisplaySize();
-    const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight, {
+    const workspace = await this.getDisplaySize();
+    const positions = calculateCornerPositions(workspace, smallWindowWidth, smallWindowHeight, {
       cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft,
     });
     const pos = positions[corner];
@@ -124,12 +124,13 @@ class SwayPlatform implements WindowPlatform {
 
     // 'border none/normal' controls Sway's native decorations (title bar + edge)
     // smallWindowBorderless setting controls Sway's 'border' command
+    // Use 'move position' (relative to workspace) which naturally handles swaybar and multi-monitor
     const command = [
       'fullscreen disable',
       'floating enable',
       `border ${smallWindowBorderless ? 'none' : 'normal'}`,
       `resize set ${smallWindowWidth} ${smallWindowHeight}`,
-      `move absolute position ${pos.x} ${pos.y}`,
+      `move position ${pos.x} ${pos.y}`,
       'sticky enable'
     ].join(', ')
 
@@ -150,12 +151,13 @@ class SwayPlatform implements WindowPlatform {
     console.log('[window] Sway - Normal mode:', normalWindowWidth + 'x' + normalWindowHeight);
 
     // We don't explicitly set border here - leaving it to user's Sway config defaults
-    // Combine all commands into a single swaymsg call
+    // Use 'move position center' (not 'move absolute position') to center on current output
     const command = [
       `resize set ${normalWindowWidth} ${normalWindowHeight}`,
-      'move absolute position center'
+      'move position center'
     ].join(', ')
 
+    console.log('[window] Executing swaymsg:', command);
     const cmd = Command.create('run-swaymsg', [command])
     const result = await cmd.execute();
     console.log('[window] swaymsg result - code:', result.code);
@@ -165,47 +167,51 @@ class SwayPlatform implements WindowPlatform {
     await window.setDecorations(false);
   }
 
-  async getDisplaySize(): Promise<{ width: number; height: number; }> {
-    // Use swaymsg for accurate multi-monitor output info
+  async getDisplaySize(): Promise<{ width: number; height: number; x: number; y: number; }> {
+    // Use swaymsg to get workspace dimensions (usable area excluding swaybar)
     try {
-      const cmd = Command.create('run-swaymsg', ['-t', 'get_outputs']);
+      const cmd = Command.create('run-swaymsg', ['-t', 'get_workspaces']);
       const result = await cmd.execute();
-      console.log('[window] swaymsg get_outputs - code:', result.code);
+      console.log('[window] swaymsg get_workspaces - code:', result.code);
 
       if (result.code === 0) {
-        const outputs = JSON.parse(result.stdout);
+        const workspaces = JSON.parse(result.stdout);
 
-        // Prefer focused output
-        const focused = outputs.find((o: { focused: boolean; }) => o.focused);
+        // Find the focused workspace
+        const focused = workspaces.find((w: { focused: boolean; }) => w.focused);
         if (focused?.rect) {
-          console.log('[window] Display:', focused.rect.width + 'x' + focused.rect.height, '(focused output)');
-          return { width: focused.rect.width, height: focused.rect.height };
+          console.log('[window] Workspace:', focused.rect.width + 'x' + focused.rect.height,
+            'at offset (' + focused.rect.x + ', ' + focused.rect.y + ') (focused workspace)');
+          return {
+            width: focused.rect.width,
+            height: focused.rect.height,
+            x: focused.rect.x,
+            y: focused.rect.y
+          };
         }
 
-        // Fallback: find output containing current window
-        if (outputs.length > 0) {
-          const window = getCurrentWindow();
-          const windowPos = await window.outerPosition();
-          const currentOutput = outputs.find((o: { rect: { x: number; y: number; width: number; height: number; }; }) => {
-            const rect = o.rect;
-            return windowPos.x >= rect.x && windowPos.x < rect.x + rect.width &&
-              windowPos.y >= rect.y && windowPos.y < rect.y + rect.height;
-          }) || outputs[0];
-
-          if (currentOutput?.rect) {
-            console.log('[window] Display:', currentOutput.rect.width + 'x' + currentOutput.rect.height, '(current output)');
-            return { width: currentOutput.rect.width, height: currentOutput.rect.height };
-          }
+        // Fallback to first visible workspace
+        const visible = workspaces.find((w: { visible: boolean; }) => w.visible);
+        if (visible?.rect) {
+          console.log('[window] Workspace:', visible.rect.width + 'x' + visible.rect.height,
+            'at offset (' + visible.rect.x + ', ' + visible.rect.y + ') (visible workspace)');
+          return {
+            width: visible.rect.width,
+            height: visible.rect.height,
+            x: visible.rect.x,
+            y: visible.rect.y
+          };
         }
       }
     } catch (err) {
-      console.error('[window] swaymsg getDisplaySize failed:', err);
+      console.error('[window] swaymsg get_workspaces failed:', err);
     }
 
     // Fallback to default platform's method
     console.log('[window] Sway falling back to Tauri window API');
     const defaultPlatform = new DefaultPlatform();
-    return defaultPlatform.getDisplaySize();
+    const size = await defaultPlatform.getDisplaySize();
+    return { ...size, x: 0, y: 0 };
   }
 }
 
