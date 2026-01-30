@@ -37,7 +37,7 @@ export function EstimationHistogram({
     const p97Index = Math.floor(sortedErrors.length * 0.97)
     const p97Value = sortedErrors[p97Index] || 100
 
-    const minError = Math.min(-100, currentError - 20)
+    const minError = Math.min(-100, currentError - 30)
     const maxError = Math.max(100, currentError + 20, p97Value)
     const range: [number, number] = [minError, maxError]
 
@@ -106,10 +106,26 @@ export function EstimationHistogram({
       },
     ]
 
+    // Add stem for "this prediction" marker
+    shapes.push({
+      type: 'line',
+      xref: 'x',
+      yref: 'paper',
+      x0: currentError,
+      x1: currentError,
+      y0: 0,
+      y1: 0.6,
+      line: {
+        color: accentPalette.base,
+        width: 2,
+      },
+      layer: 'above',
+    })
+
     // Add "this prediction" marker for current session
     traces.push({
       x: [currentError],
-      y: [0],
+      y: [0.5],
       mode: 'markers+text',
       type: 'scatter',
       marker: {
@@ -122,7 +138,7 @@ export function EstimationHistogram({
         },
       },
       text: ['this prediction'],
-      textposition: 'bottom center',
+      textposition: 'top center',
       textfont: {
         color: accentPalette.base,
         size: 11,
