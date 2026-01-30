@@ -1,6 +1,7 @@
 import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell'
+import { info, error as logError } from '@tauri-apps/plugin-log'
 import { getDataDir } from './paths'
 import type { Corner } from './window'
 
@@ -51,6 +52,9 @@ export interface Settings {
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
 
+  // Completion hook
+  completionCommand: string; // Shell command to run on timer completion with {focus}, {predicted}, {actual} placeholders
+
   // GNOME panel indicator (Linux only)
   useGnomePanelIndicator: boolean;
 }
@@ -78,6 +82,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultDurationMode: 'none', // No default duration
   defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
+  completionCommand: '',
   useGnomePanelIndicator: false,
 }
 
@@ -138,6 +143,35 @@ export async function executeCustomNotification(title: string, body: string, com
     return true
   } catch (err) {
     console.error('Custom notification command failed:', err)
+    return false
+  }
+}
+
+/**
+ * Execute completion hook command with placeholder substitution.
+ * Returns true if command was executed, false if no command configured.
+ */
+export async function executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean> {
+  if (!command.trim()) {
+    return false
+  }
+
+  focus = focus.replace(/'/g, "'\\''")
+
+  const substituted = command
+    .replace(/\{focus\}/g, `'${focus}'`)
+    .replace(/\{predicted\}/g, String(predicted))
+    .replace(/\{actual\}/g, String(actual))
+
+  try {
+    const cmd = Command.create('run-sh', ['-c', substituted.trim()])
+    const result = await cmd.execute()
+    if (result.stdout) await info(`[completion-hook] stdout: ${result.stdout}`)
+    if (result.stderr) await logError(`[completion-hook] stderr: ${result.stderr}`)
+    if (result.code !== 0) await logError(`[completion-hook] exited with code ${result.code}`)
+    return true
+  } catch (err) {
+    await logError(`[completion-hook] command failed: ${err}`)
     return false
   }
 }
