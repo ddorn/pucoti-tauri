@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { appendSession } from '../lib/storage';
+import { executeCompletionHook } from '../lib/settings';
 import { useTimerEngine } from '../hooks/useTimerEngine'
 import { useDbusSync } from '../hooks/useDbusSync'
 import { useSettings } from './SettingsContext'
@@ -183,6 +184,16 @@ export function AppProvider({ children }: AppProviderProps) {
       })
     } catch (err) {
       console.error('Failed to save session:', err)
+    }
+
+    // Run completion hook
+    if (settings.completionCommand) {
+      executeCompletionHook(
+        timerState.focusText,
+        timerState.predictedSeconds,
+        elapsed,
+        settings.completionCommand,
+      ).catch(err => console.error('Completion hook failed:', err))
     }
 
     // Change color if random mode is enabled
