@@ -50,14 +50,14 @@ export function ModeTabButton({
       onClick={onClick}
       title={title}
       className={clsx(
-        "h-8 rounded-full flex items-center justify-center transition-all text-sm",
+        "h-8 px-3 rounded-full flex items-center justify-center gap-1.5 transition-all text-sm",
         isActive
-          ? `${COLOR_CLASSES[activeColor]} px-3 gap-1.5`
-          : "w-8 text-zinc-600/70 hover:text-zinc-500 hover:bg-zinc-800"
+          ? COLOR_CLASSES[activeColor]
+          : "text-zinc-400 hover:text-zinc-300 hover:bg-zinc-800"
       )}
     >
       <span>{emoji}</span>
-      {isActive && <span className="text-xs font-medium">{label}</span>}
+      <span className="text-xs font-medium">{label}</span>
     </button>
   )
 }
