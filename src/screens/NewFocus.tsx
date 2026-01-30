@@ -36,7 +36,7 @@ const QUESTIONS = [
 ]
 
 
-type SessionMode = 'predict' | 'timebox' | 'ai-ab';
+type TimerType = 'predict' | 'timebox' | 'ai-ab';
 
 function BlankInput({
   value,
@@ -99,14 +99,14 @@ export function NewFocus() {
   const [focusText, setFocusText] = useState('')
   const [timeInput, setTimeInput] = useState('')
   const [question, setQuestion] = useState(QUESTIONS[0])
-  const [mode, setMode] = useState<SessionMode>('predict')
+  const [timerType, setTimerType] = useState<TimerType>('predict')
   const [focusedInput, setFocusedInput] = useState<'focus' | 'time' | null>('focus')
   const focusInputRef = useRef<HTMLInputElement>(null)
   const timeInputRef = useRef<HTMLInputElement>(null)
 
   const parsedSeconds = parseTime(timeInput)
   const isValid = focusText.trim() && parsedSeconds !== null && parsedSeconds > 0
-  const isTimebox = mode === 'timebox';
+  const isTimebox = timerType === 'timebox';
 
   // Pick a random question on mount
   useEffect(() => {
@@ -129,10 +129,10 @@ export function NewFocus() {
     }
   }, [settings.defaultDurationMode, settings.lastUsedDuration, settings.defaultDurationSeconds])
 
-  // Initialize with last used mode
+  // Initialize with last used timer type
   useEffect(() => {
-    setMode(settings.lastUsedMode);
-  }, [settings.lastUsedMode])
+    setTimerType(settings.lastUsedTimerType);
+  }, [settings.lastUsedTimerType])
 
   // Fire confetti on mount if we just completed a session
   useEffect(() => {
@@ -188,7 +188,9 @@ export function NewFocus() {
   const handleStart = async () => {
     if (!isValid || parsedSeconds === null) return
 
-    await startTimer(focusText.trim(), parsedSeconds, [`mode:${mode}`], mode)
+    // TODO: Consider renaming tag prefix from 'mode:' to 'type:' once we have a migration system
+    // Tags use 'mode:' prefix for backwards compatibility with existing session data
+    await startTimer(focusText.trim(), parsedSeconds, [`mode:${timerType}`], timerType)
   }
 
   const handleFocusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -210,12 +212,12 @@ export function NewFocus() {
   return (
     <div className="flex flex-col items-center justify-center flex-1 p-8">
       <div className="w-full max-w-md lg:max-w-xl 2xl:scale-175 xl:scale-125">
-        {/* Mode tabs */}
+        {/* Timer type tabs */}
         <div className="flex gap-2 mb-8">
           <ModeTabButton
             mode="predict"
-            currentMode={mode}
-            onClick={() => setMode('predict')}
+            currentMode={timerType}
+            onClick={() => setTimerType('predict')}
             title="Prediction mode"
             emoji="⏱️"
             label="Predict"
@@ -223,8 +225,8 @@ export function NewFocus() {
           />
           <ModeTabButton
             mode="timebox"
-            currentMode={mode}
-            onClick={() => setMode('timebox')}
+            currentMode={timerType}
+            onClick={() => setTimerType('timebox')}
             title="Time box mode (no prediction)"
             emoji="🎯"
             label="Time Box"
@@ -233,8 +235,8 @@ export function NewFocus() {
           {settings.enableAiProductivityExperiment && (
             <ModeTabButton
               mode="ai-ab"
-              currentMode={mode}
-              onClick={() => setMode('ai-ab')}
+              currentMode={timerType}
+              onClick={() => setTimerType('ai-ab')}
               title="AI Productivity Experiment"
               emoji="🎲"
               label="AI Productivity"

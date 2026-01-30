@@ -42,7 +42,7 @@ export interface Settings {
 
   // Last used values
   lastUsedDuration: number; // in seconds
-  lastUsedMode: 'predict' | 'timebox' | 'ai-ab';
+  lastUsedTimerType: 'predict' | 'timebox' | 'ai-ab';
 
   // Default duration behavior
   defaultDurationMode: 'none' | 'last' | 'fixed'; // How to set default duration in NewFocus screen
@@ -74,7 +74,7 @@ export const DEFAULT_SETTINGS: Settings = {
   accentColor: 'amber',
   randomColorOnCompletion: false,
   lastUsedDuration: 20 * 60, // 20 minutes
-  lastUsedMode: 'predict',
+  lastUsedTimerType: 'predict',
   defaultDurationMode: 'none', // No default duration
   defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
@@ -91,6 +91,13 @@ export async function loadSettings(): Promise<Settings> {
   try {
     const content = await readTextFile(path)
     const saved = JSON.parse(content)
+
+    // Migration: rename lastUsedMode → lastUsedTimerType (if old key exists)
+    if ('lastUsedMode' in saved && !('lastUsedTimerType' in saved)) {
+      saved.lastUsedTimerType = saved.lastUsedMode
+      delete saved.lastUsedMode
+    }
+
     // Merge with defaults to handle new settings added in updates
     return { ...DEFAULT_SETTINGS, ...saved }
   } catch (err) {

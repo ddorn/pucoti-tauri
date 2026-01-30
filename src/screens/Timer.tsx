@@ -9,8 +9,8 @@ import clsx from 'clsx'
 export function Timer() {
   const {
     timerState,
-    timerMode,
-    setTimerMode,
+    displayMode,
+    setDisplayMode,
     adjustTimer,
     completeTimer,
     cancelTimer,
@@ -66,36 +66,36 @@ export function Timer() {
       switch (e.key.toLowerCase()) {
         case 'tab':
           e.preventDefault()
-          if (timerMode === 'zen') {
-            setTimerMode('normal')
-          } else if (timerMode === 'normal') {
-            setTimerMode('zen');
-          } else if (timerMode === 'small') {
-            setTimerMode('zen')
+          if (displayMode === 'zen') {
+            setDisplayMode('normal')
+          } else if (displayMode === 'normal') {
+            setDisplayMode('zen');
+          } else if (displayMode === 'small') {
+            setDisplayMode('zen')
           }
           break
 
         case ' ':
           e.preventDefault()
-          if (timerMode === 'small') {
-            setTimerMode('normal')
+          if (displayMode === 'small') {
+            setDisplayMode('normal')
             await setNormalMode(settings)
-          } else if (timerMode === 'normal') {
-            setTimerMode('small')
+          } else if (displayMode === 'normal') {
+            setDisplayMode('small')
             await setSmallMode(settings)
-          } else if (timerMode === 'zen') {
-            setTimerMode('small');
+          } else if (displayMode === 'zen') {
+            setDisplayMode('small');
             await setSmallMode(settings)
           }
           break
 
         case 'c':
-          if (timerMode === 'small') {
+          if (displayMode === 'small') {
             const newCorner = nextCorner(settings.corner);
             await updateSettings({ corner: newCorner });
             await setSmallMode({ ...settings, corner: newCorner })
           } else {
-            setTimerMode('small');
+            setDisplayMode('small');
             await setSmallMode(settings)
           }
           break
@@ -112,7 +112,7 @@ export function Timer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [timerMode, settings, setTimerMode, updateSettings, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
+  }, [displayMode, settings, setDisplayMode, updateSettings, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
 
   if (!timerState) {
     return (
@@ -122,8 +122,8 @@ export function Timer() {
     )
   }
 
-  // Zen and Small modes: minimal display with prominent intent
-  if (timerMode === 'zen' || timerMode === 'small') {
+  // Zen and Small display modes: minimal display with prominent intent
+  if (displayMode === 'zen' || displayMode === 'small') {
     const countdown = formatCountdown(remaining);
     const countdownLength = countdown.length;
 

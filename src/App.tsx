@@ -12,10 +12,10 @@ import { applyAccentColor } from './lib/colors';
 import clsx from 'clsx'
 
 function AppContent() {
-  const { screen, timerMode, setScreen, timerState } = useApp()
+  const { screen, displayMode, setScreen, timerState } = useApp()
 
-  // Hide navbar only when there's an active timer in small or zen mode
-  const showNavbar = !timerState || timerMode === 'normal'
+  // Hide navbar only when there's an active timer in small or zen display mode
+  const showNavbar = !timerState || displayMode === 'normal'
 
   // Show mini timer when there's an active timer but we're not on the timer screen
   const showMiniTimer = timerState && screen !== 'timer'

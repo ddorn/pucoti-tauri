@@ -8,7 +8,7 @@ import { setSmallMode, setNormalMode } from '../lib/window'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
 export type Screen = 'new-focus' | 'timer' | 'stats' | 'settings' | 'completion';
-export type TimerMode = 'normal' | 'zen' | 'small'
+export type DisplayMode = 'normal' | 'zen' | 'small'
 
 export interface TimerState {
   focusText: string
@@ -27,7 +27,7 @@ export interface CompletionData {
 
 interface AppState {
   screen: Screen
-  timerMode: TimerMode
+  displayMode: DisplayMode
   timerState: TimerState | null
   completionData: CompletionData | null
   showConfetti: boolean;
@@ -37,11 +37,11 @@ interface AppContextValue extends AppState {
   // Navigation
   setScreen: (screen: Screen) => void
 
-  // Timer mode (zen, small, normal)
-  setTimerMode: (mode: TimerMode) => void
+  // Display mode (zen, small, normal)
+  setDisplayMode: (mode: DisplayMode) => void
 
   // Timer actions
-  startTimer: (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => void
+  startTimer: (focusText: string, predictedSeconds: number, tags: string[], timerType: 'predict' | 'timebox' | 'ai-ab') => void
   adjustTimer: (seconds: number) => void
   completeTimer: () => Promise<void>
   cancelTimer: () => Promise<void>
@@ -66,7 +66,7 @@ export function AppProvider({ children }: AppProviderProps) {
   const { settings, updateSettings } = useSettings()
   const [state, setState] = useState<AppState>({
     screen: 'new-focus',
-    timerMode: 'normal',
+    displayMode: 'normal',
     timerState: null,
     completionData: null,
     showConfetti: false,
@@ -110,18 +110,18 @@ export function AppProvider({ children }: AppProviderProps) {
   }, [state.timerState])
 
   const setScreen = (screen: Screen) => setState(s => ({ ...s, screen }))
-  const setTimerMode = (timerMode: TimerMode) => setState(s => ({ ...s, timerMode }))
+  const setDisplayMode = (displayMode: DisplayMode) => setState(s => ({ ...s, displayMode }))
 
-  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], mode: 'predict' | 'timebox' | 'ai-ab') => {
+  const startTimer = useCallback(async (focusText: string, predictedSeconds: number, tags: string[], timerType: 'predict' | 'timebox' | 'ai-ab') => {
     // Calculate initial adjustment based on timer start percentage (predict mode only)
-    const initialAdjustment = mode === 'predict'
+    const initialAdjustment = timerType === 'predict'
       ? Math.round(predictedSeconds * (settings.timerStartPercentage / 100 - 1))
       : 0
 
     setState(s => ({
       ...s,
       screen: 'timer',
-      timerMode: settings.onTimerStart === 'corner' ? 'small' : s.timerMode,
+      displayMode: settings.onTimerStart === 'corner' ? 'small' : s.displayMode,
       timerState: {
         focusText,
         predictedSeconds,
@@ -134,7 +134,7 @@ export function AppProvider({ children }: AppProviderProps) {
     // Save last used values to settings (persist across restarts)
     await updateSettings({
       lastUsedDuration: predictedSeconds,
-      lastUsedMode: mode,
+      lastUsedTimerType: timerType,
     })
 
     // Handle window mode change
@@ -243,7 +243,7 @@ export function AppProvider({ children }: AppProviderProps) {
       value={{
         ...state,
         setScreen,
-        setTimerMode,
+        setDisplayMode,
         startTimer,
         adjustTimer,
         completeTimer,
