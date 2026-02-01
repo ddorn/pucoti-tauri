@@ -404,7 +404,10 @@ export function Settings() {
             <Radio value="minimize" color={settings.accentColor} />
             <Label>Minimize window</Label>
             <Description>
-              Minimize the window on timer start. This is primarily useful on GNOME when using the panel extension that displays the timer in the top panel.
+              Minimize the window on timer start.
+              {extensionStatus && extensionStatus !== 'not-gnome' && (
+                <> This is primarily useful when using the GNOME panel extension that displays the timer in the top panel.</>
+              )}
             </Description>
           </RadioField>
         </RadioGroup>

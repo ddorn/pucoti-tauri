@@ -1,16 +1,34 @@
 import { useEffect, useRef } from 'react'
 import { timerMachine } from '../lib/timer-machine'
 import { invoke } from '@tauri-apps/api/core'
+import { useSettings } from '../context/SettingsContext'
+import { detectGnome } from '../lib/gnome-extension'
 
 /**
  * Subscriber hook that syncs timer state to D-Bus for GNOME panel indicator.
- * Silently fails on non-Linux platforms.
+ * Only runs when useGnomePanelIndicator setting is enabled AND running on GNOME.
+ * Silently fails on non-GNOME platforms.
  */
 export function useDbusSubscriber() {
+  const { settings } = useSettings()
   const lastUpdateRef = useRef<string>('')
 
   useEffect(() => {
-    const unsubscribe = timerMachine.subscribe(event => {
+    // Only subscribe if GNOME panel indicator is enabled
+    if (!settings.useGnomePanelIndicator) {
+      return
+    }
+
+    // Check if we're actually running on GNOME
+    let unsubscribe: (() => void) | undefined
+    let isActive = true
+
+    detectGnome().then(isGnome => {
+      if (!isActive || !isGnome) {
+        return
+      }
+
+      unsubscribe = timerMachine.subscribe(event => {
       if (event.type === 'tick') {
         const state = timerMachine.getState()
         const focusText = state?.focusText ?? ''
@@ -39,7 +57,13 @@ export function useDbusSubscriber() {
         }).catch(() => {})
       }
     })
+    })
 
-    return unsubscribe
-  }, [])
+    return () => {
+      isActive = false
+      if (unsubscribe) {
+        unsubscribe()
+      }
+    }
+  }, [settings.useGnomePanelIndicator])
 }
