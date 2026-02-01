@@ -109,7 +109,7 @@ class DefaultPlatform implements WindowPlatform {
  */
 class SwayPlatform implements WindowPlatform {
   async setCornerMode(settings: Settings): Promise<void> {
-    const { smallWindowWidth, smallWindowHeight, smallWindowBorderless,
+    const { smallWindowWidth, smallWindowHeight,
       cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
 
     const workspace = await this.getDisplaySize();

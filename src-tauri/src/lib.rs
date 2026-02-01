@@ -2,6 +2,7 @@
 const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
 
 use tauri::Manager;
+use tauri_plugin_cli::CliExt;
 
 #[cfg(target_os = "linux")]
 mod dbus_service;
@@ -82,7 +83,44 @@ fn update_timer_state(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_cli::init())
     .setup(|app| {
+      // Handle CLI arguments
+      match app.cli().matches() {
+        Ok(matches) => {
+          // Check if help flag was passed (occurrences > 0)
+          if let Some(data) = matches.args.get("help") {
+            if data.occurrences > 0 {
+              println!("Pucoti {}", app.package_info().version);
+              println!();
+              println!("A timer to stay on track and make predictions to overcome the planning fallacy.");
+              println!();
+              println!("Pucoti helps you track predicted vs actual task durations and provides");
+              println!("calibration statistics to improve your time estimation accuracy over time.");
+              println!();
+              println!("USAGE:");
+              println!("    pucoti [OPTIONS]");
+              println!();
+              println!("OPTIONS:");
+              println!("    -h, --help       Print help information");
+              println!("    -v, --version    Print version information");
+              std::process::exit(0);
+            }
+          }
+
+          // Check if version flag was passed (occurrences > 0)
+          if let Some(data) = matches.args.get("version") {
+            if data.occurrences > 0 {
+              println!("Pucoti {}", app.package_info().version);
+              std::process::exit(0);
+            }
+          }
+        }
+        Err(_) => {
+          // No CLI args, continue normally
+        }
+      }
+
       // Enable logging in both debug and release modes
       let log_level = if cfg!(debug_assertions) {
         log::LevelFilter::Debug
