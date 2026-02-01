@@ -100,17 +100,17 @@ export function Timer() {
 
         case 'enter':
           e.preventDefault()
-          // If there's an intent set, complete the timer
-          // Otherwise, open the command palette
-          if (timerState?.focusText) {
-            timerMachine.complete()
-          } else {
+          // Open command palette only if there's no focus AND no prediction
+          // Otherwise, complete the timer (which shows completion screen)
+          if (!timerState?.focusText && timerState?.predictedSeconds === null) {
             // If in small mode, transition to normal mode when opening palette
             if (displayMode === 'small') {
               setDisplayMode('normal')
               await setNormalMode(settings)
             }
             setPaletteOpen(true)
+          } else {
+            timerMachine.complete()
           }
           break
 

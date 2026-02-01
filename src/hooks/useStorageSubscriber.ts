@@ -21,7 +21,7 @@ export function useStorageSubscriber() {
         }).catch(err => console.error('Failed to save session:', err))
       }
 
-      if (event.type === 'canceled' && event.state.focusText) {
+      if (event.type === 'canceled') {
         appendSession({
           timestamp: event.state.startTime,
           focusText: event.state.focusText,
@@ -37,7 +37,7 @@ export function useStorageSubscriber() {
     const window = getCurrentWindow()
     const unlistenPromise = window.onCloseRequested(async () => {
       const state = timerMachine.getState()
-      if (state?.focusText) {
+      if (state) {
         const computed = timerMachine.getComputed()
         try {
           await appendSession({

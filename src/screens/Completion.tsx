@@ -219,20 +219,18 @@ export function Completion() {
         {/* Headline */}
         <div className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold text-zinc-100">
-            {errorPercent === 0 ? (
+            You took{' '}
+            <span style={{ color: errorColor }}>
+              {errorPercent === 0
+                ? 'exactly as long as predicted'
+                : errorPercent > 0
+                  ? `${absError.toFixed(0)}% longer`
+                  : `${absError.toFixed(0)}% less time`}
+            </span>
+            {errorPercent !== 0 && ' than predicted'}
+            {focusText && (
               <>
-                You took{' '}
-                <span style={{ color: errorColor }}>exactly as long as predicted</span>
                 {' '}to{' '}
-                <span className="text-accent">{focusText}</span>
-              </>
-            ) : (
-              <>
-                You took{' '}
-                <span style={{ color: errorColor }}>
-                  {errorPercent > 0 ? `${absError.toFixed(0)}% longer` : `${absError.toFixed(0)}% less time`}
-                </span>
-                {' '}than predicted to{' '}
                 <span className="text-accent">{focusText}</span>
               </>
             )}
