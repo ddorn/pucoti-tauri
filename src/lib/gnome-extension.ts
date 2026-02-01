@@ -9,12 +9,38 @@ export type ExtensionStatus =
   | 'disabled'          // Extension is installed but disabled
   | 'not-loaded'        // Files exist but GNOME hasn't loaded it (needs re-login)
   | 'not-installed'     // Extension files not found
-  | 'not-gnome'         // Not running GNOME (gnome-extensions command not found)
+  | 'not-gnome'         // Not running GNOME
+
+/**
+ * Detect if currently running under GNOME (not just if GNOME is installed)
+ * Checks $XDG_CURRENT_DESKTOP which is set by the desktop environment
+ */
+export async function detectGnome(): Promise<boolean> {
+  try {
+    const cmd = Command.create('run-sh', ['-c', 'echo $XDG_CURRENT_DESKTOP']);
+    const result = await cmd.execute();
+    const desktop = result.stdout.trim().toLowerCase();
+    console.log('[gnome] XDG_CURRENT_DESKTOP:', desktop);
+
+    // Handle various GNOME variants: "GNOME", "ubuntu:GNOME", "pop:GNOME", etc.
+    const isGnome = desktop.includes('gnome');
+    console.log('[gnome] Running under GNOME:', isGnome);
+    return isGnome;
+  } catch (err) {
+    console.error('[gnome] GNOME detection failed:', err);
+    return false;
+  }
+}
 
 /**
  * Check the status of the GNOME extension.
  */
 export async function getExtensionStatus(): Promise<ExtensionStatus> {
+  // First check if we're actually running GNOME
+  if (!await detectGnome()) {
+    return 'not-gnome';
+  }
+
   try {
     // Try to get extension info via gnome-extensions command
     const cmd = Command.create('run-sh', ['-c', `gnome-extensions info ${EXTENSION_UUID}`])
@@ -37,8 +63,8 @@ export async function getExtensionStatus(): Promise<ExtensionStatus> {
 
     return 'not-installed'
   } catch {
-    // gnome-extensions command not available - not on GNOME
-    return 'not-gnome'
+    // gnome-extensions command not available
+    return 'not-installed'
   }
 }
 
