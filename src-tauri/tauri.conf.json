@@ -32,21 +32,7 @@
   "plugins": {
     "cli": {
       "description": "A timer to stay on track and make predictions to overcome the planning fallacy.",
-      "longDescription": "Pucoti helps you track predicted vs actual task durations and provides calibration statistics to improve your time estimation accuracy over time.",
-      "args": [
-        {
-          "name": "version",
-          "short": "v",
-          "takesValue": false,
-          "description": "Print version information"
-        },
-        {
-          "name": "help",
-          "short": "h",
-          "takesValue": false,
-          "description": "Print help information"
-        }
-      ]
+      "longDescription": "Pucoti helps you track predicted vs actual task durations and provides calibration statistics to improve your time estimation accuracy over time ."
     }
   },
   "bundle": {
