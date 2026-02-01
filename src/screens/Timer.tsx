@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
+import { useTimerState } from '../hooks/useTimerState'
+import { timerMachine } from '../lib/timer-machine'
 import { formatCountdown, formatDuration } from '../lib/format'
 import { setSmallMode, setNormalMode, nextCorner } from '../lib/window';
 import { Text } from '../components/catalyst/text'
@@ -8,20 +10,11 @@ import { CommandPalette } from '../components/CommandPalette'
 import { type ParsedCommand } from '../lib/command-parser'
 import clsx from 'clsx'
 
-export function Timer() {
-  const {
-    timerState,
-    displayMode,
-    setDisplayMode,
-    setIntentAndPrediction,
-    adjustTimer,
-    completeTimer,
-    cancelTimer,
-    elapsed,
-    remaining,
-    isOvertime,
-  } = useApp()
+const DEFAULT_COUNTDOWN_SECONDS = 300
 
+export function Timer() {
+  const { displayMode, setDisplayMode } = useApp()
+  const { timerState, elapsed, remaining, isOvertime } = useTimerState()
   const { settings, updateSettings } = useSettings()
 
   // Command palette state
@@ -46,25 +39,25 @@ export function Timer() {
         const targetSeconds = minutes * 60
         // Calculate adjustment needed: delta = target_remaining - current_remaining
         const delta = targetSeconds - remaining
-        adjustTimer(delta)
+        timerMachine.adjust(delta)
         return
       }
 
       // Handle j/k case-sensitively: lowercase = ±1 min, uppercase (Shift+j/k) = ±5 min
       if (e.key === 'j') {
-        adjustTimer(-60) // -1 minute
+        timerMachine.adjust(-60) // -1 minute
         return
       }
       if (e.key === 'k') {
-        adjustTimer(60) // +1 minute
+        timerMachine.adjust(60) // +1 minute
         return
       }
       if (e.key === 'J') {
-        adjustTimer(-300) // -5 minutes
+        timerMachine.adjust(-300) // -5 minutes
         return
       }
       if (e.key === 'K') {
-        adjustTimer(300) // +5 minutes
+        timerMachine.adjust(300) // +5 minutes
         return
       }
 
@@ -110,7 +103,7 @@ export function Timer() {
           // If there's an intent set, complete the timer
           // Otherwise, open the command palette
           if (timerState?.focusText) {
-            await completeTimer()
+            timerMachine.complete()
           } else {
             // If in small mode, transition to normal mode when opening palette
             if (displayMode === 'small') {
@@ -122,22 +115,32 @@ export function Timer() {
           break
 
         case 'q':
-          await cancelTimer()
+          timerMachine.cancel()
+          // Reset to default countdown
+          timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [])
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [displayMode, settings, setDisplayMode, updateSettings, adjustTimer, completeTimer, cancelTimer, timerState, remaining])
+  }, [displayMode, settings, setDisplayMode, updateSettings, timerState, remaining])
 
   const handlePaletteSubmit = useCallback((parsed: ParsedCommand) => {
     setPaletteOpen(false)
     // Only update if there's something to set
     if (parsed.intent || parsed.seconds !== null) {
-      setIntentAndPrediction(parsed.intent, parsed.seconds)
+      const hasPrediction = parsed.seconds !== null
+      const tags = hasPrediction ? ['mode:predict'] : ['mode:timebox']
+
+      // Calculate initial adjustment based on timer start percentage (prediction mode only)
+      const initialAdjustment = hasPrediction
+        ? Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
+        : DEFAULT_COUNTDOWN_SECONDS
+
+      timerMachine.start(parsed.intent, parsed.seconds, initialAdjustment, tags)
     }
-  }, [setIntentAndPrediction])
+  }, [settings.timerStartPercentage])
 
   const handlePaletteClose = useCallback(() => {
     setPaletteOpen(false)

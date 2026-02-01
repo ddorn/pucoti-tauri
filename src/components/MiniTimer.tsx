@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext'
+import { useTimerState } from '../hooks/useTimerState'
 import { formatCountdown } from '../lib/format'
 import clsx from 'clsx'
 
@@ -7,7 +8,8 @@ import clsx from 'clsx'
  * Clicking navigates to the full timer screen.
  */
 export function MiniTimer() {
-  const { timerState, remaining, isOvertime, setScreen } = useApp()
+  const { setScreen } = useApp()
+  const { timerState, remaining, isOvertime } = useTimerState()
 
   if (!timerState) return null
 
