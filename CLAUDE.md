@@ -38,30 +38,77 @@ npm run test:watch       # Run tests in watch mode
 
 ### State Management Architecture
 
-The app uses React Context for global state with two primary providers:
+The app uses a centralized timer state machine with React hooks for subscriptions:
 
 1. **SettingsProvider** (`src/context/SettingsContext.tsx`)
    - Manages user settings (window sizes, notification commands, margins, etc.)
    - Persists settings to disk via Tauri filesystem API
    - Wraps entire app at top level
 
-2. **AppProvider** (`src/context/AppContext.tsx`)
-   - Core timer state and navigation
-   - Timer modes: 'normal', 'zen', 'small' (affects UI and window behavior)
-   - Timer lifecycle: start, adjust, complete, cancel
-   - Lives inside SettingsProvider and calls `useSettings()` directly for access to all settings
+2. **TimerMachine** (`src/lib/timer-machine.ts`) - **Singleton State Machine**
+   - Pure TypeScript class (no React dependencies)
+   - Single source of truth for all timer state
+   - Commands: `start()`, `adjust()`, `complete()`, `cancel()`, `reset()`
+   - Events: `started`, `adjusted`, `tick`, `overtime_entered`, `overtime_exited`, `completed`, `canceled`
+   - State: `focusText`, `predictedSeconds`, `startTime`, `adjustmentSeconds`, `tags`
+   - Computed values: `elapsed`, `remaining`, `isOvertime` (calculated from `startTime`, not interval-based)
+   - Updates at 200ms intervals for smooth UI
 
-**Bridge Component**: `App.tsx` contains `AppWithSettings` that provides lifecycle callbacks (onTimerStart, onTimerComplete, onTimerCancel) to AppProvider for window management. AppProvider accesses settings directly via `useSettings()` hook.
+3. **AppProvider** (`src/context/AppContext.tsx`)
+   - Manages UI state only: `screen`, `displayMode`, `completionData`
+   - Mounts subscriber hooks that react to timer events
+   - Components access UI state via `useApp()` hook
 
-### Timer Engine (`src/hooks/useTimerEngine.ts`)
+**Key Pattern**: Components call `timerMachine` directly for commands (e.g., `timerMachine.start()`, `timerMachine.adjust(60)`). No wrapper functions needed.
 
-Core timer logic runs at app level (persists across screen navigation):
-- Calculates elapsed/remaining time from `startTime` (not interval-based)
-- Detects overtime and triggers notifications
-- Manages bell ringing (plays once on overtime, then repeats every 20s)
-- Updates display at 200ms intervals for smooth UI
+### Timer Subscribers (Event-Driven Side Effects)
 
-Key insight: Timer state includes `adjustmentSeconds` to handle +/- time adjustments (j/k keys) without resetting the start time.
+The timer machine uses an event-driven architecture where independent subscriber hooks handle side effects:
+
+1. **useBellSubscriber** (`src/hooks/useBellSubscriber.ts`)
+   - Plays bell on `overtime_entered` event
+   - Shows OS notification with elapsed time
+   - Manages repeating bell interval (configurable, default 20s)
+   - Uses `useSettings()` for bell path and interval
+
+2. **useStorageSubscriber** (`src/hooks/useStorageSubscriber.ts`)
+   - Appends session to CSV on `completed` and `canceled` events
+   - Handles window close: saves with status 'unknown' if timer active
+   - Uses `appendSession()` from `src/lib/storage.ts`
+
+3. **useDbusSubscriber** (`src/hooks/useDbusSubscriber.ts`)
+   - Syncs timer state to GNOME panel indicator on every `tick`
+   - Throttles updates to avoid redundant D-Bus calls
+   - Silently fails on non-Linux platforms
+
+4. **useWindowSubscriber** (`src/hooks/useWindowSubscriber.ts`)
+   - On `started`: switches to corner mode if configured AND timer has content (focusText or prediction)
+   - On `completed`/`canceled`: switches back to normal mode
+   - User-triggered mode changes (Tab, Space, c keys) handled directly in Timer.tsx
+
+All subscribers are mounted in AppProvider and run independently without knowing about each other.
+
+### Timer State Access in React
+
+**For reactive updates** (components that need to re-render on every tick):
+```typescript
+import { useTimerState } from '../hooks/useTimerState'
+
+const { timerState, elapsed, remaining, isOvertime } = useTimerState()
+```
+Uses `useSyncExternalStore` internally - only components using this hook re-render on tick.
+
+**For commands** (calling timer methods):
+```typescript
+import { timerMachine } from '../lib/timer-machine'
+
+timerMachine.start(focusText, predictedSeconds, adjustmentSeconds, tags)
+timerMachine.adjust(60)  // Add 1 minute
+timerMachine.complete()
+timerMachine.cancel()
+```
+
+**Key Insight**: Timer state includes `adjustmentSeconds` to handle +/- time adjustments (j/k keys) without resetting the start time. Elapsed time is always calculated fresh from `startTime` for accuracy.
 
 ### Storage System (`src/lib/storage.ts`)
 
@@ -106,11 +153,15 @@ Flexible duration input supporting:
 
 ## Key Screens
 
-1. **NewFocus** (`src/screens/NewFocus.tsx`): Start new timer with focus text and duration
-2. **Timer** (`src/screens/Timer.tsx`): Active timer display with j/k adjustment keys
-3. **Stats** (`src/screens/Stats.tsx`): Calibration plots and session history
-4. **Settings** (`src/screens/Settings.tsx`): Configure window behavior and notifications
-5. **Completion** (`src/screens/Completion.tsx`): Feedback on estimation accuracy after completing a timer
+1. **Timer** (`src/screens/Timer.tsx`): Active timer display with j/k adjustment keys
+   - Press Enter to open CommandPalette for setting intent/duration
+   - Keyboard shortcuts for time adjustment (j/k, digit keys)
+   - Display modes: normal, zen, small
+2. **Stats** (`src/screens/Stats.tsx`): Calibration plots and session history
+3. **Settings** (`src/screens/Settings.tsx`): Configure window behavior and notifications
+4. **Completion** (`src/screens/Completion.tsx`): Feedback on estimation accuracy after completing a timer
+
+**CommandPalette** (`src/components/CommandPalette.tsx`): Modal overlay for starting timers with intent and duration. Opened via Enter key from Timer screen.
 
 ## Tauri Backend
 
@@ -173,9 +224,11 @@ await updateSettings({ normalWindowWidth: 800 })
 All components (including AppProvider) access settings via the same hook pattern for consistency.
 
 ### Session Management
-- Start timer: creates timer state in memory
-- Complete/Cancel: appends to `sessions.csv`
-- Window close: if timer is active, saves session with status 'unknown'
+
+Handled by `useStorageSubscriber` hook:
+- Start timer: `timerMachine.start()` creates timer state in memory, emits `started` event
+- Complete/Cancel: `timerMachine.complete()`/`cancel()` emit events, subscriber appends to `sessions.csv`
+- Window close: subscriber detects active timer via `timerMachine.getState()`, saves session with status 'unknown'
 
 ## Changelog Management
 
