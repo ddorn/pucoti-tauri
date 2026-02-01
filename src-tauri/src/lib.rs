@@ -4,6 +4,33 @@ const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
 use tauri::Manager;
 use tauri_plugin_cli::CliExt;
 
+/// Format version information with git commit and build details
+fn format_version_info(version: &impl std::fmt::Display) -> String {
+  let commit = option_env!("GIT_COMMIT").unwrap_or("unknown");
+  let headline = option_env!("GIT_COMMIT_HEADLINE").unwrap_or("");
+  let dirty = option_env!("GIT_DIRTY").unwrap_or("false") == "true";
+  let dirty_flag = if dirty { " (dirty)" } else { "" };
+
+  let mut output = format!("Pucoti {} ({}{})", version, commit, dirty_flag);
+
+  if !headline.is_empty() {
+    output.push_str(&format!("\nCommit: {}", headline));
+  }
+
+  // Format build timestamp
+  if let Some(timestamp) = option_env!("BUILD_TIMESTAMP") {
+    if let Ok(ts) = timestamp.parse::<i64>() {
+      // Format as ISO 8601 date
+      let datetime = chrono::DateTime::from_timestamp(ts, 0);
+      if let Some(dt) = datetime {
+        output.push_str(&format!("\nBuilt: {}", dt.format("%Y-%m-%d %H:%M:%S UTC")));
+      }
+    }
+  }
+
+  output
+}
+
 #[cfg(target_os = "linux")]
 mod dbus_service;
 
@@ -82,44 +109,40 @@ fn update_timer_state(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+  // Handle --version and --help BEFORE initializing Tauri to avoid conflicts
+  // with auto-generated flags from tauri-plugin-cli
+  let args: Vec<String> = std::env::args().collect();
+
+  // Check for --help or -h
+  if args.iter().any(|arg| arg == "--help" || arg == "-h") {
+    // We'll get the version from Cargo.toml via env var set at compile time
+    let version = env!("CARGO_PKG_VERSION");
+    println!("Pucoti {}", version);
+    println!();
+    println!("A timer to stay on track and make predictions to overcome the planning fallacy.");
+    println!();
+    println!("Pucoti helps you track predicted vs actual task durations and provides");
+    println!("calibration statistics to improve your time estimation accuracy over time.");
+    println!();
+    println!("USAGE:");
+    println!("    pucoti [OPTIONS]");
+    println!();
+    println!("OPTIONS:");
+    println!("    -h, --help       Print help information");
+    println!("    -v, --version    Print version information");
+    std::process::exit(0);
+  }
+
+  // Check for --version or -v
+  if args.iter().any(|arg| arg == "--version" || arg == "-v") {
+    let version = env!("CARGO_PKG_VERSION");
+    println!("{}", format_version_info(&version));
+    std::process::exit(0);
+  }
+
   tauri::Builder::default()
     .plugin(tauri_plugin_cli::init())
     .setup(|app| {
-      // Handle CLI arguments
-      match app.cli().matches() {
-        Ok(matches) => {
-          // Check if help flag was passed (occurrences > 0)
-          if let Some(data) = matches.args.get("help") {
-            if data.occurrences > 0 {
-              println!("Pucoti {}", app.package_info().version);
-              println!();
-              println!("A timer to stay on track and make predictions to overcome the planning fallacy.");
-              println!();
-              println!("Pucoti helps you track predicted vs actual task durations and provides");
-              println!("calibration statistics to improve your time estimation accuracy over time.");
-              println!();
-              println!("USAGE:");
-              println!("    pucoti [OPTIONS]");
-              println!();
-              println!("OPTIONS:");
-              println!("    -h, --help       Print help information");
-              println!("    -v, --version    Print version information");
-              std::process::exit(0);
-            }
-          }
-
-          // Check if version flag was passed (occurrences > 0)
-          if let Some(data) = matches.args.get("version") {
-            if data.occurrences > 0 {
-              println!("Pucoti {}", app.package_info().version);
-              std::process::exit(0);
-            }
-          }
-        }
-        Err(_) => {
-          // No CLI args, continue normally
-        }
-      }
 
       // Enable logging in both debug and release modes
       let log_level = if cfg!(debug_assertions) {
