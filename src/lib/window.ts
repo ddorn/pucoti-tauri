@@ -104,8 +104,6 @@ class DefaultPlatform implements WindowPlatform {
  *
  * Decorations on Sway:
  * - Sway manages native window decorations (title bar + border edge) via 'border' command
- *   - 'border none' = no title bar, no edge
- *   - 'border normal' = Sway's title bar + border edge
  * - Tauri also renders its own client-side title bar independently
  * - To avoid double title bars, we disable Tauri decorations and let Sway handle everything
  */
@@ -122,13 +120,13 @@ class SwayPlatform implements WindowPlatform {
 
     console.log('[window] Sway - Corner mode:', corner, 'position:', pos, 'size:', smallWindowWidth + 'x' + smallWindowHeight)
 
-    // 'border none/normal' controls Sway's native decorations (title bar + edge)
+    // 'border none/normal/pixel' controls Sway's native decorations (title bar + edge)
     // smallWindowBorderless setting controls Sway's 'border' command
     // Use 'move position' (relative to workspace) which naturally handles swaybar and multi-monitor
     const command = [
       'fullscreen disable',
       'floating enable',
-      `border ${smallWindowBorderless ? 'none' : 'normal'}`,
+      `border pixel`,
       `resize set ${smallWindowWidth} ${smallWindowHeight}`,
       `move position ${pos.x} ${pos.y}`,
       'sticky enable'
@@ -265,8 +263,6 @@ async function getPlatform(): Promise<WindowPlatform> {
  * On Sway:
  * - Tauri's client-side decorations are ALWAYS disabled (setDecorations(false))
  * - Sway manages native window decorations via 'border' command:
- *   - 'border none' = no title bar, no border edge
- *   - 'border normal' = Sway's native title bar + border edge
  * - smallWindowBorderless setting controls Sway's 'border' command only
  *
  * On other platforms (macOS, Windows, other Linux WMs):
