@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { timerMachine } from '../lib/timer-machine'
 import { useSettings } from './SettingsContext'
 import { getRandomAccentColor } from '../lib/colors'
@@ -7,6 +7,7 @@ import { useStorageSubscriber } from '../hooks/useStorageSubscriber'
 import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
 import { executeCompletionHook } from '../lib/settings'
+import { setSmallMode, setNormalMode } from '../lib/window'
 
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
 export type DisplayMode = 'normal' | 'zen' | 'small'
@@ -51,6 +52,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useStorageSubscriber()
   useDbusSubscriber()
   useWindowSubscriber(setDisplayMode)
+
+  // Keep settings ref up to date so we always use latest settings without depending on them
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  // Automatically apply window mode changes when displayMode changes
+  useEffect(() => {
+    if (displayMode === 'normal') {
+      setNormalMode(settingsRef.current).catch(console.error);
+    } else if (displayMode === 'small') {
+      setSmallMode(settingsRef.current).catch(console.error);
+    }
+    // zen mode is UI-only, no window function needed
+
+    // Corner is changed by directly updating the settings.
+    // Is this a good thing? It's probably fine.
+  }, [displayMode, settings.corner])
 
   // Subscribe to timer events for screen navigation and completion data
   useEffect(() => {

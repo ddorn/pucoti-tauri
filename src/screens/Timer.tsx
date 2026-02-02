@@ -3,8 +3,8 @@ import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
 import { useTimerState } from '../hooks/useTimerState'
 import { timerMachine } from '../lib/timer-machine'
-import { formatCountdown, formatDuration } from '../lib/format'
-import { setSmallMode, setNormalMode, nextCorner } from '../lib/window';
+import { formatDuration } from '../lib/format';
+import { nextCorner, setSmallMode } from '../lib/window';
 import { Text } from '../components/catalyst/text'
 import { CommandPalette } from '../components/CommandPalette'
 import { CountdownDisplay } from '../components/CountdownDisplay';
@@ -70,7 +70,8 @@ export function Timer() {
           } else if (displayMode === 'normal') {
             setDisplayMode('zen');
           } else if (displayMode === 'small') {
-            setDisplayMode('zen')
+            // Prevent corner-to-zen transition
+            setDisplayMode('normal')
           }
           break
 
@@ -78,13 +79,8 @@ export function Timer() {
           e.preventDefault()
           if (displayMode === 'small') {
             setDisplayMode('normal')
-            await setNormalMode(settings)
-          } else if (displayMode === 'normal') {
-            setDisplayMode('small')
-            await setSmallMode(settings)
-          } else if (displayMode === 'zen') {
+          } else {
             setDisplayMode('small');
-            await setSmallMode(settings)
           }
           break
 
@@ -95,7 +91,6 @@ export function Timer() {
             await setSmallMode({ ...settings, corner: newCorner })
           } else {
             setDisplayMode('small');
-            await setSmallMode(settings)
           }
           break
 
@@ -104,10 +99,9 @@ export function Timer() {
           // Open command palette only if there's no focus AND no prediction
           // Otherwise, complete the timer (which shows completion screen)
           if (!timerState?.focusText && timerState?.predictedSeconds === null) {
-            // If in small mode, transition to normal mode when opening palette
-            if (displayMode === 'small') {
+            // Ensure we're in normal mode when opening palette
+            if (displayMode !== 'normal') {
               setDisplayMode('normal')
-              await setNormalMode(settings)
             }
             setPaletteOpen(true)
           } else {
