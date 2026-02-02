@@ -2,7 +2,6 @@
 const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
 
 use tauri::Manager;
-use tauri_plugin_cli::CliExt;
 
 /// Format version information with git commit and build details
 fn format_version_info(version: &impl std::fmt::Display) -> String {
