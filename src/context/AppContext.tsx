@@ -101,7 +101,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Initialize timer on mount
   useEffect(() => {
     // Start with default countdown state
-    timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [])
+    timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
   }, [])
 
   const clearCompletionData = () => setCompletionData(null)

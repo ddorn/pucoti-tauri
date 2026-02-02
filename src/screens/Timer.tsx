@@ -115,9 +115,8 @@ export function Timer() {
           break
 
         case 'q':
-          timerMachine.cancel()
-          // Reset to default countdown
-          timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [])
+          // Reset to default countdown (cancel any running timer)
+          timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
           break
       }
     }
@@ -138,7 +137,8 @@ export function Timer() {
         ? Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
         : DEFAULT_COUNTDOWN_SECONDS
 
-      timerMachine.start(parsed.intent, parsed.seconds, initialAdjustment, tags)
+      // Cancel previous timer when starting new task
+      timerMachine.start(parsed.intent, parsed.seconds, initialAdjustment, tags, 'cancel')
     }
   }, [settings.timerStartPercentage])
 

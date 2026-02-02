@@ -54,12 +54,24 @@ export class TimerMachine {
     return { elapsed, remaining, isOvertime: remaining < 0 }
   }
 
+  /**
+   * Start a new timer.
+   * @param ifRunning - What to do if a timer is already running: 'complete' or 'cancel'
+   */
   start(
     focusText: string,
     predictedSeconds: number | null,
     adjustmentSeconds: number,
-    tags: string[]
+    tags: string[],
+    ifRunning: 'complete' | 'cancel'
   ) {
+    if (this.state) {
+      if (ifRunning === 'complete') {
+        this.complete()
+      } else {
+        this.cancel()
+      }
+    }
     this.state = {
       focusText,
       predictedSeconds,
