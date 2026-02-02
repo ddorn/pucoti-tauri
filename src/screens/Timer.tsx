@@ -7,15 +7,15 @@ import { formatCountdown, formatDuration } from '../lib/format'
 import { setSmallMode, setNormalMode, nextCorner } from '../lib/window';
 import { Text } from '../components/catalyst/text'
 import { CommandPalette } from '../components/CommandPalette'
+import { CountdownDisplay } from '../components/CountdownDisplay';
 import { type ParsedCommand } from '../lib/command-parser'
 import clsx from 'clsx'
-import { COLOR_PALETTES } from '../lib/colors';
 
 const DEFAULT_COUNTDOWN_SECONDS = 300
 
 export function Timer() {
   const { displayMode, setDisplayMode } = useApp()
-  const { timerState, elapsed, remaining, isOvertime } = useTimerState()
+  const { timerState, elapsed, remaining } = useTimerState()
   const { settings, updateSettings } = useSettings()
 
   // Command palette state
@@ -173,17 +173,11 @@ export function Timer() {
             {timerState.focusText}
           </p>
         )}
-        <p
-          className={clsx(
-            'font-timer font-bold tracking-tight leading-none',
-            isOvertime ? 'text-red-500' : 'text-zinc-100'
-          )}
-          style={{
-            fontSize: countDownFontSize,
-            textShadow: isOvertime ? '' : `0px 4px 0px ${COLOR_PALETTES[settings.accentColor].base}` }}
-        >
-          {countdown}
-        </p>
+        <CountdownDisplay
+          remaining={remaining}
+          accentColor={settings.accentColor}
+          autoscale
+        />
       </div>
     )
   }
@@ -202,15 +196,12 @@ export function Timer() {
           </p>
 
           {/* Big countdown - viewport proportional */}
-          <p
-            className={clsx(
-              'font-timer text-[18vw] md:text-[12vw] font-bold tracking-tight leading-none',
-              isOvertime ? 'text-red-500' : 'text-zinc-100',
-            )}
-            style={{ textShadow: isOvertime ? '' : `0px 4px 0px ${COLOR_PALETTES[settings.accentColor].base}` }}
-          >
-            {formatCountdown(remaining)}
-          </p>
+          <CountdownDisplay
+            remaining={remaining}
+            accentColor={settings.accentColor}
+            className="h-[33vh]!"
+            autoscale
+          />
 
           {/* Elapsed / Predicted - only show if there's a prediction */}
           {timerState.predictedSeconds !== null && (

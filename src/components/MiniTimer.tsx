@@ -1,6 +1,6 @@
 import { useApp } from '../context/AppContext'
 import { useTimerState } from '../hooks/useTimerState'
-import { formatCountdown } from '../lib/format'
+import { CountdownDisplay } from './CountdownDisplay';
 import clsx from 'clsx'
 
 /**
@@ -26,14 +26,10 @@ export function MiniTimer() {
       <span className="text-accent text-sm font-medium truncate max-w-[120px]">
         {timerState.focusText}
       </span>
-      <span
-        className={clsx(
-          'font-timer text-sm font-bold',
-          isOvertime ? 'text-red-500' : 'text-zinc-100'
-        )}
-      >
-        {formatCountdown(remaining)}
-      </span>
+      <CountdownDisplay
+        remaining={remaining}
+        className="text-sm"
+      />
     </button>
   )
 }
