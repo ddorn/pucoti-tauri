@@ -115,63 +115,43 @@ export async function saveSettings(settings: Settings): Promise<void> {
 }
 
 /**
- * Execute custom notification command with placeholder substitution.
- * Returns true if command was executed, false if no custom command configured.
+ * Execute a shell command template with placeholder substitution.
+ * String values are shell-escaped and quoted, numbers are substituted raw.
  */
-/**
- * Execute custom notification command with placeholder substitution.
- * Returns true if command was executed, false if no custom command configured.
- */
-export async function executeCustomNotification(title: string, body: string, command: string): Promise<boolean> {
+async function executeShellTemplate(
+  command: string,
+  placeholders: Record<string, string | number>,
+  label: string,
+): Promise<boolean> {
   if (!command.trim()) {
     return false
   }
 
-  // Escape title and body for shell
-  title = title.replace(/'/g, "'\\''")
-  body = body.replace(/'/g, "'\\''")
-
-  const substituted = command
-    .replace(/\{title\}/g, `'${title}'`)
-    .replace(/\{body\}/g, `'${body}'`)
-
-  try {
-    // Use scoped sh command with -c to execute arbitrary shell commands
-    // This works because run-sh has args: true, allowing any arguments
-    const cmd = Command.create('run-sh', ['-c', substituted.trim()])
-    await cmd.execute()
-    return true
-  } catch (err) {
-    console.error('Custom notification command failed:', err)
-    return false
+  let substituted = command
+  for (const [key, value] of Object.entries(placeholders)) {
+    const replacement = typeof value === 'string'
+      ? `'${value.replace(/'/g, "'\\''")}'`
+      : String(value)
+    substituted = substituted.replaceAll(`{${key}}`, replacement)
   }
-}
-
-/**
- * Execute completion hook command with placeholder substitution.
- * Returns true if command was executed, false if no command configured.
- */
-export async function executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean> {
-  if (!command.trim()) {
-    return false
-  }
-
-  focus = focus.replace(/'/g, "'\\''")
-
-  const substituted = command
-    .replace(/\{focus\}/g, `'${focus}'`)
-    .replace(/\{predicted\}/g, String(predicted))
-    .replace(/\{actual\}/g, String(actual))
 
   try {
     const cmd = Command.create('run-sh', ['-c', substituted.trim()])
     const result = await cmd.execute()
-    if (result.stdout) await info(`[completion-hook] stdout: ${result.stdout}`)
-    if (result.stderr) await logError(`[completion-hook] stderr: ${result.stderr}`)
-    if (result.code !== 0) await logError(`[completion-hook] exited with code ${result.code}`)
+    if (result.stdout) await info(`[${label}] stdout: ${result.stdout}`)
+    if (result.stderr) await logError(`[${label}] stderr: ${result.stderr}`)
+    if (result.code !== 0) await logError(`[${label}] exited with code ${result.code}`)
     return true
   } catch (err) {
-    await logError(`[completion-hook] command failed: ${err}`)
+    await logError(`[${label}] command failed: ${err}`)
     return false
   }
+}
+
+export async function executeCustomNotification(title: string, body: string, command: string): Promise<boolean> {
+  return executeShellTemplate(command, { title, body }, 'notification')
+}
+
+export async function executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean> {
+  return executeShellTemplate(command, { focus, predicted, actual }, 'completion-hook')
 }
