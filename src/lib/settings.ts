@@ -51,6 +51,9 @@ export interface Settings {
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
 
+  // Completion hook
+  completionCommand: string; // Shell command to run on timer completion with {focus}, {predicted}, {actual} placeholders
+
   // GNOME panel indicator (Linux only)
   useGnomePanelIndicator: boolean;
 }
@@ -78,6 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultDurationMode: 'none', // No default duration
   defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
+  completionCommand: '',
   useGnomePanelIndicator: false,
 }
 
@@ -117,34 +121,44 @@ export async function saveSettings(settings: Settings): Promise<void> {
 }
 
 /**
- * Execute custom notification command with placeholder substitution.
- * Returns true if command was executed, false if no custom command configured.
+ * Execute a shell command template with placeholder substitution.
+ * String values are shell-escaped and quoted, numbers are substituted raw.
  */
-/**
- * Execute custom notification command with placeholder substitution.
- * Returns true if command was executed, false if no custom command configured.
- */
-export async function executeCustomNotification(title: string, body: string, command: string): Promise<boolean> {
+async function executeShellTemplate(
+  command: string,
+  placeholders: Record<string, string | number>,
+  label: string,
+): Promise<boolean> {
   if (!command.trim()) {
     return false
   }
 
-  // Escape title and body for shell
-  title = title.replace(/'/g, "'\\''")
-  body = body.replace(/'/g, "'\\''")
-
-  const substituted = command
-    .replace(/\{title\}/g, `'${title}'`)
-    .replace(/\{body\}/g, `'${body}'`)
+  let substituted = command
+  for (const [key, value] of Object.entries(placeholders)) {
+    const replacement = typeof value === 'string'
+      ? `'${value.replace(/'/g, "'\\''")}'`
+      : String(value)
+    substituted = substituted.replaceAll(`{${key}}`, replacement)
+  }
 
   try {
-    // Use scoped sh command with -c to execute arbitrary shell commands
-    // This works because run-sh has args: true, allowing any arguments
     const cmd = Command.create('run-sh', ['-c', substituted.trim()])
-    await cmd.execute()
+    const result = await cmd.execute()
+    console.log(`[${label}] executed command: ${substituted}`)
+    if (result.stdout) console.info(`[${label}] stdout: ${result.stdout}`)
+    if (result.stderr) console.error(`[${label}] stderr: ${result.stderr}`)
+    if (result.code !== 0) console.error(`[${label}] exited with code ${result.code}`)
     return true
   } catch (err) {
-    console.error('Custom notification command failed:', err)
+    console.error(`[${label}] command failed: ${err}`)
     return false
   }
+}
+
+export async function executeCustomNotification(title: string, body: string, command: string): Promise<boolean> {
+  return executeShellTemplate(command, { title, body }, 'notification')
+}
+
+export async function executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean> {
+  return executeShellTemplate(command, { focus, predicted, actual }, 'completion-hook')
 }

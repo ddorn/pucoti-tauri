@@ -8,7 +8,7 @@ import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
 import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
-import { executeCustomNotification } from '../lib/settings'
+import { executeCustomNotification, executeCompletionHook } from '../lib/settings'
 import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
@@ -22,6 +22,7 @@ export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
+  const [testingCompletionHook, setTestingCompletionHook] = useState(false)
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
   const [defaultDurationInput, setDefaultDurationInput] = useState('')
@@ -204,6 +205,45 @@ export function Settings() {
             {testingBell ? 'Playing...' : 'Test Bell'}
           </Button>
         </div>
+      </section>
+
+      {/* Completion Hook */}
+      <section className="space-y-4">
+        <Heading level={2}>Completion Hook</Heading>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Command to run on timer completion
+          </label>
+          <Input
+            type="text"
+            value={settings.completionCommand}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              updateSettings({ completionCommand: e.target.value })
+            }
+            placeholder="notify-send 'Done' '{focus}: {actual}s / {predicted}s'"
+          />
+          <Text className="text-xs">
+            Shell command to run when a timer is completed. Available placeholders: <code className="px-1 py-0.5 rounded bg-zinc-800">{'{focus}'}</code> (focus text), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{predicted}'}</code> (predicted seconds), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{actual}'}</code> (actual seconds).
+          </Text>
+        </div>
+
+        <Button
+          outline
+          onClick={async () => {
+            setTestingCompletionHook(true)
+            try {
+              await executeCompletionHook('Sample task', 300, 420, settings.completionCommand)
+            } catch (err) {
+              console.error('Completion hook test failed:', err)
+            } finally {
+              setTestingCompletionHook(false)
+            }
+          }}
+          disabled={testingCompletionHook || !settings.completionCommand.trim()}
+        >
+          {testingCompletionHook ? 'Running...' : 'Test Hook'}
+        </Button>
       </section>
 
       {/* Timer Behavior */}
