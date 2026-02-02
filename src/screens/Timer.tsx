@@ -157,26 +157,21 @@ export function Timer() {
 
   // Zen and Small display modes: minimal display with prominent intent
   if (displayMode === 'zen' || displayMode === 'small') {
-    const countdown = formatCountdown(remaining);
-    const countdownLength = countdown.length;
-
-    // First is to size wrt the height of the screen, second is to make sure there's enough space for each digit
-    // All the numbers are magic. You can try to find better, but test well.
-    const countDownFontSize = `min(62vh,${100/(countdownLength/1.5)}vw)`;
-    // First is to take the rest of the vertical space, second is to keep it smaller than the countdown
-    const intentFontSize = `min(calc(80vh - ${countDownFontSize}), ${countDownFontSize} * 0.3)`;
+    const intentLength = timerState.focusText?.length || 1;
+    const intentFontSize = `min(25vh, ${250 / intentLength}vh)`;
 
     return (
-      <div className="flex flex-col items-center justify-center h-screen p-1 xs:p-4 select-none overflow-hidden bg-surface">
+      <div className="flex flex-col items-center justify-center h-screen px-[2vw] py-[2vh]">
         {timerState.focusText && (
-          <p className="text-accent mb-[2vh] text-center max-w-[80vw] font-medium overflow-x-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
-            {timerState.focusText}
-          </p>
+            <p className="text-accent text-center max-w-full font-medium overflow-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
+              {timerState.focusText}
+            </p>
         )}
         <CountdownDisplay
           remaining={remaining}
           accentColor={settings.accentColor}
           autoscale
+          className="min-h-[66vh]!"
         />
       </div>
     )
@@ -185,11 +180,11 @@ export function Timer() {
   // Normal mode: full UI with viewport-proportional sizing
   return (
     <>
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 select-none">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 select-none">
         <div className="flex flex-col items-center w-full max-w-2xl">
           {/* Intent - prominent (or placeholder if none) */}
           <p className={clsx(
-            "text-2xl md:text-3xl text-center mb-8 font-medium min-h-[2em]",
+            "text-[10vh] text-center font-medium min-h-[2em] w-full  overflow-hidden overflow-ellipsis whitespace-nowrap",
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
             {timerState.focusText || 'Press Enter to set intent'}
