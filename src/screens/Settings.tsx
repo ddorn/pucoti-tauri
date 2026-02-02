@@ -17,6 +17,7 @@ import { ColorPicker } from '../components/ColorPicker'
 import { parseTime } from '../lib/time-parser';
 import { formatDuration } from '../lib/format'
 import packageJson from '../../package.json'
+import { getRandomAccentColor } from '../lib/colors';
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -528,7 +529,7 @@ export function Settings() {
             value={settings.accentColor}
             onChange={(color) => updateSettings({ accentColor: color, randomColorOnCompletion: false })}
             randomEnabled={settings.randomColorOnCompletion}
-            onRandomToggle={() => updateSettings({ randomColorOnCompletion: true })}
+            onRandomToggle={() => updateSettings({ randomColorOnCompletion: true, accentColor: getRandomAccentColor() })}
           />
           <Text className="text-xs text-zinc-400">
             Choose the accent color used throughout the app.
