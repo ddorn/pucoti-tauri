@@ -9,6 +9,7 @@ import { Text } from '../components/catalyst/text'
 import { CommandPalette } from '../components/CommandPalette'
 import { CountdownDisplay } from '../components/CountdownDisplay';
 import { type ParsedCommand } from '../lib/command-parser'
+import { Kbd } from '../components/Kbd';
 import clsx from 'clsx'
 
 const DEFAULT_COUNTDOWN_SECONDS = 300
@@ -181,7 +182,7 @@ export function Timer() {
             "text-[10vh] text-center font-medium min-h-[2em] w-full  overflow-hidden overflow-ellipsis whitespace-nowrap",
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
-            {timerState.focusText || 'Press Enter to set intent'}
+            {timerState.focusText || 'Enter to set intent'}
           </p>
 
           {/* Big countdown - viewport proportional */}
@@ -230,12 +231,7 @@ function Shortcut({ keys, label }: { keys: string[]; label: string }) {
     <div className="flex items-center gap-2">
       <span className="flex gap-1">
         {keys.map(key => (
-          <kbd
-            key={key}
-            className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 text-xs font-mono"
-          >
-            {key}
-          </kbd>
+          <Kbd key={key}>{key}</Kbd>
         ))}
       </span>
       <Text className="text-sm">{label}</Text>

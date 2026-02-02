@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { parseCommand, type ParsedCommand } from '../lib/command-parser'
 import { formatDuration } from '../lib/format'
+import { Kbd } from './Kbd'
 
 interface CommandPaletteProps {
   onSubmit: (parsed: ParsedCommand) => void
@@ -89,9 +90,9 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
         <div className="text-center text-zinc-500 text-sm mt-3">
           <p>Type an intent, duration, or both (e.g., "thank my friend 12m")</p>
           <p className="mt-1">
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Enter</kbd> to confirm
+            <Kbd>Enter</Kbd> to confirm
             <span className="mx-2">·</span>
-            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">Esc</kbd> to cancel
+            <Kbd>Esc</Kbd> to cancel
           </p>
         </div>
       </div>

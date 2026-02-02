@@ -7,6 +7,7 @@ import { getCompletionRemark } from '../lib/completion-remarks'
 import { formatDuration } from '../lib/format'
 import { COLOR_PALETTES, getRandomAccentColor, type AccentColor } from '../lib/colors';
 import { Text } from '../components/catalyst/text'
+import { Kbd } from '../components/Kbd';
 import confetti from 'canvas-confetti'
 
 // Confetti functions
@@ -196,7 +197,7 @@ export function Completion() {
             You focused for {formatDuration(actualSeconds)}
           </p>
           <Text className="text-center text-xs mt-12 text-zinc-400">
-            Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to continue
+            Press <Kbd>Enter</Kbd> to continue
           </Text>
         </div>
       </div>
@@ -258,7 +259,7 @@ export function Completion() {
 
         {/* Continue prompt */}
         <Text className="text-center text-xs pt-2 text-zinc-400">
-          Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300">Enter</kbd> to continue
+          Press <Kbd>Enter</Kbd> to continue
         </Text>
       </div>
     </div>
