@@ -1,7 +1,6 @@
 import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell'
-import { info, error as logError } from '@tauri-apps/plugin-log'
 import { getDataDir } from './paths'
 import type { Corner } from './window'
 
@@ -138,12 +137,13 @@ async function executeShellTemplate(
   try {
     const cmd = Command.create('run-sh', ['-c', substituted.trim()])
     const result = await cmd.execute()
-    if (result.stdout) await info(`[${label}] stdout: ${result.stdout}`)
-    if (result.stderr) await logError(`[${label}] stderr: ${result.stderr}`)
-    if (result.code !== 0) await logError(`[${label}] exited with code ${result.code}`)
+    console.log(`[${label}] executed command: ${substituted}`)
+    if (result.stdout) console.info(`[${label}] stdout: ${result.stdout}`)
+    if (result.stderr) console.error(`[${label}] stderr: ${result.stderr}`)
+    if (result.code !== 0) console.error(`[${label}] exited with code ${result.code}`)
     return true
   } catch (err) {
-    await logError(`[${label}] command failed: ${err}`)
+    console.error(`[${label}] command failed: ${err}`)
     return false
   }
 }
