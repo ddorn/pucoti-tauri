@@ -9,6 +9,7 @@ import { Text } from '../components/catalyst/text'
 import { CommandPalette } from '../components/CommandPalette'
 import { type ParsedCommand } from '../lib/command-parser'
 import clsx from 'clsx'
+import { COLOR_PALETTES } from '../lib/colors';
 
 const DEFAULT_COUNTDOWN_SECONDS = 300
 
@@ -177,7 +178,9 @@ export function Timer() {
             'font-timer font-bold tracking-tight leading-none',
             isOvertime ? 'text-red-500' : 'text-zinc-100'
           )}
-          style={{ fontSize: countDownFontSize }}
+          style={{
+            fontSize: countDownFontSize,
+            textShadow: isOvertime ? '' : `0px 4px 0px ${COLOR_PALETTES[settings.accentColor].base}` }}
         >
           {countdown}
         </p>
@@ -202,8 +205,9 @@ export function Timer() {
           <p
             className={clsx(
               'font-timer text-[18vw] md:text-[12vw] font-bold tracking-tight leading-none',
-              isOvertime ? 'text-red-500' : 'text-zinc-100'
+              isOvertime ? 'text-red-500' : 'text-zinc-100',
             )}
+            style={{ textShadow: isOvertime ? '' : `0px 4px 0px ${COLOR_PALETTES[settings.accentColor].base}` }}
           >
             {formatCountdown(remaining)}
           </p>
