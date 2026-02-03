@@ -197,10 +197,10 @@ export function Timer() {
   return (
     <>
       <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 select-none">
-        <div className="flex flex-col items-center w-full max-w-2xl">
+        <div className="flex flex-col items-center w-full">
           {/* Intent - prominent (or placeholder if none) */}
           <p className={clsx(
-            "text-[10vh] text-center font-medium min-h-[2em] w-full  overflow-hidden overflow-ellipsis whitespace-nowrap",
+            "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw] overflow-hidden overflow-ellipsis whitespace-nowrap",
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
             {timerState.focusText || 'Enter to set intent'}
@@ -222,7 +222,7 @@ export function Timer() {
           )}
 
           {/* Shortcut hints */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm mt-12 max-w-2xl">
             <Shortcut keys={['Tab']} label="Zen mode" />
             <Shortcut keys={['Space']} label="Toggle corner mode" />
             <Shortcut keys={['j', 'k']} label="±1 minute" />
