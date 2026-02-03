@@ -174,6 +174,7 @@ export async function executePrefillHook(command: string): Promise<string | null
     const result = await cmd.execute()
     if (result.code !== 0) {
       console.error(`[prefill-hook] exited with code ${result.code}`)
+      if (result.stdout) console.error(`[prefill-hook] stdout: ${result.stdout}`)
       if (result.stderr) console.error(`[prefill-hook] stderr: ${result.stderr}`)
       return null
     }
