@@ -44,10 +44,6 @@ export interface Settings {
   lastUsedDuration: number; // in seconds
   lastUsedTimerType: 'predict' | 'timebox' | 'ai-ab';
 
-  // Default duration behavior (currently unused after UI redesign)
-  defaultDurationMode: 'none' | 'last' | 'fixed';
-  defaultDurationSeconds: number; // Fixed duration in seconds
-
   // Timer start percentage
   timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
 
@@ -81,8 +77,6 @@ export const DEFAULT_SETTINGS: Settings = {
   randomColorOnCompletion: false,
   lastUsedDuration: 20 * 60, // 20 minutes
   lastUsedTimerType: 'predict',
-  defaultDurationMode: 'none', // No default duration
-  defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
   completionCommand: '',
   prefillCommand: '',

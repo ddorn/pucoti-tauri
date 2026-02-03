@@ -14,8 +14,6 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { playBell } from '../lib/sound'
 import { ColorPicker } from '../components/ColorPicker'
 import { RadioGroup } from '../components/RadioGroup';
-import { parseTime } from '../lib/time-parser';
-import { formatDuration } from '../lib/format'
 import packageJson from '../../package.json'
 import { getRandomAccentColor } from '../lib/colors';
 import { IconChevronDown } from '@tabler/icons-react'
@@ -30,22 +28,12 @@ export function Settings() {
   const [prefillTestResult, setPrefillTestResult] = useState<string | null>(null)
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
-  const [defaultDurationInput, setDefaultDurationInput] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   // Check extension status on mount
   useEffect(() => {
     getExtensionStatus().then(setExtensionStatus)
   }, [])
-
-  // Initialize default duration input when settings load or change
-  useEffect(() => {
-    if (settings.defaultDurationSeconds > 0) {
-      setDefaultDurationInput(formatDuration(settings.defaultDurationSeconds));
-    } else {
-      setDefaultDurationInput('');
-    }
-  }, [settings.defaultDurationSeconds])
 
   if (loading) {
     return (
@@ -112,12 +100,6 @@ export function Settings() {
     }
   }
 
-  const defaultDurationOptions = [
-    { id: 'none', name: 'None', description: 'Start with an empty duration field' },
-    { id: 'last', name: 'Last used', description: 'Use the duration from your last completed session' },
-    { id: 'fixed', name: 'Fixed duration', description: 'Always use a specific duration' },
-  ]
-
   const timerStartOptions = [
     { id: 'nothing', name: 'Do nothing', description: 'Keep the window in its current state' },
     { id: 'corner', name: 'Switch to corner mode', description: 'Automatically switch to small corner window when starting a timer' },
@@ -146,45 +128,6 @@ export function Settings() {
           <Heading level={2}>
             Timer
           </Heading>
-
-          <div className="space-y-6">
-            <div>
-              <div className={subsectionLabelClasses}>
-                Default duration
-              </div>
-              <RadioGroup
-                name="default-duration"
-                options={defaultDurationOptions}
-                value={settings.defaultDurationMode}
-                onChange={(value) => updateSettings({ defaultDurationMode: value as 'none' | 'last' | 'fixed' })}
-              />
-            </div>
-
-            {settings.defaultDurationMode === 'fixed' && (
-              <div className="ml-7 space-y-3">
-                <div className={subsectionLabelClasses}>
-                  Fixed duration
-                </div>
-                <Input
-                  type="text"
-                  value={defaultDurationInput}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setDefaultDurationInput(value);
-                    const parsed = parseTime(value);
-                    if (parsed !== null && parsed > 0) {
-                      updateSettings({ defaultDurationSeconds: parsed });
-                    }
-                  }}
-                  placeholder="25m"
-                  className="max-w-xs"
-                />
-                <Text className={descriptionClasses}>
-                  Enter duration in formats like "25m", "1h 30m", "45:00", or "12" (minutes)
-                </Text>
-              </div>
-            )}
-          </div>
 
           <div className={subsectionClasses}>
             <div className={subsectionLabelClasses}>
