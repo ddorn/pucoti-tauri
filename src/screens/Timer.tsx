@@ -5,6 +5,7 @@ import { useTimerState } from '../hooks/useTimerState'
 import { timerMachine } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
 import { nextCorner, setSmallMode } from '../lib/window';
+import { executePrefillHook } from '../lib/settings';
 import { Text } from '../components/catalyst/text'
 import { CommandPalette } from '../components/CommandPalette'
 import { CountdownDisplay } from '../components/CountdownDisplay';
@@ -21,6 +22,21 @@ export function Timer() {
 
   // Command palette state
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [paletteInput, setPaletteInput] = useState('')
+  const [paletteLoading, setPaletteLoading] = useState(false)
+
+  const handlePrefill = useCallback(async () => {
+    if (!settings.prefillCommand || paletteLoading) return
+    setPaletteLoading(true)
+    try {
+      const result = await executePrefillHook(settings.prefillCommand)
+      if (result) {
+        setPaletteInput(result)
+      }
+    } finally {
+      setPaletteLoading(false)
+    }
+  }, [settings.prefillCommand, paletteLoading])
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -105,6 +121,11 @@ export function Timer() {
               setDisplayMode('normal')
             }
             setPaletteOpen(true)
+            setPaletteInput('')
+            // Shift+Enter triggers prefill if command is configured
+            if (e.shiftKey && settings.prefillCommand) {
+              handlePrefill()
+            }
           } else {
             timerMachine.complete()
           }
@@ -119,7 +140,7 @@ export function Timer() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [displayMode, settings, setDisplayMode, updateSettings, timerState, remaining])
+  }, [displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, handlePrefill])
 
   const handlePaletteSubmit = useCallback((parsed: ParsedCommand) => {
     setPaletteOpen(false)
@@ -211,6 +232,9 @@ export function Timer() {
             <Shortcut keys={['c']} label="Cycle corners" />
             <Shortcut keys={['q']} label="Cancel" />
             <Shortcut keys={['Enter']} label={timerState.focusText ? "Complete" : "Set intent"} />
+            {settings.prefillCommand && (
+              <Shortcut keys={['Shift', 'Enter']} label="Set intent (prefill)" />
+            )}
           </div>
         </div>
       </div>
@@ -220,6 +244,9 @@ export function Timer() {
         <CommandPalette
           onSubmit={handlePaletteSubmit}
           onClose={handlePaletteClose}
+          value={paletteInput}
+          onChange={setPaletteInput}
+          isLoading={paletteLoading}
         />
       )}
     </>

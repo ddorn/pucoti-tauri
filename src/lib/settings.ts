@@ -54,6 +54,9 @@ export interface Settings {
   // Completion hook
   completionCommand: string; // Shell command to run on timer completion with {focus}, {predicted}, {actual} placeholders
 
+  // Prefill hook
+  prefillCommand: string; // Shell command to run to prefill CommandPalette (output becomes input text)
+
   // GNOME panel indicator (Linux only)
   useGnomePanelIndicator: boolean;
 }
@@ -82,6 +85,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultDurationSeconds: 25 * 60, // 25 minutes (used when defaultDurationMode is 'fixed')
   timerStartPercentage: 100,
   completionCommand: '',
+  prefillCommand: '',
   useGnomePanelIndicator: false,
 }
 
@@ -161,4 +165,21 @@ export async function executeCustomNotification(title: string, body: string, com
 
 export async function executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean> {
   return executeShellTemplate(command, { focus, predicted, actual }, 'completion-hook')
+}
+
+export async function executePrefillHook(command: string): Promise<string | null> {
+  if (!command.trim()) return null
+  try {
+    const cmd = Command.create('run-sh', ['-c', command.trim()])
+    const result = await cmd.execute()
+    if (result.code !== 0) {
+      console.error(`[prefill-hook] exited with code ${result.code}`)
+      if (result.stderr) console.error(`[prefill-hook] stderr: ${result.stderr}`)
+      return null
+    }
+    return result.stdout.trim() || null
+  } catch (err) {
+    console.error(`[prefill-hook] command failed:`, err)
+    return null
+  }
 }

@@ -2,20 +2,30 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { parseCommand, type ParsedCommand } from '../lib/command-parser'
 import { formatDuration } from '../lib/format'
 import { Kbd } from './Kbd'
+import { Spinner } from './Spinner'
 
 interface CommandPaletteProps {
   onSubmit: (parsed: ParsedCommand) => void
   onClose: () => void
+  value?: string
+  onChange?: (value: string) => void
+  isLoading?: boolean
 }
 
-export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
-  const [input, setInput] = useState('')
+export function CommandPalette({ onSubmit, onClose, value, onChange, isLoading }: CommandPaletteProps) {
+  const [internalInput, setInternalInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Focus input on mount
+  // Support both controlled and uncontrolled modes
+  const input = value !== undefined ? value : internalInput
+  const setInput = onChange !== undefined ? onChange : setInternalInput
+
+  // Focus input on mount and when loading completes
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    if (!isLoading) {
+      inputRef.current?.focus()
+    }
+  }, [isLoading])
 
   // Parse command in real-time
   const parsed = useMemo(() => parseCommand(input), [input])
@@ -46,19 +56,28 @@ export function CommandPalette({ onSubmit, onClose }: CommandPaletteProps) {
       }}
     >
       <div className="w-full max-w-2xl px-4">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Set intent and predict duration…"
-          className="w-full bg-zinc-900 border-2 border-zinc-700 focus:border-accent rounded-lg
-                     text-3xl md:text-4xl text-zinc-100 placeholder-zinc-600
-                     px-6 py-4 outline-none transition-colors"
-          autoComplete="off"
-          spellCheck={false}
-        />
+        <div className="relative">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={isLoading ? "Prefilling…" : "Set intent and predict duration…"}
+            disabled={isLoading}
+            className={`w-full bg-zinc-900 border-2 border-zinc-700 focus:border-accent rounded-lg
+                       text-3xl md:text-4xl text-zinc-100 placeholder-zinc-600
+                       px-6 py-4 outline-none transition-colors
+                       ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          {isLoading && (
+            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+              <Spinner />
+            </div>
+          )}
+        </div>
 
         {/* Show parsed result */}
         {input && (
