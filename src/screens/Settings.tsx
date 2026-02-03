@@ -8,7 +8,7 @@ import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
 import { Radio, RadioGroup, RadioField } from '../components/catalyst/radio';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
-import { executeCustomNotification, executeCompletionHook } from '../lib/settings'
+import { executeCustomNotification, executeCompletionHook, executePrefillHook } from '../lib/settings'
 import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { open } from '@tauri-apps/plugin-dialog';
@@ -18,12 +18,15 @@ import { parseTime } from '../lib/time-parser';
 import { formatDuration } from '../lib/format'
 import packageJson from '../../package.json'
 import { getRandomAccentColor } from '../lib/colors';
+import { Kbd } from '../components/Kbd';
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
   const [testingCompletionHook, setTestingCompletionHook] = useState(false)
+  const [testingPrefillHook, setTestingPrefillHook] = useState(false)
+  const [prefillTestResult, setPrefillTestResult] = useState<string | null>(null)
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
   const [defaultDurationInput, setDefaultDurationInput] = useState('')
@@ -245,6 +248,55 @@ export function Settings() {
         >
           {testingCompletionHook ? 'Running...' : 'Test Hook'}
         </Button>
+      </section>
+
+      {/* Prefill Hook */}
+      <section className="space-y-4">
+        <Heading level={2}>Prefill Hook</Heading>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-zinc-300">
+            Command to prefill intent
+          </label>
+          <Input
+            type="text"
+            value={settings.prefillCommand}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              updateSettings({ prefillCommand: e.target.value })
+            }
+            placeholder="echo 'Work on project 25m'"
+          />
+          <Text className="text-xs">
+            Shell command whose stdout will prefill the CommandPalette. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
+          </Text>
+        </div>
+
+        <div className="space-y-2">
+          <Button
+            outline
+            onClick={async () => {
+              setTestingPrefillHook(true)
+              setPrefillTestResult(null)
+              try {
+                const result = await executePrefillHook(settings.prefillCommand)
+                setPrefillTestResult(result ?? '(empty or failed)')
+              } catch (err) {
+                console.error('Prefill hook test failed:', err)
+                setPrefillTestResult('(error)')
+              } finally {
+                setTestingPrefillHook(false)
+              }
+            }}
+            disabled={testingPrefillHook || !settings.prefillCommand.trim()}
+          >
+            {testingPrefillHook ? 'Running...' : 'Test Hook'}
+          </Button>
+          {prefillTestResult !== null && (
+            <Text className="text-xs">
+              Output: <code className="px-1 py-0.5 rounded bg-zinc-800">{prefillTestResult}</code>
+            </Text>
+          )}
+        </div>
       </section>
 
       {/* Timer Behavior */}
