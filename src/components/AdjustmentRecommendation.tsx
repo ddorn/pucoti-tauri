@@ -35,7 +35,7 @@ export function AdjustmentRecommendation({
             <span className="text-emerald-400">Your estimates are spot on!</span>
           )}
         </div>
-        <Text className="text-sm text-zinc-400">
+        <Text className="text-zinc-400">
           Based on {sessionCount} completed sessions
         </Text>
       </div>

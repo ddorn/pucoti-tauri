@@ -31,7 +31,7 @@ export function SessionTable({ sessions }: { sessions: Session[] }) {
       <div className="flex items-center justify-between mb-4">
         <Subheading level={2}>All Sessions</Subheading>
         <div className="flex items-center gap-2">
-          <Text className="text-sm">{relativeTime ? 'Relative time' : 'Absolute time'}</Text>
+          <Text>{relativeTime ? 'Relative time' : 'Absolute time'}</Text>
           <Switch checked={relativeTime} onChange={setRelativeTime} />
         </div>
       </div>
@@ -78,7 +78,7 @@ export function SessionTable({ sessions }: { sessions: Session[] }) {
                       ))}
                     </div>
                   ) : (
-                    <Text className="text-zinc-500 text-sm">—</Text>
+                    <Text className="text-zinc-500">—</Text>
                   )}
                 </TableCell>
               </TableRow>

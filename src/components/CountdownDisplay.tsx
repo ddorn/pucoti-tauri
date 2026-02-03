@@ -33,7 +33,7 @@ export function CountdownDisplay({
 
   const textShadow = isOvertime || !accentColor
     ? undefined
-    : `0px max(0.03em,2px) 0px ${COLOR_PALETTES[accentColor].base}`
+    : `0px max(0.03em,2px) 0px var(--color-accent)`
 
   let fontSize = ''
   if (autoscale) {

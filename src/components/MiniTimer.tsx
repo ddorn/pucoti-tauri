@@ -23,12 +23,11 @@ export function MiniTimer() {
       )}
       title="Go to timer"
     >
-      <span className="text-accent text-sm font-medium truncate max-w-[120px]">
+      <span className="text-accent font-medium truncate max-w-[120px]">
         {timerState.focusText}
       </span>
       <CountdownDisplay
         remaining={remaining}
-        className="text-sm"
       />
     </button>
   )

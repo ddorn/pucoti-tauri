@@ -49,7 +49,7 @@ export function Stats() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
         <p className="text-red-400 text-lg mb-2">Error loading stats</p>
-        <Text className="text-sm">{error}</Text>
+        <Text>{error}</Text>
       </div>
     )
   }
@@ -120,13 +120,13 @@ export function Stats() {
             <SessionTable sessions={sessions} />
 
             {/* Export section */}
-            <section className="flex flex-col items-center gap-2 pt-4">
-              <Text className="text-sm text-zinc-400">
+            <section className="text-center">
+              <Text>
                 Download all your predictions for further analysis
               </Text>
               {csvPath && (
-                <Text className="text-xs text-zinc-500">
-                  You can also find this CSV at {csvPath}
+                <Text>
+                  You can also find this CSV at <span className="select-all">{csvPath}</span>
                 </Text>
               )}
               <Button outline onClick={handleExport} disabled={sessions.length === 0}>

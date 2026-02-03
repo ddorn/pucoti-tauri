@@ -26,15 +26,15 @@ export function MedianRangeCard({ stats }: { stats: CalibrationStats | null }) {
         </div>
 
         <div className="border-t border-zinc-700 pt-4 space-y-2">
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between">
             <Text className="text-zinc-400">25% finish faster than</Text>
             <Text className="font-medium">{q1.toFixed(2)}× estimate</Text>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between">
             <Text className="text-zinc-400">Median completion at</Text>
             <Text className="font-medium">{median.toFixed(2)}× estimate</Text>
           </div>
-          <div className="flex justify-between text-sm">
+          <div className="flex justify-between">
             <Text className="text-zinc-400">75% finish by</Text>
             <Text className="font-medium">{q3.toFixed(2)}× estimate</Text>
           </div>

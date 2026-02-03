@@ -36,7 +36,6 @@ export const Input = forwardRef(function Input(
     <span
       data-slot="control"
       className={clsx([
-        className,
         // Basic layout
         'relative block w-full',
         // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode

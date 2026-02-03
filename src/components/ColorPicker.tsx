@@ -8,7 +8,7 @@ interface ColorPickerProps {
   value: AccentColor
   onChange: (color: AccentColor) => void
   randomEnabled?: boolean
-  onRandomToggle?: () => void
+  onRandomSelect?: () => void;
 }
 
 const COLOR_ORDER: AccentColor[] = [
@@ -31,7 +31,7 @@ const COLOR_ORDER: AccentColor[] = [
   'rose',
 ]
 
-export function ColorPicker({ value, onChange, randomEnabled = false, onRandomToggle }: ColorPickerProps) {
+export function ColorPicker({ value, onChange, randomEnabled = false, onRandomSelect }: ColorPickerProps) {
   const radioValue = randomEnabled ? 'random' : value
 
   return (
@@ -39,7 +39,7 @@ export function ColorPicker({ value, onChange, randomEnabled = false, onRandomTo
       value={radioValue}
       onChange={(selectedValue) => {
         if (selectedValue === 'random') {
-          onRandomToggle?.();
+          onRandomSelect?.();
         } else {
           onChange(selectedValue as AccentColor);
         }
@@ -47,8 +47,8 @@ export function ColorPicker({ value, onChange, randomEnabled = false, onRandomTo
       className="grid grid-cols-6 sm:grid-cols-9 gap-3"
     >
       {/* Random color radio */}
-      {onRandomToggle && (
-        <RadioGroup.Option value="random">
+      {onRandomSelect && (
+        <RadioGroup.Option value="random" onClick={onRandomSelect}>
           {({ checked }) => (
             <div className="relative w-8 h-8">
               <div

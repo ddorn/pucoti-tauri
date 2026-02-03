@@ -49,7 +49,7 @@ function NavButton({
   return (
     <button
       onClick={onClick}
-      className="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+      className="px-4 py-1.5 rounded-lg font-medium transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
     >
       {children}
     </button>

@@ -19,7 +19,7 @@ export function StatCard({
 
   return (
     <div className="bg-surface-raised rounded-lg p-5">
-      <div className="text-sm text-zinc-100 mb-1">{label}</div>
+      <div className="text-zinc-100 mb-1">{label}</div>
       <div className={`text-3xl font-bold ${colorClasses[color]}`}>
         {value}
       </div>

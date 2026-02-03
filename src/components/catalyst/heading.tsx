@@ -4,13 +4,26 @@ type HeadingProps = { level?: 1 | 2 | 3 | 4 | 5 | 6 } & React.ComponentPropsWith
   'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 >
 
+
+const styles = {
+  h1: 'text-6xl font-bold ',
+  h2: 'text-4xl font-bold',
+  h3: 'text-3xl font-bold',
+  h4: 'text-2xl font-bold',
+  h5: 'text-xl font-bold',
+  h6: 'text-lg font-bold',
+}
+
 export function Heading({ className, level = 1, ...props }: HeadingProps) {
   let Element: `h${typeof level}` = `h${level}`
+
+  const textShadow = level < 3 ? `0px max(0.03em,2px) 0px var(--color-accent)` : undefined
 
   return (
     <Element
       {...props}
-      className={clsx(className, 'text-2xl/8 font-semibold text-zinc-950 sm:text-xl/8 dark:text-white')}
+      className={clsx(className, styles[`h${level}`], 'text-zinc-950 dark:text-white')}
+      style={{ textShadow }}
     />
   )
 }
