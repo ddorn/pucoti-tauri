@@ -1,4 +1,4 @@
-import Plotly from 'plotly.js-dist-min'
+import Plotly from './plotly-custom'
 
 export function createPlotLayout(overrides?: Partial<Plotly.Layout>): Partial<Plotly.Layout> {
   return {

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import Plotly from 'plotly.js-dist-min'
+import Plotly from '../lib/plotly-custom'
 import type { Session } from '../lib/storage'
 import type { AccentColor } from '../lib/colors'
 import { COLOR_PALETTES } from '../lib/colors'

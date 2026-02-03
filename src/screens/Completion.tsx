@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
 import { loadSessions, type Session } from '../lib/storage'
-import { EstimationHistogram } from '../components/EstimationHistogram'
 import { getCompletionRemark } from '../lib/completion-remarks'
 import { formatDuration } from '../lib/format'
 import { COLOR_PALETTES, getRandomAccentColor, type AccentColor } from '../lib/colors';
 import { Text } from '../components/catalyst/text'
 import { Kbd } from '../components/Kbd';
 import confetti from 'canvas-confetti'
+import { EstimationHistogram } from '../components/plots'
 
 // Confetti functions
 function startPerfectConfetti() {

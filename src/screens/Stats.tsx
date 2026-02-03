@@ -7,11 +7,10 @@ import { Button } from '../components/catalyst/button'
 import { Text } from '../components/catalyst/text';
 import { Heading } from '../components/catalyst/heading';
 import { StatCard } from '../components/StatCard';
-import { AdjustmentPlot } from '../components/AdjustmentPlot';
 import { AdjustmentRecommendation } from '../components/AdjustmentRecommendation';
-import { CalibrationPlot } from '../components/CalibrationPlot';
 import { MedianRangeCard } from '../components/MedianRangeCard';
 import { SessionTable } from '../components/SessionTable'
+import { CalibrationPlot, AdjustmentPlot } from '../components/plots'
 
 export function Stats() {
   const { sessions, loading, error } = useSessions();

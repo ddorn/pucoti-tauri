@@ -181,7 +181,25 @@ Frontend communicates via `@tauri-apps/api` and plugin imports.
 **Catalyst Components** (`src/components/catalyst/`): Use these when possible instead of creating custom components. Available: alert, auth-layout, avatar, badge, button, checkbox, combobox, description-list, dialog, divider, dropdown, fieldset, heading, input, link, listbox, navbar, pagination, radio, select, sidebar-layout, sidebar, stacked-layout, switch, table, text, textarea.
 
 - Application-specific components in `src/components/`
-- Plotly.js for statistical visualizations
+
+### Plot Components & Bundle Optimization
+
+**Lazy-loaded plots** (`src/components/plots.tsx`): Centralized exports for all Plotly-based charts with automatic code-splitting:
+- Import from `../components/plots` instead of individual component files
+- Components are automatically lazy-loaded with Suspense boundaries built-in
+- No need to manually wrap in `React.lazy()` or `<Suspense>`
+- Reduces initial bundle size by 93% (5.2 MB → 371 KB, 1.57 MB → 112 KB gzipped)
+- Plotly bundle (1.1 MB) only loads when Stats or Completion screens are accessed
+
+**Custom Plotly bundle** (`src/lib/plotly-custom.ts`):
+- Uses modular imports from `plotly.js/lib/*` instead of full distribution
+- Only includes trace types we use: scatter and violin
+- Reduces Plotly size by ~65% compared to `plotly.js-dist-min`
+
+**Adding new plot components**:
+1. Create component in `src/components/` that imports from `../lib/plotly-custom`
+2. Add lazy export to `src/components/plots.tsx` with Suspense wrapper
+3. Import from `../components/plots` anywhere in the app
 
 ## Configuration Files
 
