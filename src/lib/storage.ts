@@ -99,7 +99,7 @@ export async function appendSession(session: Session): Promise<void> {
   const csvPath = await getCSVPath()
 
   // Check if file exists, if not write header
-  let fileExists = await exists(csvPath)
+  const fileExists = await exists(csvPath)
 
   const line = [
     formatTimestamp(session.timestamp),

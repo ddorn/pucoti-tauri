@@ -15,7 +15,7 @@ const styles = {
 }
 
 export function Heading({ className, level = 1, ...props }: HeadingProps) {
-  let Element: `h${typeof level}` = `h${level}`
+  const Element: `h${typeof level}` = `h${level}`
 
   const textShadow = level < 3 ? `0px max(0.03em,2px) 0px var(--color-accent)` : undefined
 
@@ -29,7 +29,7 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
 }
 
 export function Subheading({ className, level = 2, ...props }: HeadingProps) {
-  let Element: `h${typeof level}` = `h${level}`
+  const Element: `h${typeof level}` = `h${level}`
 
   return (
     <Element
