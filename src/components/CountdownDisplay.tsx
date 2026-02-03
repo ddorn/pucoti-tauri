@@ -31,9 +31,11 @@ export function CountdownDisplay({
     isOvertime ? 'text-red-500' : 'text-zinc-100',
   )
 
-  const textShadow = isOvertime || !accentColor
-    ? undefined
-    : `0px max(0.03em,2px) 0px var(--color-accent)`
+  const textShadow = isOvertime
+    ? `0px max(0.03em,2px) 0px rgb(127 29 29)` // Darker red shadow for overtime
+    : accentColor
+    ? `0px max(0.03em,2px) 0px var(--color-accent)`
+    : undefined
 
   let fontSize = ''
   if (autoscale) {
