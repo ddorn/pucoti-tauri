@@ -156,7 +156,7 @@ const REMARKS: RemarkGroup[] = [
     range: [-100, -50],
     absolute: false,
     texts: [
-      'Task failed successfully',
+      'Prediction failed successfully',
     ],
   },
 
