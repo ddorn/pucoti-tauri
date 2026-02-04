@@ -165,15 +165,17 @@ export function Timer() {
       const hasPrediction = parsed.seconds !== null
       const tags = hasPrediction ? ['mode:predict'] : ['mode:timebox']
 
-      // Calculate initial adjustment based on timer start percentage (prediction mode only)
+      // Calculate initial adjustment:
+      // - For predictions: based on timer start percentage
+      // - For timebox mode: use current remaining time to preserve countdown
       const initialAdjustment = hasPrediction
         ? Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
-        : DEFAULT_COUNTDOWN_SECONDS
+        : remaining
 
       // Cancel previous timer when starting new task
       timerMachine.start(parsed.intent, parsed.seconds, initialAdjustment, tags, 'cancel')
     }
-  }, [parsed, settings.timerStartPercentage])
+  }, [parsed, settings.timerStartPercentage, remaining])
 
   const handleEditCancel = useCallback(() => {
     setEditMode(false)
