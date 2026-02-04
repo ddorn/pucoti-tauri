@@ -8,4 +8,8 @@ export default defineConfig({
   build: {
     outDir: 'dist',
   },
+  define: {
+    // Polyfill for libraries expecting Node.js global variable
+    global: 'globalThis',
+  },
 })
