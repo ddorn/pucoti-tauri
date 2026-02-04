@@ -31,14 +31,18 @@ export function EstimationHistogram({
     )
 
     // Determine range for the plot
-    // Min: min(-100%, pred%-20%)
-    // Max: at least 100%, at least current% + 20, but hide top 3% outliers
+    // Min: min(-100%, current%-30pp)
+    // Max: Show up to 97th percentile to hide outliers, BUT always include current error with buffer
     const sortedErrors = [...errors].sort((a, b) => a - b)
     const p97Index = Math.floor(sortedErrors.length * 0.97)
     const p97Value = sortedErrors[p97Index] || 100
 
-    const minError = Math.min(-100, currentError - 30)
-    const maxError = Math.max(100, currentError + 20, p97Value)
+    // Use a comfortable buffer that scales with the error magnitude
+    // At least 30pp, or 15% of the absolute error value, whichever is larger
+    const buffer = Math.max(30, Math.abs(currentError) * 0.15)
+
+    const minError = Math.min(-100, currentError - buffer)
+    const maxError = Math.max(100, currentError + buffer, p97Value)
     const range: [number, number] = [minError, maxError]
 
     const traces: Plotly.Data[] = []
