@@ -17,7 +17,7 @@ const styles = {
 export function Heading({ className, level = 1, ...props }: HeadingProps) {
   const Element: `h${typeof level}` = `h${level}`
 
-  const textShadow = level < 3 ? `0px max(0.03em,2px) 0px var(--color-accent)` : undefined
+  const textShadow = level < 3 ? `0px 3px 1px var(--color-accent)` : undefined
 
   return (
     <Element
