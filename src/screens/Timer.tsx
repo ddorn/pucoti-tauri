@@ -204,14 +204,16 @@ export function Timer() {
   if (displayMode === 'zen' || displayMode === 'small') {
     const intentLength = timerState.focusText?.length || 1;
     // Set reasonable min/max: between 1rem and 25vh, scales down gradually for longer text
-    const intentFontSize = `clamp(1rem, ${250 / intentLength}vw, 25vh)`;
+    const intentFontSize = `max(1rem,  min(${250 / intentLength}vw, 20vh))`;
 
     return (
       <div className="flex flex-col items-center justify-center h-screen px-[2vw] py-[2vh]">
         {timerState.focusText && (
-            <p className="text-accent text-center max-w-full font-medium overflow-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
-              {timerState.focusText}
-            </p>
+            <div className='w-full'>
+              <p className="text-accent text-center font-medium overflow-x-hidden overflow-ellipsis whitespace-nowrap" style={{ fontSize: intentFontSize }}>
+                {timerState.focusText}
+              </p>
+            </div>
         )}
         <CountdownDisplay
           remaining={remaining}
@@ -253,7 +255,7 @@ export function Timer() {
           />
         ) : (
           <p className={clsx(
-            "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw] overflow-hidden overflow-ellipsis whitespace-nowrap",
+            "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw] overflow-x-hidden overflow-y-visible overflow-ellipsis whitespace-nowrap",
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
             {timerState.focusText || 'Enter to set intent'}
