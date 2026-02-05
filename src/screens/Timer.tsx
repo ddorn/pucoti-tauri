@@ -203,7 +203,8 @@ export function Timer() {
   // Zen and Small display modes: minimal display with prominent intent
   if (displayMode === 'zen' || displayMode === 'small') {
     const intentLength = timerState.focusText?.length || 1;
-    const intentFontSize = `min(25vh, ${250 / intentLength}vh)`;
+    // Set reasonable min/max: between 1rem and 25vh, scales down gradually for longer text
+    const intentFontSize = `clamp(1rem, ${250 / intentLength}vw, 25vh)`;
 
     return (
       <div className="flex flex-col items-center justify-center h-screen px-[2vw] py-[2vh]">
