@@ -156,19 +156,33 @@ export function Completion() {
 
   // Fire confetti on mount
   useEffect(() => {
+    console.log('Starting confetti:', { isTimebox, isWithinOne, isWithinTen, accentColor: settings.accentColor })
+
     if (isTimebox) {
       // Timebox gets simple confetti
       startSimpleConfetti(settings.accentColor)
+      console.log('Started simple confetti (timebox)')
       return
     }
     if (isWithinOne) {
       // Perfect confetti - never stops
-      return startPerfectConfetti()
+      console.log('Starting perfect confetti (within 1%)')
+      const cleanup = startPerfectConfetti()
+      return () => {
+        console.log('Cleaning up perfect confetti')
+        cleanup()
+      }
     } else if (isWithinTen) {
       // Continuous falling confetti for within 10%
-      return startWithinTenConfetti()
+      console.log('Starting within-ten confetti')
+      const cleanup = startWithinTenConfetti()
+      return () => {
+        console.log('Cleaning up within-ten confetti')
+        cleanup()
+      }
     } else {
       // Simple side-firing confetti for other cases
+      console.log('Started simple confetti (general)')
       startSimpleConfetti(settings.accentColor)
     }
   }, [isTimebox, isWithinOne, isWithinTen, settings.accentColor])
@@ -177,6 +191,7 @@ export function Completion() {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
+        console.log('Enter pressed - leaving Completion screen')
         clearCompletionData()
         setScreen('timer')
         // Note: displayMode is already set to 'normal' in completeTimer
@@ -229,13 +244,13 @@ export function Completion() {
           <h1 className="text-4xl md:text-5xl font-bold text-zinc-100">
             You took{' '}
             <span style={{ color: errorColor }}>
-              {errorPercent === 0
+              {absError.toFixed(0) === '0'
                 ? 'exactly as long as predicted'
                 : errorPercent > 0
                   ? `${absError.toFixed(0)}% longer`
                   : `${absError.toFixed(0)}% less time`}
             </span>
-            {errorPercent !== 0 && ' than predicted'}
+            {absError.toFixed(0) !== '0' && ' than predicted'}
             {focusText && (
               <>
                 {' '}to{' '}
