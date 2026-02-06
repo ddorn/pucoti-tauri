@@ -6,7 +6,7 @@ import { timerMachine } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
 import { nextCorner, setSmallMode } from '../lib/window';
 import { executePrefillHook } from '../lib/settings';
-import { Text } from '../components/catalyst/text'
+import { Code, Text } from '../components/catalyst/text'
 import { CountdownDisplay } from '../components/CountdownDisplay';
 import { parseCommand } from '../lib/command-parser'
 import { Kbd } from '../components/Kbd';
@@ -23,10 +23,16 @@ export function Timer() {
   const [editMode, setEditMode] = useState(false)
   const [editInput, setEditInput] = useState('')
   const [editLoading, setEditLoading] = useState(false)
+  const [noPredictionWarning, setNoPredictionWarning] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Parse command in real-time
   const parsed = useMemo(() => parseCommand(editInput), [editInput])
+
+  // Clear warning when input changes
+  useEffect(() => {
+    setNoPredictionWarning(false)
+  }, [editInput])
 
   const handlePrefill = useCallback(async () => {
     if (!settings.prefillCommand || editLoading) return
@@ -158,34 +164,64 @@ export function Timer() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, handlePrefill])
 
-  const handleEditSubmit = useCallback(() => {
+  const handleEditSubmit = useCallback((forceTimebox: boolean = false) => {
+    // If input is empty, just close edit mode
+    if (!editInput.trim()) {
+      setEditMode(false)
+      setNoPredictionWarning(false)
+      return
+    }
+
+    // If no prediction and not forcing timebox, show warning first
+    if (parsed.seconds === null && !forceTimebox && !noPredictionWarning) {
+      setNoPredictionWarning(true)
+      return
+    }
+
     setEditMode(false)
+    setNoPredictionWarning(false)
+
     // Only update if there's something to set
-    if (parsed.intent || parsed.seconds !== null) {
-      const hasPrediction = parsed.seconds !== null
+    if (parsed.intent || parsed.seconds !== null || forceTimebox) {
+      // forceTimebox: treat any parsed duration as timebox, not prediction
+      const hasPrediction = parsed.seconds !== null && !forceTimebox
       const tags = hasPrediction ? ['mode:predict'] : ['mode:timebox']
 
       // Calculate initial adjustment:
       // - For predictions: based on timer start percentage
-      // - For timebox mode: use current remaining time to preserve countdown
-      const initialAdjustment = hasPrediction
-        ? Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
-        : remaining
+      // - For timebox with explicit duration: use that duration
+      // - For timebox without duration: preserve current remaining time
+      let initialAdjustment: number
+      if (hasPrediction) {
+        initialAdjustment = Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
+      } else if (parsed.seconds !== null) {
+        initialAdjustment = parsed.seconds
+      } else {
+        initialAdjustment = remaining
+      }
 
       // Cancel previous timer when starting new task
-      timerMachine.start(parsed.intent, parsed.seconds, initialAdjustment, tags, 'cancel')
+      timerMachine.start(
+        parsed.intent,
+        hasPrediction ? parsed.seconds : null,
+        initialAdjustment,
+        tags,
+        'cancel'
+      )
     }
-  }, [parsed, settings.timerStartPercentage, remaining])
+  }, [editInput, parsed, settings.timerStartPercentage, remaining, noPredictionWarning])
 
   const handleEditCancel = useCallback(() => {
     setEditMode(false)
     setEditInput('')
+    setNoPredictionWarning(false)
   }, [])
 
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      handleEditSubmit()
+      // Shift+Enter always starts as timebox (no prediction)
+      handleEditSubmit(e.shiftKey)
     } else if (e.key === 'Escape') {
       e.preventDefault()
       handleEditCancel()
@@ -245,7 +281,12 @@ export function Timer() {
             className={clsx(
               "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw]",
               "bg-transparent outline-none",
-              "border-b-4 border-accent/50 focus:border-accent",
+              "border-b-4",
+              noPredictionWarning?
+                (settings.accentColor !== 'amber')?
+                  "border-amber-500/50 focus:border-amber-500" :
+                  "border-red-500/50 focus:border-red-500" :
+                "border-accent/50 focus:border-accent",
               "text-accent placeholder-zinc-600",
               "transition-colors",
               editLoading && "opacity-50 cursor-not-allowed"
@@ -259,6 +300,13 @@ export function Timer() {
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
             {timerState.focusText || 'Enter to set intent'}
+          </p>
+        )}
+
+        {/* Warning when no prediction */}
+        {noPredictionWarning && (
+          <p className="text-amber-500 text-lg mt-2 text-center">
+            No prediction: add one like <Kbd>15m</Kbd>, or <Kbd>Enter</Kbd> to continue without
           </p>
         )}
 
@@ -286,9 +334,9 @@ export function Timer() {
           {editMode ? (
             <>
               <Shortcut keys={['Esc']} label="Cancel" />
-              <Shortcut keys={['Enter']} label="Start timer" />
-              <Shortcut keys={['5m 30s']} label="Predict duration" />
-              <Shortcut keys={['12']} label="Predict minutes shorthand" />
+              <Shortcut keys={['5m 30s']} label="Duration syntax" />
+              <Shortcut keys={['Enter']} label="Start with prediction" />
+              <Shortcut keys={['Shift', 'Enter']} label="Start without" />
             </>
           ) : (
             <>
