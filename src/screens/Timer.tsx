@@ -6,7 +6,7 @@ import { timerMachine } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
 import { nextCorner, setSmallMode } from '../lib/window';
 import { executePrefillHook } from '../lib/settings';
-import { Code, Text } from '../components/catalyst/text'
+import { Text } from '../components/catalyst/text'
 import { CountdownDisplay } from '../components/CountdownDisplay';
 import { parseCommand } from '../lib/command-parser'
 import { Kbd } from '../components/Kbd';
