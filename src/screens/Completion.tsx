@@ -142,6 +142,13 @@ export function Completion() {
   const isWithinOne = !isTimebox && absError <= 1
   const isWithinTen = !isTimebox && absError <= 10
 
+  // Force cleanup all confetti on unmount
+  useEffect(() => {
+    return () => {
+      confetti.reset()
+    }
+  }, [])
+
   // Load sessions on mount
   useEffect(() => {
     loadSessions().then(setSessions).catch(console.error)
