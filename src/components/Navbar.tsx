@@ -15,8 +15,8 @@ export function Navbar() {
   const showMiniTimer = screen !== 'timer'
 
   // Calculate navbar height for spacer
-  // UpdateBanner adds ~42px when visible, nav is ~49px
-  const navbarHeight = updateInfo ? '91px' : '49px'
+  // UpdateBanner adds ~49px when visible, nav is ~61px
+  const navbarHeight = updateInfo ? '110px' : '61px'
 
   return (
     <>
