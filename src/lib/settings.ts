@@ -51,7 +51,7 @@ export interface Settings {
   completionCommand: string; // Shell command to run on timer completion with {focus}, {predicted}, {actual} placeholders
 
   // Prefill hook
-  prefillCommand: string; // Shell command to run to prefill CommandPalette (output becomes input text)
+  prefillCommand: string; // Shell command to run to prefill intent input (output becomes input text)
 
   // GNOME panel indicator (Linux only)
   useGnomePanelIndicator: boolean;

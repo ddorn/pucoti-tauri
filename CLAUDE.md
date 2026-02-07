@@ -154,14 +154,14 @@ Flexible duration input supporting:
 ## Key Screens
 
 1. **Timer** (`src/screens/Timer.tsx`): Active timer display with j/k adjustment keys
-   - Press Enter to open CommandPalette for setting intent/duration
+   - Press Enter to edit intent/duration inline (no separate modal)
    - Keyboard shortcuts for time adjustment (j/k, digit keys)
    - Display modes: normal, zen, small
 2. **Stats** (`src/screens/Stats.tsx`): Calibration plots and session history
 3. **Settings** (`src/screens/Settings.tsx`): Configure window behavior and notifications
 4. **Completion** (`src/screens/Completion.tsx`): Feedback on estimation accuracy after completing a timer
 
-**CommandPalette** (`src/components/CommandPalette.tsx`): Modal overlay for starting timers with intent and duration. Opened via Enter key from Timer screen.
+**Inline Intent Editing**: The Timer screen supports inline editing of intent and duration. Press Enter to enter edit mode, which replaces the intent text with an input field. Real-time parsing shows predicted duration. Shift+Enter triggers the prefill command if configured.
 
 ## Tauri Backend
 

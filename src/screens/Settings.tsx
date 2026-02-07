@@ -495,7 +495,7 @@ export function Settings() {
               </Text>
             )}
             <Text className={descriptionClasses}>
-              Shell command whose stdout will prefill the CommandPalette. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
+              Shell command whose stdout will prefill the intent input field. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
             </Text>
           </div>
 
