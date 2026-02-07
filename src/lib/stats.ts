@@ -227,9 +227,9 @@ export function computeAdjustmentCurve(sessions: Session[]): AdjustmentCurve | n
   );
     if (completed.length === 0) return null;
 
-    // Generate adjustment percentages from -50% to +200%
+    // Generate adjustment percentages from -100% to +200%
     const adjustments: number[] = [];
-    for (let adj = -50; adj <= 200; adj += 2) {
+    for (let adj = -100; adj <= 200; adj += 2) {
         adjustments.push(adj);
     }
 
