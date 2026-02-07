@@ -8,19 +8,15 @@ import { Completion } from './screens/Completion'
 import { Navbar } from './components/Navbar'
 import { initializeWindowForPlatform } from './lib/window';
 import { applyAccentColor } from './lib/colors';
-import clsx from 'clsx'
 
 function AppContent() {
-  const { screen, displayMode } = useApp()
-
-  // Show navbar padding in normal display mode
-  const showNavbar = displayMode === 'normal'
+  const { screen } = useApp()
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <Navbar />
 
-      <main className={clsx('flex-1 min-h-0 flex flex-col', showNavbar && 'pt-[61px]')}>
+      <main className="flex-1 min-h-0 flex flex-col">
         {screen === 'timer' && <Timer />}
         {screen === 'stats' && <Stats />}
         {screen === 'settings' && <Settings />}

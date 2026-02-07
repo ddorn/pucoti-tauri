@@ -8,6 +8,8 @@ import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
 import { executeCompletionHook } from '../lib/settings'
 import { setSmallMode, setNormalMode } from '../lib/window'
+import { checkForUpdates, type UpdateInfo } from '../lib/update-checker'
+import packageJson from '../../package.json'
 
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
 export type DisplayMode = 'normal' | 'zen' | 'small'
@@ -36,6 +38,11 @@ interface AppContextValue {
 
   // Completion
   clearCompletionData: () => void
+
+  // Updates
+  updateInfo: UpdateInfo | null
+  dismissUpdate: () => void
+  checkForUpdatesNow: () => Promise<'success' | 'no-updates' | 'error'>
 }
 
 const AppContext = createContext<AppContextValue | null>(null)
@@ -46,6 +53,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [screen, setScreen] = useState<Screen>('timer')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('normal')
   const [completionData, setCompletionData] = useState<CompletionData | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 
   // Mount all subscriber hooks
   useBellSubscriber()
@@ -122,7 +130,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
   }, [])
 
+  // Check for updates on mount (if enabled in settings)
+  useEffect(() => {
+    if (settings.checkForUpdatesAutomatically) {
+      checkForUpdates(packageJson.version).then(update => {
+        if (update) {
+          console.log('[Update Check] Update available:', update.version)
+          setUpdateInfo(update)
+        }
+      }).catch(err => console.error('[Update Check] Failed:', err))
+    }
+  }, [settings.checkForUpdatesAutomatically])
+
   const clearCompletionData = () => setCompletionData(null)
+
+  const dismissUpdate = async () => {
+    if (updateInfo) {
+      await updateSettings({ dismissedUpdateVersion: updateInfo.version })
+    }
+  }
+
+  const checkForUpdatesNow = async (): Promise<'success' | 'no-updates' | 'error'> => {
+    try {
+      const update = await checkForUpdates(packageJson.version)
+      if (update) {
+        console.log('[Update Check] Update available:', update.version)
+        setUpdateInfo(update)
+        return 'success'
+      } else {
+        console.log('[Update Check] No update available')
+        return 'no-updates'
+      }
+    } catch (err) {
+      console.error('[Update Check] Failed:', err)
+      return 'error'
+    }
+  }
 
   return (
     <AppContext.Provider
@@ -133,6 +176,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setScreen,
         setDisplayMode,
         clearCompletionData,
+        updateInfo,
+        dismissUpdate,
+        checkForUpdatesNow,
       }}
     >
       {children}

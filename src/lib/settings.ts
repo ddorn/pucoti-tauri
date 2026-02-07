@@ -55,6 +55,10 @@ export interface Settings {
 
   // GNOME panel indicator (Linux only)
   useGnomePanelIndicator: boolean;
+
+  // Update checking
+  checkForUpdatesAutomatically: boolean;
+  dismissedUpdateVersion: string; // Version string that was dismissed in banner
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -81,6 +85,8 @@ export const DEFAULT_SETTINGS: Settings = {
   completionCommand: '',
   prefillCommand: '',
   useGnomePanelIndicator: false,
+  checkForUpdatesAutomatically: true,
+  dismissedUpdateVersion: '',
 }
 
 async function getSettingsPath(): Promise<string> {

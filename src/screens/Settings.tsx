@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSettings } from '../context/SettingsContext'
+import { useApp } from '../context/AppContext'
 import { Button } from '../components/catalyst/button'
 import { Input } from '../components/catalyst/input'
 import { Text } from '../components/catalyst/text'
@@ -10,7 +11,8 @@ import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
 import { executeCustomNotification, executeCompletionHook, executePrefillHook } from '../lib/settings'
 import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
 import { sendNotification } from '@tauri-apps/plugin-notification'
-import { open } from '@tauri-apps/plugin-dialog';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openUrl } from '@tauri-apps/plugin-shell';
 import { playBell } from '../lib/sound'
 import { ColorPicker } from '../components/ColorPicker'
 import { RadioGroup } from '../components/RadioGroup';
@@ -21,6 +23,7 @@ import { Kbd } from '../components/Kbd'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
+  const { updateInfo, checkForUpdatesNow } = useApp()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
   const [testingCompletionHook, setTestingCompletionHook] = useState(false)
@@ -29,11 +32,20 @@ export function Settings() {
   const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [checkingForUpdates, setCheckingForUpdates] = useState(false)
+  const [updateCheckResult, setUpdateCheckResult] = useState<'success' | 'no-updates' | 'error' | null>(null)
 
   // Check extension status on mount
   useEffect(() => {
     getExtensionStatus().then(setExtensionStatus)
   }, [])
+
+  // Clear update check result when updateInfo changes (from auto-check)
+  useEffect(() => {
+    if (updateInfo) {
+      setUpdateCheckResult(null)
+    }
+  }, [updateInfo])
 
   if (loading) {
     return (
@@ -67,7 +79,7 @@ export function Settings() {
 
   const handleSelectBell = async () => {
     try {
-      const selected = await open({
+      const selected = await openDialog({
         multiple: false,
         filters: [{
           name: 'Audio',
@@ -121,6 +133,28 @@ export function Settings() {
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <Heading level={1} className="mb-16">Settings</Heading>
+
+      {/* Update available banner */}
+      {updateInfo && (
+        <div className="mb-12 p-6 rounded-lg bg-accent/10 border-2 border-accent/30 shadow-lg">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <Heading level={3} className="text-accent mb-2">
+                Update Available: {updateInfo.version}
+              </Heading>
+              <Text className="text-zinc-300 mb-4">
+                A new version of Pucoti is ready to download.
+              </Text>
+              <Button
+                color={settings.accentColor}
+                onClick={() => openUrl(updateInfo.url)}
+              >
+                View Release on GitHub
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-24">
         {/* Timer */}
@@ -529,6 +563,72 @@ export function Settings() {
                 <span className="text-accent"> Random mode enabled - color will change after each completed timer.</span>
               )}
             </Text>
+          </div>
+        </section>
+
+        {/* Updates */}
+        <section className={sectionClasses}>
+          <Heading level={2}>
+            Updates
+          </Heading>
+
+          <div className={subsectionClasses}>
+            <CheckboxField>
+              <Checkbox
+                checked={settings.checkForUpdatesAutomatically}
+                onChange={(checked) => updateSettings({ checkForUpdatesAutomatically: checked })}
+                color={settings.accentColor}
+              />
+              <Label>Check for updates automatically</Label>
+              <Description>
+                Check for new versions when the app starts
+              </Description>
+            </CheckboxField>
+          </div>
+
+          <div className={subsectionClasses}>
+            <Button
+              onClick={async () => {
+                setCheckingForUpdates(true)
+                setUpdateCheckResult(null)
+                try {
+                  const result = await checkForUpdatesNow()
+                  setUpdateCheckResult(result)
+                } finally {
+                  setCheckingForUpdates(false)
+                }
+              }}
+              disabled={checkingForUpdates}
+            >
+              {checkingForUpdates ? 'Checking...' : 'Check for Updates Now'}
+            </Button>
+
+            {/* Status messages */}
+            {updateCheckResult === 'no-updates' && (
+              <Text className={descriptionClasses}>
+                You're up to date! Running version {packageJson.version}
+              </Text>
+            )}
+            {updateCheckResult === 'error' && (
+              <Text className="text-base text-red-400">
+                Failed to check for updates. Please check your internet connection and try again.
+              </Text>
+            )}
+            {updateInfo && (
+              <Text className={descriptionClasses}>
+                Version {updateInfo.version} is available.{' '}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    openUrl(updateInfo.url)
+                  }}
+                  className="text-accent hover:underline"
+                >
+                  View release
+                </a>
+              </Text>
+            )}
           </div>
         </section>
 
