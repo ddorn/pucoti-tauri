@@ -64,24 +64,22 @@ Download and run `Pucoti_*_x64_en-US.msi`. Follow the installation wizard.
 
 Installing on macOS requires some extra steps before opening the app for the first time, as the app is not signed. Open a terminal and run the following commands.
 
-**Apple Silicon (M1/M2/M3)**:
+**Download for Apple Silicon (M1/M2/M3)**:
 ```bash
-# Download the latest release of pucoti for Apple Silicon
 curl -L -o Pucoti.tar.gz https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_aarch64.app.tar.gz
 ```
 
-**Intel**:
+**Download of Intel**:
 ```bash
-# Download the latest release of pucoti for Intel
 curl -L -o Pucoti.tar.gz https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x64.app.tar.gz
 ```
 
-Then extract, install, and launch:
+Then extract, install, remove the quarantine bit, and launch:
 ```bash
-tar -xzf Pucoti.tar.gz                    # Extract the archive
-mv Pucoti.app /Applications/              # Move to Applications folder
-xattr -cr /Applications/Pucoti.app        # Remove quarantine attributes
-open /Applications/Pucoti.app             # Launch the app
+tar -xzf Pucoti.tar.gz
+mv Pucoti.app /Applications/
+xattr -cr /Applications/Pucoti.app
+open /Applications/Pucoti.app
 ```
 
 If you still encounter permission issues, see: https://wiki.hacks.guide/wiki/Open_unsigned_applications_on_macOS_Sequoia_and_newer
