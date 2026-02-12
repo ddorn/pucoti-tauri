@@ -74,10 +74,9 @@ curl -L -o Pucoti.tar.gz https://github.com/ddorn/pucoti-tauri/releases/latest/d
 curl -L -o Pucoti.tar.gz https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x64.app.tar.gz
 ```
 
-Then extract, install, remove the quarantine bit, and launch:
+Then extract to Applications, remove the quarantine bit, and launch:
 ```bash
-tar -xzf Pucoti.tar.gz
-mv Pucoti.app /Applications/
+tar -xzf Pucoti.tar.gz -C /Applications/
 xattr -cr /Applications/Pucoti.app
 open /Applications/Pucoti.app
 ```
