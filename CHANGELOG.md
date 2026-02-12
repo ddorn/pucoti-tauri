@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.3.0] - 2026-02-12
+
+### Added
+
+- **Redesign the main timer/prediction flow**: The app now directly opens with a running timer. Press Enter to set your intent and prediction directly. This makes it faster to start timers and set prediction, uses the same inteface for predictions and time boxes, but embodies less intentionality. This will be improved in a future release.
+
+- **Automatic update checking**: The app now shows when new releases are available on GitHub. You can disable automatic checks or manually check for updates from the Settings screen.
+
+- **Shell command integration**: Two new hooks let you integrate Pucoti with external tools:
+  - **Prefill hook**: Press Shift+Enter to populate the timer with data from an external command (e.g., pull your current intention from intend.do)
+  - **Completion hook**: Run a shell command automatically when a timer completes (e.g., log to external tracking systems)
+
+- **Confirmation for timers without predictions**: When you try to start a timer without a duration, you'll now see a warning prompting you to add a time estimate or press Enter again to confirm. This prevents accidentally starting timebox mode when you meant to set a prediction.
+
+- **CLI flags**: You can now run `pucoti --version` (or `-v`) to print version information and `pucoti --help` (or `-h`) to show usage information.
+
+
+### Fixed
+
+- **Confetti crashes**: Fixed occasional app crashes or freezes when confetti is displayed on the completion screen by ensuring proper cleanup of all canvas elements and animation loops. Hopefully. Please report any crashes if there are still some.
+
+- **Bell overlap**: The overtime bell now properly stops when you start a new timer, preventing the previous timer's repeating bell from continuing.
+
+- **Text display issues**: Fixed multiple text rendering problems:
+  - Intent text descenders (like 'g', 'y', 'p') no longer get clipped
+  - Intent text now properly scales in small mode using viewport width
+  - Intent text no longer truncates on large screens (can use up to 90% of viewport width)
+  - Completion screen no longer shows "0% longer" when the error rounds to zero
+
+- **Platform detection**: GNOME-specific UI elements now properly hide when running on other desktop environments (uses XDG_CURRENT_DESKTOP for reliable detection).
+
+- **Other fixes**: Histogram range always includes your current prediction, adjustment curve now extends down to -100%, and various spacing issues in the navbar have been resolved.
+
+### Changed
+
+- **Redesigned Settings screen**: The Settings screen now features improved visual hierarchy with colorful headings, better grouping of related options, and larger font sizes throughout the app for better readability.
+
+- **Visual polish**: Timer now has an accent-colored outline.
+
+- **Fixed navbar**: The navigation bar is now fixed to the top of the window with improved layout and spacing.
+
+- **93% smaller bundle**: Optimized the app bundle from 5.2 MB to 371 KB (1.57 MB to 112 KB gzipped) by lazy-loading chart components and using a minimal Plotly build. Charts only load when you visit the Stats or Completion screens.
+
+- **Timers without intent**: You can now save and complete timers that have only a duration (no intent text). These sessions still appear in your history and show a completion screen.
+
 ## [1.2.0] - 2026-01-29
 
 ### Added
