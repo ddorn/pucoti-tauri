@@ -169,11 +169,16 @@ export default class PucotiExtension extends Extension {
             return;
         }
 
-        // Format time as MM:SS
+        // Format time as MM:SS or H:MM:SS when duration exceeds one hour
         const absSeconds = Math.abs(remainingSeconds);
-        const minutes = Math.floor(absSeconds / 60);
+        const hours = Math.floor(absSeconds / 3600);
+        const minutes = Math.floor((absSeconds % 3600) / 60);
         const seconds = absSeconds % 60;
-        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        const pad = (n) => n.toString().padStart(2, '0');
+        const timeStr = hours > 0
+            ? `${hours}:${pad(minutes)}:${pad(seconds)}`
+            : `${minutes}:${pad(seconds)}`;
+
 
         // Truncate focus text if too long
         let displayFocus = focusText;
