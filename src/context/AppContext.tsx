@@ -7,6 +7,7 @@ import { useStorageSubscriber } from '../hooks/useStorageSubscriber'
 import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
 import { executeCompletionHook } from '../lib/settings'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { setSmallMode, setNormalMode } from '../lib/window'
 import { checkForUpdates, type UpdateInfo } from '../lib/update-checker'
 import packageJson from '../../package.json'
@@ -71,8 +72,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setNormalMode(settingsRef.current).catch(console.error);
     } else if (displayMode === 'small') {
       setSmallMode(settingsRef.current).catch(console.error);
+    } else if (displayMode === 'zen') {
+      getCurrentWindow().setFullscreen(true).catch(console.error);
     }
-    // zen mode is UI-only, no window function needed
 
     // Corner is changed by directly updating the settings.
     // Is this a good thing? It's probably fine.

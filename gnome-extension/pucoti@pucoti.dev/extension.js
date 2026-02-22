@@ -13,6 +13,26 @@ const DBUS_INTERFACE = 'org.pucoti.Timer';
 const POLL_INTERVAL_MS = 500;
 const MAX_FOCUS_LENGTH = 20;
 
+const WINDOW_DBUS_NAME = 'org.pucoti.Window';
+const WINDOW_DBUS_PATH = '/org/pucoti/Window';
+const WINDOW_DBUS_XML = `
+<node>
+  <interface name="org.pucoti.Window">
+    <method name="MoveResize">
+      <arg type="i" direction="in" name="x"/>
+      <arg type="i" direction="in" name="y"/>
+      <arg type="i" direction="in" name="width"/>
+      <arg type="i" direction="in" name="height"/>
+    </method>
+    <method name="MakeAbove">
+      <arg type="b" direction="in" name="above"/>
+    </method>
+    <method name="Stick">
+      <arg type="b" direction="in" name="stick"/>
+    </method>
+  </interface>
+</node>`;
+
 export default class PucotiExtension extends Extension {
     _indicator = null;
     _label = null;
@@ -20,6 +40,8 @@ export default class PucotiExtension extends Extension {
     _dbusProxy = null;
     _dbusWatchId = null;
     _serviceAvailable = false;
+    _windowDbusId = null;
+    _windowDbusImpl = null;
 
     enable() {
         // Create the panel indicator (button)
@@ -45,6 +67,19 @@ export default class PucotiExtension extends Extension {
         // Add to panel (left of system indicators)
         Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
 
+        // Own a D-Bus name to expose window management methods
+        this._windowDbusId = Gio.bus_own_name(
+            Gio.BusType.SESSION,
+            WINDOW_DBUS_NAME,
+            Gio.BusNameOwnerFlags.NONE,
+            (_connection, _name) => {
+                this._windowDbusImpl = Gio.DBusExportedObject.wrapJSObject(WINDOW_DBUS_XML, this);
+                this._windowDbusImpl.export(Gio.DBus.session, WINDOW_DBUS_PATH);
+            },
+            null,
+            null
+        );
+
         // Watch for the D-Bus service to appear/disappear
         this._dbusWatchId = Gio.bus_watch_name(
             Gio.BusType.SESSION,
@@ -56,6 +91,16 @@ export default class PucotiExtension extends Extension {
     }
 
     disable() {
+        // Unexport window D-Bus interface and release name
+        if (this._windowDbusImpl) {
+            this._windowDbusImpl.unexport();
+            this._windowDbusImpl = null;
+        }
+        if (this._windowDbusId) {
+            Gio.bus_unown_name(this._windowDbusId);
+            this._windowDbusId = null;
+        }
+
         // Stop watching D-Bus name
         if (this._dbusWatchId) {
             Gio.bus_unwatch_name(this._dbusWatchId);
@@ -200,34 +245,51 @@ export default class PucotiExtension extends Extension {
         this._indicator.visible = true;
     }
 
+    _findPucotiMetaWindow() {
+        for (const actor of global.get_window_actors()) {
+            const mw = actor.get_meta_window();
+            if (mw?.get_wm_class()?.toLowerCase().includes('pucoti')) return mw;
+        }
+        return null;
+    }
+
+    MoveResize(x, y, width, height) {
+        const w = this._findPucotiMetaWindow();
+        if (w) w.move_resize_frame(true, x, y, width, height);
+    }
+
+    MakeAbove(above) {
+        const w = this._findPucotiMetaWindow();
+        if (!w) return;
+        above ? w.make_above() : w.unmake_above();
+    }
+
+    Stick(stick) {
+        const w = this._findPucotiMetaWindow();
+        if (!w) return;
+        stick ? w.stick() : w.unstick();
+    }
+
     _focusPucotiWindow() {
-        // Find Pucoti window by WM_CLASS
-        const windowTracker = Shell.WindowTracker.get_default();
-        const windows = global.get_window_actors();
+        const metaWindow = this._findPucotiMetaWindow();
 
-        for (const actor of windows) {
-            const metaWindow = actor.get_meta_window();
-            if (!metaWindow) continue;
+        if (metaWindow) {
+            // Found Pucoti window, activate it
+            const workspace = metaWindow.get_workspace();
+            const time = global.get_current_time();
 
-            const wmClass = metaWindow.get_wm_class();
-            if (wmClass && wmClass.toLowerCase().includes('pucoti')) {
-                // Found Pucoti window, activate it
-                const workspace = metaWindow.get_workspace();
-                const time = global.get_current_time();
-
-                if (workspace) {
-                    workspace.activate_with_focus(metaWindow, time);
-                } else {
-                    metaWindow.activate(time);
-                }
-
-                // Unminimize if minimized
-                if (metaWindow.minimized) {
-                    metaWindow.unminimize();
-                }
-
-                return;
+            if (workspace) {
+                workspace.activate_with_focus(metaWindow, time);
+            } else {
+                metaWindow.activate(time);
             }
+
+            // Unminimize if minimized
+            if (metaWindow.minimized) {
+                metaWindow.unminimize();
+            }
+
+            return;
         }
 
         // Window not found, try to launch Pucoti
