@@ -69,7 +69,7 @@ export const DEFAULT_SETTINGS: Settings = {
   normalWindowHeight: 500,
   smallWindowWidth: 220,
   smallWindowHeight: 80,
-  smallWindowBorderless: false,
+  smallWindowBorderless: true,
   onTimerStart: 'nothing',
   cornerMarginTop: 16,
   cornerMarginRight: 16,
