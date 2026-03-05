@@ -90,12 +90,15 @@ export function formatRelativeTime(date: Date): string {
     return `${dayDiff} days ago`;
   }
   if (dayDiff < 31) {
-    return `${Math.floor(dayDiff / 7)} weeks ago`;
+    const weeks = Math.floor(dayDiff / 7);
+    return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
   }
   if (dayDiff < 365) {
-    return `${Math.floor(dayDiff / 30)} months ago`;
+    const months = Math.floor(dayDiff / 30);
+    return `${months} ${months === 1 ? 'month' : 'months'} ago`;
   }
-  return `${Math.floor(dayDiff / 365)} years ago`;
+  const years = Math.floor(dayDiff / 365);
+  return `${years} ${years === 1 ? 'year' : 'years'} ago`;
 }
 
 /**
