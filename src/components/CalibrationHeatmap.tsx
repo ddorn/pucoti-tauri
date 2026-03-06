@@ -1,21 +1,25 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useEffect } from 'react'
 import { Subheading } from './catalyst/heading'
 import { Text } from './catalyst/text'
 import { calibrationColor } from '../lib/stats'
 import type { HeatmapData } from '../hooks/useStats'
 
-const CELL_SIZE = 20
+const CELL_SIZE = 26
 const GAP = 4
 const STEP = CELL_SIZE + GAP
-const MAX_RADIUS = CELL_SIZE / 2 - 1
-const MIN_RADIUS = 3
+const MAX_RADIUS = 15
+const MIN_RADIUS = 6
+const FONT_SIZE = 10
 const LABEL_WIDTH = 40
-const SUMMARY_GAP = 24
 const MONTH_LABEL_HEIGHT = 22
+const GRID_HEIGHT = MONTH_LABEL_HEIGHT + 7 * STEP
+
+// Right panel: 8px gap after separator, circle centered
+const RIGHT_CX = 8 + CELL_SIZE / 2  // = 22
+const RIGHT_PANEL_WIDTH = RIGHT_CX + CELL_SIZE / 2 + 6  // = 42
 
 // Monday-first order: Mon=0, Tue=1, ..., Sun=6
-// Maps from our row index to JS getDay() value
-const ROW_TO_JS_DAY = [1, 2, 3, 4, 5, 6, 0] // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+const ROW_TO_JS_DAY = [1, 2, 3, 4, 5, 6, 0]
 const JS_DAY_TO_ROW: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 0: 6 }
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -35,9 +39,17 @@ function generateDateGrid(days: HeatmapData['days']): {
   const dayMap = new Map(days.map(d => [d.date, d]))
 
   const end = new Date()
-  const start = new Date()
-  start.setMonth(start.getMonth() - 6)
-  // Align to start of week (Monday)
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+  // Show all data if there's history older than 6 months
+  let startBase = sixMonthsAgo
+  if (days.length > 0) {
+    const minDate = new Date(days.reduce((min, d) => d.date < min ? d.date : min, days[0].date))
+    if (minDate < sixMonthsAgo) startBase = minDate
+  }
+
+  const start = new Date(startBase)
   const dayOfWeek = start.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
   start.setDate(start.getDate() + mondayOffset)
@@ -54,7 +66,6 @@ function generateDateGrid(days: HeatmapData['days']): {
     const row = JS_DAY_TO_ROW[jsDay]
     const dateKey = formatDateKey(current)
 
-    // Track month labels at Monday of each new month
     const monthKey = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`
     if (!seenMonths.has(monthKey) && jsDay === 1) {
       seenMonths.add(monthKey)
@@ -72,7 +83,6 @@ function generateDateGrid(days: HeatmapData['days']): {
     })
 
     current.setDate(current.getDate() + 1)
-    // New week starts on Monday
     if (current.getDay() === 1) col++
   }
 
@@ -95,6 +105,7 @@ function radiusScale(count: number, maxCount: number): number {
 
 export function CalibrationHeatmap({ data }: { data: HeatmapData }) {
   const hasData = data.days.length > 0
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const grid = useMemo(() => generateDateGrid(data.days), [data.days])
 
@@ -108,10 +119,13 @@ export function CalibrationHeatmap({ data }: { data: HeatmapData }) {
     [data.weekdays]
   )
 
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    }
+  }, [grid.weeks])
+
   const gridWidth = grid.weeks * STEP
-  const summaryColX = LABEL_WIDTH + gridWidth + SUMMARY_GAP
-  const svgWidth = summaryColX + STEP + 8
-  const svgHeight = MONTH_LABEL_HEIGHT + 7 * STEP
 
   return (
     <div className="bg-surface-raised rounded-lg p-4">
@@ -122,125 +136,140 @@ export function CalibrationHeatmap({ data }: { data: HeatmapData }) {
         </Text>
       </div>
       {hasData ? (
-        <div className="overflow-x-auto">
-          <svg
-            width={svgWidth}
-            height={svgHeight + 48}
-            className="block"
-          >
-            {/* Month labels */}
-            {grid.monthLabels.map(({ label, col }) => (
-              <text
-                key={`month-${col}`}
-                x={LABEL_WIDTH + col * STEP + CELL_SIZE / 2}
-                y={MONTH_LABEL_HEIGHT - 6}
-                textAnchor="start"
-                className="fill-zinc-400 text-xs"
-              >
-                {label}
-              </text>
-            ))}
-
-            {/* Summary column header */}
-            <text
-              x={summaryColX + CELL_SIZE / 2}
-              y={MONTH_LABEL_HEIGHT - 6}
-              textAnchor="middle"
-              className="fill-zinc-400 text-xs"
+        <div>
+          <div className="flex">
+            {/* Left: fixed weekday labels */}
+            <div
+              className="flex-shrink-0 border-r border-zinc-700"
+              style={{ boxShadow: '4px 0 12px -2px rgba(0,0,0,0.7)', zIndex: 1 }}
             >
-              Avg
-            </text>
-
-            {/* Weekday labels - all days, starting Monday */}
-            {WEEKDAY_LABELS.map((label, row) => (
-              <text
-                key={`day-${row}`}
-                x={LABEL_WIDTH - 6}
-                y={MONTH_LABEL_HEIGHT + row * STEP + CELL_SIZE / 2 + 4}
-                textAnchor="end"
-                className="fill-zinc-400 text-xs"
-              >
-                {label}
-              </text>
-            ))}
-
-            {/* Day cells */}
-            {grid.cells.map(cell => (
-              <circle
-                key={cell.date}
-                cx={LABEL_WIDTH + cell.col * STEP + CELL_SIZE / 2}
-                cy={MONTH_LABEL_HEIGHT + cell.row * STEP + CELL_SIZE / 2}
-                r={radiusScale(cell.sessionCount, maxSessionCount)}
-                fill={cell.sessionCount > 0 ? calibrationColor(cell.onTimeRate) : '#27272a'}
-                opacity={cell.sessionCount > 0 ? 1 : 0.3}
-              >
-                <title>
-                  {cell.date}
-                  {cell.sessionCount > 0
-                    ? `\n${cell.sessionCount} prediction${cell.sessionCount !== 1 ? 's' : ''}\nOn-time: ${cell.onTimeRate !== null ? Math.round(cell.onTimeRate) + '%' : 'N/A'}`
-                    : '\nNo predictions'}
-                </title>
-              </circle>
-            ))}
-
-            {/* Separator line */}
-            <line
-              x1={summaryColX - SUMMARY_GAP / 2}
-              y1={MONTH_LABEL_HEIGHT}
-              x2={summaryColX - SUMMARY_GAP / 2}
-              y2={MONTH_LABEL_HEIGHT + 7 * STEP - GAP}
-              stroke="#3f3f46"
-              strokeWidth={1}
-            />
-
-            {/* Weekday summary column (reordered to Monday-first) */}
-            {WEEKDAY_LABELS.map((_, row) => {
-              const jsDay = ROW_TO_JS_DAY[row]
-              const w = data.weekdays.find(wd => wd.day === jsDay)
-              if (!w) return null
-              return (
-                <circle
-                  key={`summary-${row}`}
-                  cx={summaryColX + CELL_SIZE / 2}
-                  cy={MONTH_LABEL_HEIGHT + row * STEP + CELL_SIZE / 2}
-                  r={w.sessionCount > 0 ? radiusScale(w.sessionCount, maxWeekdayCount) : 2}
-                  fill={w.sessionCount > 0 ? calibrationColor(w.onTimeRate) : '#27272a'}
-                  opacity={w.sessionCount > 0 ? 1 : 0.3}
+            <svg width={LABEL_WIDTH} height={GRID_HEIGHT}>
+              {WEEKDAY_LABELS.map((label, row) => (
+                <text
+                  key={row}
+                  x={LABEL_WIDTH - 6}
+                  y={MONTH_LABEL_HEIGHT + row * STEP + CELL_SIZE / 2 + 4}
+                  textAnchor="end"
+                  className="fill-zinc-300 text-sm"
                 >
-                  <title>
-                    {WEEKDAY_LABELS[row]} average
-                    {w.sessionCount > 0
-                      ? `\n${w.sessionCount} total predictions\nOn-time: ${w.onTimeRate !== null ? Math.round(w.onTimeRate) + '%' : 'N/A'}`
-                      : '\nNo predictions'}
-                  </title>
-                </circle>
-              )
-            })}
+                  {label}
+                </text>
+              ))}
+            </svg>
+            </div>
 
-            {/* Color scale legend */}
-            <g transform={`translate(${LABEL_WIDTH}, ${svgHeight + 14})`}>
-              <text x={0} y={12} className="fill-zinc-400 text-xs">
-                Poor
-              </text>
-              {Array.from({ length: 20 }, (_, i) => {
-                const rate = (i / 19) * 100
-                return (
-                  <rect
-                    key={i}
-                    x={36 + i * 10}
-                    y={2}
-                    width={10}
-                    height={14}
-                    rx={0}
-                    fill={calibrationColor(rate)}
-                  />
-                )
-              })}
-              <text x={36 + 20 * 10 + 8} y={12} className="fill-zinc-400 text-xs">
-                Great
-              </text>
-            </g>
-          </svg>
+            {/* Middle: scrollable month grid */}
+            <div ref={scrollRef} className="overflow-x-auto min-w-0 px-1">
+              <svg width={gridWidth} height={GRID_HEIGHT} className="block">
+                {/* Month labels */}
+                {grid.monthLabels.map(({ label, col }) => (
+                  <text
+                    key={`month-${col}`}
+                    x={col * STEP + CELL_SIZE / 2}
+                    y={MONTH_LABEL_HEIGHT - 6}
+                    textAnchor="middle"
+                    className="fill-zinc-300 text-sm"
+                  >
+                    {label}
+                  </text>
+                ))}
+
+                {/* Day cells */}
+                {grid.cells.map(cell => {
+                  const cx = cell.col * STEP + CELL_SIZE / 2
+                  const cy = MONTH_LABEL_HEIGHT + cell.row * STEP + CELL_SIZE / 2
+                  const r = radiusScale(cell.sessionCount, maxSessionCount)
+                  const dayNum = parseInt(cell.date.split('-')[2])
+                  return (
+                    <g key={cell.date}>
+                      {cell.sessionCount > 0 && (
+                        <circle cx={cx} cy={cy} r={r} fill={calibrationColor(cell.onTimeRate)} />
+                      )}
+                      <text
+                        x={cx}
+                        y={cy}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={FONT_SIZE}
+                        fill={cell.sessionCount > 0 ? 'white' : '#a1a1aa'}
+                        style={{ userSelect: 'none', pointerEvents: 'none' }}
+                      >
+                        {dayNum}
+                      </text>
+                      <title>
+                        {cell.date}
+                        {cell.sessionCount > 0
+                          ? `\n${cell.sessionCount} prediction${cell.sessionCount !== 1 ? 's' : ''}\nOn-time: ${cell.onTimeRate !== null ? Math.round(cell.onTimeRate) + '%' : 'N/A'}`
+                          : '\nNo predictions'}
+                      </title>
+                    </g>
+                  )
+                })}
+              </svg>
+            </div>
+
+            {/* Right: fixed Avg column */}
+            <div className="flex-shrink-0 border-l border-zinc-700" style={{ boxShadow: '-4px 0 12px -2px rgba(0,0,0,0.7)', zIndex: 1 }}>
+              <svg width={RIGHT_PANEL_WIDTH} height={GRID_HEIGHT} className="block">
+                <text
+                  x={RIGHT_CX}
+                  y={MONTH_LABEL_HEIGHT - 6}
+                  textAnchor="middle"
+                  className="fill-zinc-300 text-sm"
+                >
+                  Avg
+                </text>
+                {WEEKDAY_LABELS.map((_, row) => {
+                  const jsDay = ROW_TO_JS_DAY[row]
+                  const w = data.weekdays.find(wd => wd.day === jsDay)
+                  if (!w) return null
+                  return (
+                    <circle
+                      key={`summary-${row}`}
+                      cx={RIGHT_CX}
+                      cy={MONTH_LABEL_HEIGHT + row * STEP + CELL_SIZE / 2}
+                      r={w.sessionCount > 0 ? radiusScale(w.sessionCount, maxWeekdayCount) : 2}
+                      fill={w.sessionCount > 0 ? calibrationColor(w.onTimeRate) : '#27272a'}
+                      opacity={w.sessionCount > 0 ? 1 : 0.3}
+                    >
+                      <title>
+                        {WEEKDAY_LABELS[row]} average
+                        {w.sessionCount > 0
+                          ? `\n${w.sessionCount} total predictions\nOn-time: ${w.onTimeRate !== null ? Math.round(w.onTimeRate) + '%' : 'N/A'}`
+                          : '\nNo predictions'}
+                      </title>
+                    </circle>
+                  )
+                })}
+              </svg>
+            </div>
+          </div>
+
+          {/* Color scale legend */}
+          <div className="mt-3" style={{ paddingLeft: LABEL_WIDTH }}>
+            <div className="flex">
+              {Array.from({ length: 20 }, (_, i) => (
+                <div
+                  key={i}
+                  style={{ width: 10, height: 10, backgroundColor: calibrationColor((i / 19) * 100) }}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-4 mt-1.5">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: calibrationColor(0) }} />
+                <span className="text-xs text-zinc-400">Underestimate</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: calibrationColor(80) }} />
+                <span className="text-xs text-zinc-400">Calibrated</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: calibrationColor(100) }} />
+                <span className="text-xs text-zinc-400">Overestimate</span>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="flex items-center justify-center h-32">
