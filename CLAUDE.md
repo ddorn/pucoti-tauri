@@ -181,6 +181,7 @@ Frontend communicates via `@tauri-apps/api` and plugin imports.
 **Catalyst Components** (`src/components/catalyst/`): Use these when possible instead of creating custom components. Available: alert, auth-layout, avatar, badge, button, checkbox, combobox, description-list, dialog, divider, dropdown, fieldset, heading, input, link, listbox, navbar, pagination, radio, select, sidebar-layout, sidebar, stacked-layout, switch, table, text, textarea.
 
 - Application-specific components in `src/components/`
+- **ButtonGroup** (`src/components/ButtonGroup.tsx`): A segmented button group for mutually exclusive options. Generic over the option value type. Used for "Group by" and "Showing" controls in Stats. Props: `options`, `value`, `onChange`.
 
 ### Plot Components & Bundle Optimization
 

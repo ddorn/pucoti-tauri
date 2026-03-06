@@ -23,6 +23,7 @@ import { Heading } from '../components/catalyst/heading'
 import { StatCard } from '../components/StatCard'
 import { AdjustmentRecommendation } from '../components/AdjustmentRecommendation'
 import { TimeRangeFilter } from '../components/TimeRangeFilter'
+import { ButtonGroup } from '../components/ButtonGroup'
 import { CalibrationHeatmap } from '../components/CalibrationHeatmap'
 import { NotableSessions } from '../components/NotableSessions'
 import { SessionTable } from '../components/SessionTable'
@@ -168,20 +169,7 @@ export function Stats() {
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Text className="text-zinc-400">Group by</Text>
-            <div className="flex gap-1">
-              {GRANULARITY_OPTIONS.map(opt => (
-                <Button
-                  key={opt.value}
-                  outline={opt.value !== granularity}
-                  plain={opt.value !== granularity}
-                  color={opt.value === granularity ? 'zinc' : undefined}
-                  onClick={() => setGranularity(opt.value)}
-                  className="text-sm! px-3! py-1!"
-                >
-                  {opt.label}
-                </Button>
-              ))}
-            </div>
+            <ButtonGroup options={GRANULARITY_OPTIONS} value={granularity} onChange={setGranularity} />
           </div>
           <div className="flex items-center gap-2">
             <Text className="text-zinc-400">Showing</Text>

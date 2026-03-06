@@ -1,4 +1,4 @@
-import { Button } from './catalyst/button'
+import { ButtonGroup } from './ButtonGroup'
 import type { TimeRange } from '../lib/stats'
 
 const OPTIONS: { value: TimeRange; label: string }[] = [
@@ -9,20 +9,5 @@ const OPTIONS: { value: TimeRange; label: string }[] = [
 ]
 
 export function TimeRangeFilter({ value, onChange }: { value: TimeRange; onChange: (v: TimeRange) => void }) {
-  return (
-    <div className="flex gap-1">
-      {OPTIONS.map(opt => (
-        <Button
-          key={opt.value}
-          outline={opt.value !== value}
-          plain={opt.value !== value}
-          color={opt.value === value ? 'zinc' : undefined}
-          onClick={() => onChange(opt.value)}
-          className="text-sm! px-3! py-1!"
-        >
-          {opt.label}
-        </Button>
-      ))}
-    </div>
-  )
+  return <ButtonGroup options={OPTIONS} value={value} onChange={onChange} />
 }
