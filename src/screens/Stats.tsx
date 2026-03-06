@@ -91,7 +91,7 @@ export function Stats() {
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
   const [granularity, setGranularity] = useState<Granularity>('day')
   const [csvPath, setCsvPath] = useState<string>('')
-  const [sessionSort, setSessionSort] = useState<SessionSortMode>('recent')
+  const [sessionSort, setSessionSort] = useState<SessionSortMode>('predictions')
   const sessionTableRef = useRef<HTMLDivElement>(null)
 
   const barColor = COLOR_PALETTES[settings.accentColor].base

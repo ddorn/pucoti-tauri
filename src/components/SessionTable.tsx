@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatDuration, formatTime } from '../lib/format'
 import type { Session } from '../lib/storage'
+import { filterMeaningful } from '../lib/stats'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './catalyst/table'
 import { Text } from './catalyst/text'
 import { Subheading } from './catalyst/heading'
@@ -23,13 +24,14 @@ function getTagColor(tag: string): typeof badgeColors[number] {
   return badgeColors[Math.abs(hash) % badgeColors.length]
 }
 
-export type SessionSortMode = 'recent' | 'most-underestimated' | 'most-overestimated' | 'best-calibrated'
+export type SessionSortMode = 'all' | 'predictions' | 'most-underestimated' | 'most-overestimated' | 'best-calibrated'
 
-const SORT_OPTIONS: { value: SessionSortMode; label: string }[] = [
-  { value: 'recent', label: 'Recent' },
-  { value: 'most-underestimated', label: 'Most underestimated' },
-  { value: 'most-overestimated', label: 'Most overestimated' },
-  { value: 'best-calibrated', label: 'Best calibrated' },
+const SORT_OPTIONS: { value: SessionSortMode; label: string; activeColor: string; inactiveClass: string }[] = [
+  { value: 'all', label: 'All', activeColor: 'zinc', inactiveClass: 'text-zinc-400!' },
+  { value: 'predictions', label: 'Predictions', activeColor: 'indigo', inactiveClass: 'text-indigo-400!' },
+  { value: 'most-underestimated', label: 'Most underestimated', activeColor: 'red', inactiveClass: 'text-red-400!' },
+  { value: 'most-overestimated', label: 'Most overestimated', activeColor: 'emerald', inactiveClass: 'text-emerald-400!' },
+  { value: 'best-calibrated', label: 'Best calibrated', activeColor: 'amber', inactiveClass: 'text-amber-500!' },
 ]
 
 function computeError(session: Session): number | null {
@@ -39,13 +41,21 @@ function computeError(session: Session): number | null {
 }
 
 function sortSessions(sessions: Session[], mode: SessionSortMode): Session[] {
-  const predictions = mode === 'recent'
-    ? sessions
-    : sessions.filter(s => s.status === 'completed' && s.tags.includes('mode:predict'))
+  let base: Session[]
+  if (mode === 'all') {
+    base = sessions
+  } else if (mode === 'predictions') {
+    base = filterMeaningful(sessions).filter(s => s.tags.includes('mode:predict'))
+  } else {
+    base = filterMeaningful(sessions).filter(s => s.status === 'completed' && s.tags.includes('mode:predict'))
+  }
 
-  const sorted = [...predictions]
+  const sorted = [...base]
   switch (mode) {
-    case 'recent':
+    case 'all':
+      sorted.reverse()
+      break
+    case 'predictions':
       sorted.reverse()
       break
     case 'most-underestimated':
@@ -89,7 +99,7 @@ export function SessionTable({ sessions, initialSort }: {
 }) {
   const [relativeTime, setRelativeTime] = useState(true)
   const [page, setPage] = useState(0)
-  const [sortMode, setSortMode] = useState<SessionSortMode>(initialSort ?? 'recent')
+  const [sortMode, setSortMode] = useState<SessionSortMode>(initialSort ?? 'predictions')
 
   const sorted = sortSessions(sessions, sortMode)
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE)
@@ -105,15 +115,14 @@ export function SessionTable({ sessions, initialSort }: {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <Subheading level={2}>All Sessions</Subheading>
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {SORT_OPTIONS.map(opt => (
               <Button
                 key={opt.value}
                 outline={opt.value !== sortMode}
-                plain={opt.value !== sortMode}
-                color={opt.value === sortMode ? 'zinc' : undefined}
+                color={opt.activeColor}
                 onClick={() => handleSortChange(opt.value)}
-                className="text-xs! px-2! py-0.5!"
+                className={opt.value !== sortMode ? opt.inactiveClass : ''}
               >
                 {opt.label}
               </Button>
