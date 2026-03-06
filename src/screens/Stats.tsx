@@ -231,7 +231,7 @@ export function Stats() {
           {/* Section: trend over time */}
           <SectionHeader
             title="Are you getting better?"
-            subtitle="Each bar shows what share of your predictions came true. The green line marks 80% — look for an upward trend."
+            subtitle={`Each bar shows what share of your predictions came true${granularity === 'week' ? ' (one bar = one week, starting Monday)' : ''}. The green line marks 80% — look for an upward trend.`}
           />
           <CalibrationOverTimeChart
             data={calibrationOverTime}

@@ -54,7 +54,31 @@ function formatDateKey(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+/** Parse "YYYY-Www" and return the Monday Date of that ISO week */
+function isoWeekToMonday(weekKey: string): Date {
+  const [yearStr, weekStr] = weekKey.split('-W')
+  const year = parseInt(yearStr)
+  const week = parseInt(weekStr)
+  // Jan 4 is always in ISO week 1; find its Monday
+  const jan4 = new Date(year, 0, 4)
+  const jan4DayOfWeek = jan4.getDay() || 7 // 1=Mon … 7=Sun
+  const week1Monday = new Date(jan4)
+  week1Monday.setDate(jan4.getDate() - (jan4DayOfWeek - 1))
+  const monday = new Date(week1Monday)
+  monday.setDate(week1Monday.getDate() + (week - 1) * 7)
+  return monday
+}
+
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Format a week key as "Jan 27 – Feb 2" for hover tooltips */
+function weekRangeLabel(weekKey: string): string {
+  const monday = isoWeekToMonday(weekKey)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+  const fmt = (d: Date) => `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`
+  return `${fmt(monday)} – ${fmt(sunday)}`
+}
 
 function formatPeriodLabels(entries: { period: string }[], granularity: Granularity): string[] {
   if (granularity === 'month') {
@@ -65,7 +89,26 @@ function formatPeriodLabels(entries: { period: string }[], granularity: Granular
   }
 
   if (granularity === 'week') {
-    return entries.map(e => e.period)
+    let lastMonth = ''
+    let lastYear = ''
+    return entries.map(e => {
+      const monday = isoWeekToMonday(e.period)
+      const y = String(monday.getFullYear())
+      const m = String(monday.getMonth() + 1).padStart(2, '0')
+      const monthName = MONTH_NAMES[monday.getMonth()]
+      const dayNum = monday.getDate()
+
+      if (y !== lastYear) {
+        lastYear = y
+        lastMonth = m
+        return `${monthName} ${dayNum}, ${y}`
+      }
+      if (m !== lastMonth) {
+        lastMonth = m
+        return `${monthName} ${dayNum}`
+      }
+      return `${monthName} ${dayNum}`
+    })
   }
 
   // Day: "Mar 1" on month change, then just "2", "3", etc.
@@ -119,11 +162,12 @@ export function CalibrationOverTimeChart({ data, granularity, barColor }: Props)
       marker: {
         color: filled.map(e => e.data ? barColor : 'transparent'),
       },
-      hovertemplate: filled.map((e, i) =>
-        e.data
-          ? `${labels[i]}<br>On-time: ${Math.round(e.data.onTime.rate)}%<br>${e.data.sessionCount} prediction${e.data.sessionCount !== 1 ? 's' : ''}<extra></extra>`
-          : `${labels[i]}<br>No predictions<extra></extra>`
-      ),
+      hovertemplate: filled.map((e, i) => {
+        const periodLabel = granularity === 'week' ? weekRangeLabel(e.period) : labels[i]
+        return e.data
+          ? `${periodLabel}<br>On-time: ${Math.round(e.data.onTime.rate)}%<br>${e.data.sessionCount} prediction${e.data.sessionCount !== 1 ? 's' : ''}<extra></extra>`
+          : `${periodLabel}<br>No predictions<extra></extra>`
+      }),
     }
 
     if (showErrorBars) {
