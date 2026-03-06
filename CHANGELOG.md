@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.4.0] - 2026-03-06
+
+### Added
+
+- **Redesigned Stats screen**: The Stats screen has been completely rebuilt around one key question: *are you getting better at estimating?* It now shows:
+  - **On-time rate**: A hero card showing what percentage of your predictions you hit, with a comparison to the previous period and a goal of 80%.
+  - **Calibration over time**: A bar chart tracking your on-time rate across days, weeks, or months so you can see improvement trends.
+  - **Duration breakdown**: A chart showing your on-time rate for different task length ranges, so you can spot whether you tend to underestimate short tasks, long tasks, or both.
+  - **Prediction calendar**: A heatmap of your prediction activity and accuracy across all of history.
+  - **Notable sessions**: Cards highlighting your most underestimated, most overestimated, and best-calibrated recent sessions.
+  - **Improved session log**: A filterable table with separate views for all sessions, predictions only, most underestimated, most overestimated, and best calibrated. Filter buttons are color-coded.
+  - **Time range and granularity controls**: Filter by the last 30/90/365 days or all time, and group charts by day, week, or month.
+
+- **Keyboard shortcuts for screen navigation**: Press `s` from the timer to jump to Stats, `,` to open Settings, and `Esc` from Stats or Settings to return to the timer.
+
+### Fixed
+
+- **Relative time display**: Time descriptions now correctly use singular form — "1 week ago" instead of "1 weeks ago".
+- **Time display in GNOME panel**: Durations above one hour now show properly (#5) Thanks @Aelerinya!
+
 ## [1.3.0] - 2026-02-12
 
 ### Added
