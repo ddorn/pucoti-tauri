@@ -5,10 +5,11 @@ import { lazy, Suspense } from 'react'
 import type { ComponentProps } from 'react'
 import { Text } from './catalyst/text'
 
-// Lazy load the actual plot components
-const CalibrationPlotLazy = lazy(() => import('./CalibrationPlot').then(m => ({ default: m.CalibrationPlot })))
+// Lazy load the actual plot components (these import Plotly)
 const AdjustmentPlotLazy = lazy(() => import('./AdjustmentPlot').then(m => ({ default: m.AdjustmentPlot })))
 const EstimationHistogramLazy = lazy(() => import('./EstimationHistogram').then(m => ({ default: m.EstimationHistogram })))
+const CalibrationOverTimeChartLazy = lazy(() => import('./CalibrationOverTimeChart').then(m => ({ default: m.CalibrationOverTimeChart })))
+const DurationBucketChartLazy = lazy(() => import('./DurationBucketChart').then(m => ({ default: m.DurationBucketChart })))
 
 // Loading fallback for plots
 function PlotSkeleton({ height = 'h-72' }: { height?: string }) {
@@ -20,14 +21,6 @@ function PlotSkeleton({ height = 'h-72' }: { height?: string }) {
 }
 
 // Export wrapped versions with Suspense built-in
-export function CalibrationPlot(props: ComponentProps<typeof CalibrationPlotLazy>) {
-  return (
-    <Suspense fallback={<PlotSkeleton />}>
-      <CalibrationPlotLazy {...props} />
-    </Suspense>
-  )
-}
-
 export function AdjustmentPlot(props: ComponentProps<typeof AdjustmentPlotLazy>) {
   return (
     <Suspense fallback={<PlotSkeleton />}>
@@ -40,6 +33,22 @@ export function EstimationHistogram(props: ComponentProps<typeof EstimationHisto
   return (
     <Suspense fallback={<div className="w-full h-48" />}>
       <EstimationHistogramLazy {...props} />
+    </Suspense>
+  )
+}
+
+export function CalibrationOverTimeChart(props: ComponentProps<typeof CalibrationOverTimeChartLazy>) {
+  return (
+    <Suspense fallback={<PlotSkeleton />}>
+      <CalibrationOverTimeChartLazy {...props} />
+    </Suspense>
+  )
+}
+
+export function DurationBucketChart(props: ComponentProps<typeof DurationBucketChartLazy>) {
+  return (
+    <Suspense fallback={<PlotSkeleton />}>
+      <DurationBucketChartLazy {...props} />
     </Suspense>
   )
 }
