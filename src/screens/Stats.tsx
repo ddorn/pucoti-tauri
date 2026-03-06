@@ -162,9 +162,9 @@ export function Stats() {
   }
 
   return (
-    <div className="p-4 sm:p-6 space-y-8 mb-12 max-w-9xl lg:mx-auto">
+    <div className="p-4 sm:p-6 space-y-8 mb-12 max-w-6xl lg:mx-auto">
       {/* Header with global controls */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col gap-3">
         <Heading level={1} className="font-bold">Session Stats</Heading>
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
