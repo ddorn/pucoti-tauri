@@ -44,16 +44,16 @@ function SessionList({ items, type, title, sortMode, onSeeAll }: {
   onSeeAll: (sort: SessionSortMode) => void
 }) {
   return (
-    <div className="bg-surface-raised rounded-lg p-4">
+    <div className="bg-surface-raised rounded-lg p-4 flex flex-col">
       <Subheading level={2} className="mb-3">{title}</Subheading>
       {items.length > 0 ? (
         <>
-          <div className="divide-y divide-zinc-800">
+          <div className="divide-y divide-zinc-800 flex-1">
             {items.map((item, i) => (
               <SessionRow key={i} item={item} type={type} />
             ))}
           </div>
-          <div className="flex justify-end mt-3 pt-2 border-t border-zinc-800">
+          <div className="flex justify-end mt-3 pt-2 border-t border-zinc-800 mt-auto">
             <Button plain onClick={() => onSeeAll(sortMode)} className="text-sm!">
               See all
             </Button>
