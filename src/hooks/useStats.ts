@@ -169,7 +169,7 @@ export interface NotableSession {
   errorPercent: number // abs((actual - predicted) / predicted) * 100
 }
 
-export function useNotableSessions(sessions: Session[]): {
+export function useNotableSessions(sessions: Session[], limit = 5): {
   mostUnderestimated: NotableSession[]
   mostOverestimated: NotableSession[]
   bestCalibrated: NotableSession[]
@@ -186,9 +186,9 @@ export function useNotableSessions(sessions: Session[]): {
     const sortedByError = [...scored].sort((a, b) => a.errorPercent - b.errorPercent)
 
     return {
-      mostUnderestimated: sortedByRatio.slice(0, 5),
-      mostOverestimated: sortedByRatio.slice(-5).reverse(),
-      bestCalibrated: sortedByError.slice(0, 5),
+      mostUnderestimated: sortedByRatio.slice(0, limit),
+      mostOverestimated: sortedByRatio.slice(-limit).reverse(),
+      bestCalibrated: sortedByError.slice(0, limit),
     }
-  }, [sessions])
+  }, [sessions, limit])
 }

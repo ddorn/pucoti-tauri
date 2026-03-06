@@ -103,7 +103,7 @@ export function Stats() {
   const bucketData = useByDurationBucket(filteredSessions)
   const heatmapData = useHeatmapData(sessions)
   const adjustmentCurve = useAdjustmentCurve(filteredSessions)
-  const notable = useNotableSessions(filteredSessions)
+  const notable = useNotableSessions(filteredSessions, 3)
 
   useEffect(() => {
     getCSVPath().then(setCsvPath).catch(console.error)
