@@ -19,7 +19,7 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
         y: adjustmentCurve.onTimeRates,
         mode: 'lines',
         type: 'scatter',
-        name: 'On-time rate',
+        name: 'Predictions correct',
         line: {
           color: '#f59e0b',
           width: 3,
@@ -60,7 +60,7 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
     const layout = createPlotLayout({
       xaxis: {
         title: {
-          text: 'Adjustment to Initial Estimate (+X%)',
+          text: 'Buffer added to estimate (%)',
           font: { color: '#a1a1aa' },
         },
         gridcolor: '#27272a',
@@ -86,7 +86,7 @@ export function AdjustmentPlot({ adjustmentCurve }: { adjustmentCurve: Adjustmen
 
   return (
     <div className="bg-surface-raised rounded-lg p-4">
-      <Subheading level={2} className="mb-4">Adjustment Impact</Subheading>
+      <Subheading level={2} className="mb-4">Accuracy vs. added buffer</Subheading>
       {adjustmentCurve ? (
         <div ref={plotRef} className="w-full h-72" />
       ) : (

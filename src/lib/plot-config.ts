@@ -5,7 +5,7 @@ export function createPlotLayout(overrides?: Partial<Plotly.Layout>): Partial<Pl
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
     font: { color: '#a1a1aa', family: 'system-ui' },
-    margin: { l: 60, r: 20, t: 40, b: 60 },
+    margin: { l: 60, r: 20, t: 0, b: 60 },
     legend: {
       x: 0.98,
       y: 0.02,

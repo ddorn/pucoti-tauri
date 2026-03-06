@@ -59,7 +59,7 @@ export function DurationBucketChart({ data, barColor }: { data: BucketData[]; ba
         range: [-0.7, data.length - 0.3],
       },
       yaxis: {
-        title: { text: 'On-time rate (%)', font: { color: '#a1a1aa' } },
+        title: { text: 'Predictions correct (%)', font: { color: '#a1a1aa' } },
         gridcolor: '#27272a',
         range: [0, 115],
       },
@@ -84,7 +84,10 @@ export function DurationBucketChart({ data, barColor }: { data: BucketData[]; ba
 
   return (
     <div className="bg-surface-raised rounded-lg p-4">
-      <Subheading level={2} className="mb-4">On-time Rate by Duration</Subheading>
+      <div className="mb-4">
+        <Subheading level={2}>Which task lengths trip you up?</Subheading>
+        <Text className="text-zinc-400 mt-1">How accurate your predictions are, broken down by how long you thought a task would take.</Text>
+      </div>
       {hasData ? (
         <div ref={plotRef} className="w-full h-72" />
       ) : (

@@ -34,6 +34,15 @@ const GRANULARITY_OPTIONS: { value: Granularity; label: string }[] = [
   { value: 'month', label: 'Month' },
 ]
 
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <div className="border-t border-zinc-800 pt-6 -mt-2">
+      <Heading level={2} className="mb-1">{title}</Heading>
+      {subtitle && <Text className="text-zinc-500 mt-4">{subtitle}</Text>}
+    </div>
+  )
+}
+
 function HeroCard({ currentRate, change, currentN, granularity }: {
   currentRate: number | null
   change: number | null
@@ -76,7 +85,7 @@ function HeroCard({ currentRate, change, currentN, granularity }: {
             <div className="flex items-center justify-center gap-3 text-sm">
               {changeText && <span className={changeColor}>{changeText}</span>}
               {changeText && <span className="text-zinc-600">·</span>}
-              <span className="text-zinc-500">{currentN} prediction{currentN !== 1 ? 's' : ''}</span>
+              <span className="text-zinc-500">Goal: 80%</span>
             </div>
           </>
         ) : (
@@ -91,7 +100,7 @@ export function Stats() {
   const { sessions, loading, error } = useSessions()
   const { settings } = useSettings()
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
-  const [granularity, setGranularity] = useState<Granularity>('day')
+  const [granularity, setGranularity] = useState<Granularity>('week')
   const [csvPath, setCsvPath] = useState<string>('')
   const [sessionSort, setSessionSort] = useState<SessionSortMode>('predictions')
   const sessionTableRef = useRef<HTMLDivElement>(null)
@@ -174,18 +183,23 @@ export function Stats() {
               ))}
             </div>
           </div>
-          <TimeRangeFilter value={timeRange} onChange={setTimeRange} />
+          <div className="flex items-center gap-2">
+            <Text className="text-zinc-400">Showing</Text>
+            <TimeRangeFilter value={timeRange} onChange={setTimeRange} />
+          </div>
         </div>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="text-center py-16">
-          <Text className="text-lg">No sessions yet</Text>
-          <Text className="mt-1">Complete your first focus session to see your calibration data here.</Text>
+        <div className="text-center py-16 max-w-md mx-auto">
+          <Text className="text-lg text-zinc-200 mb-2">No sessions yet</Text>
+          <Text className="text-zinc-400">
+            Start a timer and make a prediction — once you complete sessions, you'll see how well your estimates match reality. Over time this page helps you spot patterns and become a more accurate planner.
+          </Text>
         </div>
       ) : (
         <>
-          {/* Hero card */}
+          {/* Hero card + stat cards: the immediate answer */}
           <HeroCard
             currentRate={periodComparison.currentRate}
             change={periodComparison.change}
@@ -193,7 +207,6 @@ export function Stats() {
             granularity={granularity}
           />
 
-          {/* Stat cards */}
           <section className="grid grid-cols-3 gap-4">
             <StatCard
               value={stats?.onTimeRate ? `${Math.round(stats.onTimeRate.rate)}%` : '—'}
@@ -217,20 +230,24 @@ export function Stats() {
             />
           </section>
 
-          {/* Calibration over time */}
+          {/* Section: trend over time */}
+          <SectionHeader
+            title="Are you getting better?"
+            subtitle="Each bar shows what share of your predictions came true. The green line marks 80% — look for an upward trend."
+          />
           <CalibrationOverTimeChart
             data={calibrationOverTime}
             granularity={granularity}
             barColor={barColor}
           />
 
-          {/* Duration bucket analysis */}
+          {/* Section: where estimates break down */}
+          <SectionHeader
+            title="Where do estimates go wrong?"
+            subtitle="Look for task types or durations where you consistently miss."
+          />
           <DurationBucketChart data={bucketData} barColor={barColor} />
-
-          {/* Activity heatmap */}
           <CalibrationHeatmap data={heatmapData} />
-
-          {/* Notable sessions */}
           <NotableSessions
             mostUnderestimated={notable.mostUnderestimated}
             mostOverestimated={notable.mostOverestimated}
@@ -238,7 +255,11 @@ export function Stats() {
             onSeeAll={handleSeeAll}
           />
 
-          {/* Adjustment recommendation */}
+          {/* Section: actionable takeaway */}
+          <SectionHeader
+            title="Your adjustment formula"
+            subtitle="If you had done this, you would have perfect 80%-calibration now."
+          />
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AdjustmentRecommendation
               adjustmentCurve={adjustmentCurve}
@@ -247,11 +268,16 @@ export function Stats() {
             <AdjustmentPlot adjustmentCurve={adjustmentCurve} />
           </section>
 
+          {/* Session log */}
+          <SectionHeader
+            title="Session Log"
+            subtitle="A raw record of every focus session. Use the filters below to sort and explore."
+          />
           <div ref={sessionTableRef}>
             <SessionTable key={sessionSort} sessions={filteredSessions} initialSort={sessionSort} />
           </div>
 
-          {/* Export section */}
+          {/* Export */}
           <section className="text-center">
             <Text>Download all your predictions for further analysis</Text>
             {csvPath && (

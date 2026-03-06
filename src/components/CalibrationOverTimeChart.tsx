@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import Plotly from '../lib/plotly-custom'
 import { Text } from './catalyst/text'
-import { Subheading } from './catalyst/heading'
 import { createPlotLayout, createPlotConfig } from '../lib/plot-config'
 import type { Granularity } from '../lib/stats'
 import type { PeriodData } from '../hooks/useStats'
@@ -149,7 +148,7 @@ export function CalibrationOverTimeChart({ data, granularity, barColor }: Props)
         range: [-0.7, filled.length - 0.3],
       },
       yaxis: {
-        title: { text: 'On-time rate (%)', font: { color: '#a1a1aa' } },
+        title: { text: 'Predictions correct (%)', font: { color: '#a1a1aa' } },
         gridcolor: '#27272a',
         range: [0, 105],
       },
@@ -174,7 +173,6 @@ export function CalibrationOverTimeChart({ data, granularity, barColor }: Props)
 
   return (
     <div className="bg-surface-raised rounded-lg p-4">
-      <Subheading level={2} className="mb-4">Calibration Over Time</Subheading>
       {data.length > 0 ? (
         <div ref={plotRef} className="w-full h-72" />
       ) : (

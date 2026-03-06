@@ -39,14 +39,14 @@ function generateDateGrid(days: HeatmapData['days']): {
   const dayMap = new Map(days.map(d => [d.date, d]))
 
   const end = new Date()
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  const defaultStart = new Date()
+  defaultStart.setFullYear(defaultStart.getFullYear() - 1)
 
-  // Show all data if there's history older than 6 months
-  let startBase = sixMonthsAgo
+  // Always show at least 12 months; show more if data goes further back
+  let startBase = defaultStart
   if (days.length > 0) {
     const minDate = new Date(days.reduce((min, d) => d.date < min ? d.date : min, days[0].date))
-    if (minDate < sixMonthsAgo) startBase = minDate
+    if (minDate < defaultStart) startBase = minDate
   }
 
   const start = new Date(startBase)
@@ -130,9 +130,9 @@ export function CalibrationHeatmap({ data }: { data: HeatmapData }) {
   return (
     <div className="bg-surface-raised rounded-lg p-4">
       <div className="mb-4">
-        <Subheading level={2}>Prediction Activity & Calibration</Subheading>
+        <Subheading level={2}>Your prediction calendar</Subheading>
         <Text className="text-zinc-400 mt-1">
-          Color shows calibration quality. Larger dots mean more predictions that day.
+          Color shows how accurate your predictions were. Larger dots mean more predictions that day.
         </Text>
       </div>
       {hasData ? (

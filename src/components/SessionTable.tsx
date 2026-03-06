@@ -4,7 +4,6 @@ import type { Session } from '../lib/storage'
 import { filterMeaningful } from '../lib/stats'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './catalyst/table'
 import { Text } from './catalyst/text'
-import { Subheading } from './catalyst/heading'
 import { Switch } from './catalyst/switch'
 import { Button } from './catalyst/button'
 import { StatusBadge } from './StatusBadge'
@@ -113,8 +112,8 @@ export function SessionTable({ sessions, initialSort }: {
   return (
     <section>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-        <Subheading level={2}>All Sessions</Subheading>
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Text className="text-zinc-400">Filter</Text>
           <div className="flex gap-1 flex-wrap">
             {SORT_OPTIONS.map(opt => (
               <Button
@@ -128,10 +127,10 @@ export function SessionTable({ sessions, initialSort }: {
               </Button>
             ))}
           </div>
-          <div className="flex items-center gap-2">
-            <Text>{relativeTime ? 'Relative time' : 'Absolute time'}</Text>
-            <Switch checked={relativeTime} onChange={setRelativeTime} />
-          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Text>{relativeTime ? 'Relative time' : 'Absolute time'}</Text>
+          <Switch checked={relativeTime} onChange={setRelativeTime} />
         </div>
       </div>
       <div className="rounded-lg border border-zinc-800 overflow-hidden overflow-x-auto">
