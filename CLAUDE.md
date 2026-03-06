@@ -263,13 +263,27 @@ When updating `CHANGELOG.md`:
    - ❌ Code cleanups or architecture changes
    - ❌ Developer-only improvements (build process, CI, etc.)
 
-2. **Organization**:
-   - We write changelog entries for minor version only
+2. **Don't label unreleased work as fixes**: Users only see the diff between the last released version and the new one. If a feature was introduced and then fixed entirely within the same release cycle, don't call it a "fix" — users never saw the broken version. Present it as a feature (or one of its attributes), or omit the fix entirely. Only label something as a fix if the broken behavior was present in a previously released version.
+
+3. **Organization**:
    - Use today's date by default for the release date
    - Write in user-friendly language (avoid technical jargon)
 
-3. **Construct the changelog from the git log**:
+4. **Construct the changelog from the git log**:
    Commits are usually multi-line, so read the full log entries since the last minor version release.
+
+## Release Process
+
+Follow semantic versioning (patch for fixes, minor for new features, major for breaking changes — major releases are rare).
+
+1. **Pull latest changes**: `git pull` to ensure no upstream changes are missing.
+2. **Verify the build**: Run `npm run tauri:build`. Fix any build errors before proceeding.
+3. **Write the changelog**: Add a new entry to `CHANGELOG.md` following the guidelines above.
+4. **Commit**: Stage and commit the changelog (and any other pending changes).
+5. **Bump the version**: Run `npm version patch`, `npm version minor`, or `npm version major`. This updates `package.json` and creates a git tag automatically.
+6. **Push with tags**: `git push --follow-tags`
+
+**If the build fails after tagging**: Since no release was published, move the tag instead of creating a patch version. Fix the issue, commit, then: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`, re-tag with `git tag vX.Y.Z`, and push again. Also delete any partial draft release on GitHub before re-triggering.
 
 ## Notes
 - Keep this file (CLAUDE.MD) up to date. Document architecture changes, new important features, new folders.
