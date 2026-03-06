@@ -15,3 +15,8 @@ declare module 'plotly.js/lib/violin' {
   const violin: any
   export = violin
 }
+
+declare module 'plotly.js/lib/bar' {
+  const bar: any
+  export = bar
+}

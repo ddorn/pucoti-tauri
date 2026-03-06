@@ -25,12 +25,12 @@ function getTagColor(tag: string): typeof badgeColors[number] {
 
 export type SessionSortMode = 'all' | 'predictions' | 'most-underestimated' | 'most-overestimated' | 'best-calibrated'
 
-const SORT_OPTIONS: { value: SessionSortMode; label: string; activeColor: string; inactiveClass: string }[] = [
-  { value: 'all', label: 'All', activeColor: 'zinc', inactiveClass: 'text-zinc-400!' },
-  { value: 'predictions', label: 'Predictions', activeColor: 'indigo', inactiveClass: 'text-indigo-400!' },
-  { value: 'most-underestimated', label: 'Most underestimated', activeColor: 'red', inactiveClass: 'text-red-400!' },
-  { value: 'most-overestimated', label: 'Most overestimated', activeColor: 'emerald', inactiveClass: 'text-emerald-400!' },
-  { value: 'best-calibrated', label: 'Best calibrated', activeColor: 'amber', inactiveClass: 'text-amber-500!' },
+const SORT_OPTIONS = [
+  { value: 'all' as SessionSortMode, label: 'All', activeColor: 'zinc' as const, inactiveClass: 'text-zinc-400!' },
+  { value: 'predictions' as SessionSortMode, label: 'Predictions', activeColor: 'indigo' as const, inactiveClass: 'text-indigo-400!' },
+  { value: 'most-underestimated' as SessionSortMode, label: 'Most underestimated', activeColor: 'red' as const, inactiveClass: 'text-red-400!' },
+  { value: 'most-overestimated' as SessionSortMode, label: 'Most overestimated', activeColor: 'emerald' as const, inactiveClass: 'text-emerald-400!' },
+  { value: 'best-calibrated' as SessionSortMode, label: 'Best calibrated', activeColor: 'amber' as const, inactiveClass: 'text-amber-500!' },
 ]
 
 function computeError(session: Session): number | null {
@@ -118,8 +118,7 @@ export function SessionTable({ sessions, initialSort }: {
             {SORT_OPTIONS.map(opt => (
               <Button
                 key={opt.value}
-                outline={opt.value !== sortMode}
-                color={opt.activeColor}
+                {...(opt.value !== sortMode ? { outline: true } : { color: opt.activeColor })}
                 onClick={() => handleSortChange(opt.value)}
                 className={opt.value !== sortMode ? opt.inactiveClass : ''}
               >

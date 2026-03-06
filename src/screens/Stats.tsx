@@ -45,10 +45,9 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
   )
 }
 
-function HeroCard({ currentRate, change, currentN, granularity }: {
+function HeroCard({ currentRate, change, granularity }: {
   currentRate: number | null
   change: number | null
-  currentN: number
   granularity: Granularity
 }) {
   const labels = GRANULARITY_LABELS[granularity]
@@ -201,7 +200,6 @@ export function Stats() {
           <HeroCard
             currentRate={periodComparison.currentRate}
             change={periodComparison.change}
-            currentN={periodComparison.currentN}
             granularity={granularity}
           />
 
