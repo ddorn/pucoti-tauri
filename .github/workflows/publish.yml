@@ -66,28 +66,40 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      - name: Extract changelog for this version
+        shell: bash
+        run: |
+          # Get version from package.json (strip leading 'v' if present)
+          VERSION=$(node -p "require('./package.json').version")
+          # Extract the section between this version's header and the next one
+          awk "/^## \[${VERSION}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md > release-notes.md
+          # Append installation instructions
+          cat >> release-notes.md << 'HEREDOC'
+
+          ## Installation
+
+          **Linux (Debian/Ubuntu)**:
+          ```bash
+          sudo dpkg -i Pucoti___VERSION___amd64.deb
+          ```
+
+          **Linux (Fedora/RHEL/openSUSE)**:
+          ```bash
+          sudo rpm -i Pucoti-__VERSION__.x86_64.rpm
+          ```
+
+          **Windows**: Download and run `Pucoti___VERSION___x64_en-US.msi`
+
+          **macOS**: See the [README](https://github.com/ddorn/pucoti-tauri#installation) for detailed installation instructions.
+          HEREDOC
+
       - uses: tauri-apps/tauri-action@v0.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: pucoti-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'Pucoti v__VERSION__'
-          releaseBody: |
-            ## Installation
-
-            **Linux (Debian/Ubuntu)**:
-            ```bash
-            sudo dpkg -i Pucoti___VERSION___amd64.deb
-            ```
-
-            **Linux (Fedora/RHEL/openSUSE)**:
-            ```bash
-            sudo rpm -i Pucoti-__VERSION__.x86_64.rpm
-            ```
-
-            **Windows**: Download and run `Pucoti___VERSION___x64_en-US.msi`
-
-            **macOS**: See the [README](https://github.com/ddorn/pucoti-tauri#installation) for detailed installation instructions.
+          releaseBodyPath: release-notes.md
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
