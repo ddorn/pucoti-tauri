@@ -55,30 +55,32 @@ function HeroCard({ currentRate, change, currentN, granularity }: {
       changeColor = 'text-red-400'
     } else {
       changeText = `Same as ${labels.lastLabel}`
+      changeColor = 'text-zinc-400'
     }
   } else if (hasData) {
     changeText = `No data from ${labels.lastLabel} to compare`
   }
 
   return (
-    <div className="bg-surface-raised rounded-lg p-6">
-      <div className="text-zinc-300 text-lg">
+    <div className="bg-surface-raised rounded-lg p-6 flex flex-col justify-center min-h-[140px]">
+      <div className="text-center">
+        <div className="text-xl mb-3">{labels.thisLabel}, you were on time</div>
         {hasData ? (
           <>
-            {labels.thisLabel}, you were on time{' '}
-            <span className={`font-bold text-2xl ${currentRate! >= 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {Math.round(currentRate!)}%
-            </span>
-            {' '}of the time
+            <div className="text-4xl font-bold mb-2">
+              <span className={currentRate! >= 70 ? 'text-emerald-400' : 'text-amber-400'}>
+                {Math.round(currentRate!)}%
+              </span>
+              <span> of the time</span>
+            </div>
+            <div className="flex items-center justify-center gap-3 text-sm">
+              {changeText && <span className={changeColor}>{changeText}</span>}
+              {changeText && <span className="text-zinc-600">·</span>}
+              <span className="text-zinc-500">{currentN} prediction{currentN !== 1 ? 's' : ''}</span>
+            </div>
           </>
         ) : (
-          <>{labels.thisLabel}, no predictions yet</>
-        )}
-      </div>
-      <div className="mt-2 flex items-center gap-3">
-        {changeText && <span className={changeColor}>{changeText}</span>}
-        {hasData && (
-          <span className="text-zinc-500">{currentN} prediction{currentN !== 1 ? 's' : ''}</span>
+          <div className="text-4xl font-bold mb-2 text-zinc-500">no predictions yet</div>
         )}
       </div>
     </div>
