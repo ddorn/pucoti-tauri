@@ -23,7 +23,7 @@ import { Kbd } from '../components/Kbd'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
-  const { updateInfo, checkForUpdatesNow } = useApp()
+  const { updateInfo, checkForUpdatesNow, setScreen } = useApp()
   const [testingNotification, setTestingNotification] = useState(false)
   const [testingBell, setTestingBell] = useState(false)
   const [testingCompletionHook, setTestingCompletionHook] = useState(false)
@@ -39,6 +39,14 @@ export function Settings() {
   useEffect(() => {
     getExtensionStatus().then(setExtensionStatus)
   }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setScreen('timer')
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setScreen])
 
   // Clear update check result when updateInfo changes (from auto-check)
   useEffect(() => {

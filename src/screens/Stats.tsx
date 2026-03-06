@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useApp } from '../context/AppContext'
 import { exportSessionsCSV, getCSVPath } from '../lib/storage'
 import { formatDuration } from '../lib/format'
 import { useSessions } from '../hooks/useSessions'
@@ -98,6 +99,7 @@ function HeroCard({ currentRate, change, currentN, granularity }: {
 }
 
 export function Stats() {
+  const { setScreen } = useApp()
   const { sessions, loading, error } = useSessions()
   const { settings } = useSettings()
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
@@ -120,6 +122,14 @@ export function Stats() {
   useEffect(() => {
     getCSVPath().then(setCsvPath).catch(console.error)
   }, [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setScreen('timer')
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [setScreen])
 
   const handleSeeAll = useCallback((sort: SessionSortMode) => {
     setSessionSort(sort)

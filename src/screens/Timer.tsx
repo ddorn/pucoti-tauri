@@ -15,7 +15,7 @@ import clsx from 'clsx'
 const DEFAULT_COUNTDOWN_SECONDS = 300
 
 export function Timer() {
-  const { displayMode, setDisplayMode } = useApp()
+  const { displayMode, setDisplayMode, setScreen } = useApp()
   const { timerState, elapsed, remaining } = useTimerState()
   const { settings, updateSettings } = useSettings()
 
@@ -156,6 +156,14 @@ export function Timer() {
         case 'q':
           // Reset to default countdown (cancel any running timer)
           timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
+          break
+
+        case 's':
+          setScreen('stats')
+          break
+
+        case ',':
+          setScreen('settings')
           break
       }
     }
@@ -348,6 +356,8 @@ export function Timer() {
               <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
               <Shortcut keys={['c']} label="Cycle corners" />
               <Shortcut keys={['q']} label="Cancel" />
+              <Shortcut keys={['s']} label="Stats" />
+              <Shortcut keys={[',']} label="Settings" />
               <Shortcut keys={['Enter']} label={timerState.focusText ? "Complete" : "Set intent"} />
               {settings.prefillCommand && (
                 <Shortcut keys={['Shift', 'Enter']} label="Set intent (prefill)" />
