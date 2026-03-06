@@ -108,8 +108,12 @@ export function CalibrationOverTimeChart({ data, granularity, barColor }: Props)
     const labels = formatPeriodLabels(filled, granularity)
     const showErrorBars = granularity !== 'day'
 
+    // Use integer indices as x-values to avoid Plotly merging duplicate label strings
+    // (e.g. "25" for Jan 25 and Feb 25 would otherwise be treated as one category)
+    const indices = filled.map((_, i) => i)
+
     const barTrace: Plotly.Data = {
-      x: labels,
+      x: indices,
       y: filled.map(e => e.data?.onTime.rate ?? 0),
       type: 'bar',
       name: 'On-time rate',
@@ -138,9 +142,11 @@ export function CalibrationOverTimeChart({ data, granularity, barColor }: Props)
     const layout = createPlotLayout({
       xaxis: {
         gridcolor: '#27272a',
-        type: 'category',
         tickangle: granularity === 'day' && filled.length > 20 ? -45 : 0,
-        range: [-0.7, labels.length - 0.3],
+        tickmode: 'array',
+        tickvals: indices,
+        ticktext: labels,
+        range: [-0.7, filled.length - 0.3],
       },
       yaxis: {
         title: { text: 'On-time rate (%)', font: { color: '#a1a1aa' } },
