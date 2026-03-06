@@ -50,8 +50,15 @@ const AppContext = createContext<AppContextValue | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const { settings, updateSettings } = useSettings()
 
-  const [screen, setScreen] = useState<Screen>('timer')
+  const [screen, setScreenRaw] = useState<Screen>('timer')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('normal')
+
+  const setScreen = (newScreen: Screen) => {
+    if (newScreen !== 'timer' && displayMode === 'small') {
+      setDisplayMode('normal')
+    }
+    setScreenRaw(newScreen)
+  }
   const [completionData, setCompletionData] = useState<CompletionData | null>(null)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
 
@@ -109,7 +116,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Navigate to completion screen
         setScreen('completion')
-        setDisplayMode('normal')
 
         // Reset timer to default countdown state
         timerMachine.reset()
