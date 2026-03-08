@@ -143,6 +143,21 @@ pub fn run() {
     .plugin(tauri_plugin_cli::init())
     .setup(|app| {
 
+      // On Linux, disable Tauri's client-side decorations before the window is shown.
+      // On GNOME/Wayland the xdg-decoration protocol negotiates decoration mode at
+      // window-map time, so this must happen here — dynamic setDecorations() calls on
+      // a visible window are silently ignored by the compositor.
+      // On other Linux WMs (Sway, KDE, XFCE, i3…) the WM adds its own server-side
+      // decorations when it sees an undecorated window, so users still get a title bar.
+      #[cfg(target_os = "linux")]
+      {
+        if let Some(window) = app.get_webview_window("main") {
+          if let Err(e) = window.set_decorations(false) {
+            log::warn!("Failed to disable window decorations on Linux: {}", e);
+          }
+        }
+      }
+
       // Enable logging in both debug and release modes
       let log_level = if cfg!(debug_assertions) {
         log::LevelFilter::Debug
