@@ -188,6 +188,16 @@ export function Settings() {
               Start the timer at a percentage of your prediction. Set to 80 to get a reminder 20% before your predicted time. Only applies to predict mode.
             </Text>
           </div>
+
+          <CheckboxField>
+            <Checkbox
+              checked={settings.scrambleTimer}
+              onChange={(checked) => updateSettings({ scrambleTimer: checked })}
+              color={settings.accentColor}
+            />
+            <Label>Scramble timer display</Label>
+            <Description>Replace the countdown with random symbols so you can't read the time left. Useful to avoid being influenced by the countdown. Pucoti won't always be there for you! Toggle with <Kbd>?</Kbd> on the timer screen.</Description>
+          </CheckboxField>
         </section>
 
         {/* Window & Display */}
