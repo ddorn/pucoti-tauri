@@ -59,6 +59,9 @@ export interface Settings {
   // Update checking
   checkForUpdatesAutomatically: boolean;
   dismissedUpdateVersion: string; // Version string that was dismissed in banner
+
+  // Calibration training
+  scrambleTimer: boolean; // Scrambles countdown with random symbols for estimation training
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -87,6 +90,7 @@ export const DEFAULT_SETTINGS: Settings = {
   useGnomePanelIndicator: false,
   checkForUpdatesAutomatically: true,
   dismissedUpdateVersion: '',
+  scrambleTimer: false,
 }
 
 async function getSettingsPath(): Promise<string> {

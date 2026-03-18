@@ -165,6 +165,10 @@ export function Timer() {
         case ',':
           setScreen('settings')
           break
+
+        case '?':
+          await updateSettings({ scrambleTimer: !settings.scrambleTimer })
+          break
       }
     }
 
@@ -264,6 +268,7 @@ export function Timer() {
           accentColor={settings.accentColor}
           autoscale
           className="min-h-[66vh]!"
+          scrambled={settings.scrambleTimer}
         />
       </div>
     )
@@ -324,6 +329,7 @@ export function Timer() {
           accentColor={settings.accentColor}
           className="h-[33vh]!"
           autoscale
+          scrambled={settings.scrambleTimer}
         />
 
         {/* Elapsed / Predicted - show different format in edit mode */}
@@ -362,6 +368,7 @@ export function Timer() {
               {settings.prefillCommand && (
                 <Shortcut keys={['Shift', 'Enter']} label="Set intent (prefill)" />
               )}
+              <Shortcut keys={['?']} label={settings.scrambleTimer ? "Unscramble timer" : "Scramble timer"} />
             </>
           )}
         </div>
