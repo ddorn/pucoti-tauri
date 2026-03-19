@@ -26,7 +26,7 @@ export function Navbar() {
       {/* Fixed navbar */}
       <div className="fixed top-0 left-0 right-0 z-50">
         <UpdateBanner />
-        <nav className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/50 bg-surface-raised/50 backdrop-blur-sm">
+        <nav className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/50 bg-surface-raised/50 backdrop-blur-sm" data-tauri-drag-region>
           <div className="flex items-center gap-1">
             <NavButton
               onClick={() => setScreen('timer')}
