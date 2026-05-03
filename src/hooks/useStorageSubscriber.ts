@@ -1,17 +1,16 @@
 import { useEffect } from 'react'
 import { timerMachine } from '../lib/timer-machine'
-import { appendSession } from '../lib/storage'
-import { getCurrentWindow } from '@tauri-apps/api/window'
+import { platform } from '../lib/platform'
 
 /**
- * Subscriber hook that handles session persistence to CSV.
- * Saves sessions on complete, cancel, and window close.
+ * Subscriber hook that handles session persistence.
+ * Saves sessions on complete, cancel, and window close (Tauri only).
  */
 export function useStorageSubscriber() {
   useEffect(() => {
     const unsubscribe = timerMachine.subscribe(event => {
       if (event.type === 'completed') {
-        appendSession({
+        platform.appendSession({
           timestamp: event.state.startTime,
           focusText: event.state.focusText,
           predictedSeconds: event.state.predictedSeconds ?? 0,
@@ -22,7 +21,7 @@ export function useStorageSubscriber() {
       }
 
       if (event.type === 'canceled') {
-        appendSession({
+        platform.appendSession({
           timestamp: event.state.startTime,
           focusText: event.state.focusText,
           predictedSeconds: event.state.predictedSeconds ?? 0,
@@ -34,13 +33,13 @@ export function useStorageSubscriber() {
     })
 
     // Handle window close: save with status 'unknown'
-    const window = getCurrentWindow()
-    const unlistenPromise = window.onCloseRequested(async () => {
+    // On web this is a no-op (web platform returns an empty cleanup fn)
+    const unlistenPromise = platform.onCloseRequested(async () => {
       const state = timerMachine.getState()
       if (state) {
         const computed = timerMachine.getComputed()
         try {
-          await appendSession({
+          await platform.appendSession({
             timestamp: state.startTime,
             focusText: state.focusText,
             predictedSeconds: state.predictedSeconds ?? 0,

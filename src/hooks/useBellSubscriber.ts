@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { timerMachine } from '../lib/timer-machine'
 import { useSettings } from '../context/SettingsContext'
-import { playBell, showNotification } from '../lib/sound'
+import { platform } from '../lib/platform'
 import { formatDuration } from '../lib/format'
 
 /**
@@ -28,18 +28,18 @@ export function useBellSubscriber() {
 
       if (event.type === 'overtime_entered') {
         // Play initial bell
-        playBell(s.customBellPath)
+        platform.playBell(s.customBellPath)
 
         // Show notification
         const message = event.focusText
           ? `You focused on ${event.focusText} for ${formatDuration(event.elapsed)}`
           : `Timer finished after ${formatDuration(event.elapsed)}`
-        showNotification("Time's up!", message, s.notificationCommand)
+        platform.showNotification("Time's up!", message, s.notificationCommand)
 
         // Start repeating bell (if interval > 0)
         if (s.bellRepeatIntervalSeconds > 0) {
           bellIntervalRef.current = window.setInterval(
-            () => playBell(settingsRef.current.customBellPath),
+            () => platform.playBell(settingsRef.current.customBellPath),
             s.bellRepeatIntervalSeconds * 1000
           )
         }

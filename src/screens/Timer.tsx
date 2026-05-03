@@ -4,8 +4,9 @@ import { useSettings } from '../context/SettingsContext'
 import { useTimerState } from '../hooks/useTimerState'
 import { timerMachine } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
-import { nextCorner, setSmallMode } from '../lib/window';
-import { executePrefillHook } from '../lib/settings';
+import { nextCorner } from '../lib/corner';
+import { platform, isTauri } from '../lib/platform';
+import { executePrefillHook } from '../lib/shell-hooks';
 import { Text } from '../components/catalyst/text'
 import { CountdownDisplay } from '../components/CountdownDisplay';
 import { parseCommand } from '../lib/command-parser'
@@ -127,7 +128,7 @@ export function Timer() {
           if (displayMode === 'small') {
             const newCorner = nextCorner(settings.corner);
             await updateSettings({ corner: newCorner });
-            await setSmallMode({ ...settings, corner: newCorner })
+            await platform.setSmallMode({ ...settings, corner: newCorner })
           } else {
             setDisplayMode('small');
           }
@@ -355,12 +356,12 @@ export function Timer() {
           ) : (
             <>
               <Shortcut keys={['Tab']} label="Zen mode" />
-              <Shortcut keys={['Space']} label="Toggle corner mode" />
+              {isTauri && <Shortcut keys={['Space']} label="Toggle corner mode" />}
               <Shortcut keys={['j', 'k']} label="±1 minute" />
               <Shortcut keys={['0-9']} label="Set to X minutes" />
               <Shortcut keys={['J', 'K']} label="±5 minutes" />
               <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
-              <Shortcut keys={['c']} label="Cycle corners" />
+              {isTauri && <Shortcut keys={['c']} label="Cycle corners" />}
               <Shortcut keys={['q']} label="Cancel" />
               <Shortcut keys={['s']} label="Stats" />
               <Shortcut keys={[',']} label="Settings" />

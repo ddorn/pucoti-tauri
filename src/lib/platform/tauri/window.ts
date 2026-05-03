@@ -1,9 +1,8 @@
 import { getCurrentWindow, primaryMonitor, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
 import { Command } from '@tauri-apps/plugin-shell'
-import type { Settings } from './settings'
-
-export type Corner = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+import type { Settings } from '../../settings-types'
+import type { Corner } from '../../corner'
 
 /**
  * Platform-agnostic window management interface
@@ -312,11 +311,3 @@ export async function initializeWindowForPlatform(): Promise<void> {
   }
 }
 
-/**
- * Cycle through corners
- */
-export function nextCorner(current: Corner): Corner {
-  const corners: Corner[] = ['bottom-right', 'bottom-left', 'top-left', 'top-right']
-  const idx = corners.indexOf(current)
-  return corners[(idx + 1) % corners.length]
-}

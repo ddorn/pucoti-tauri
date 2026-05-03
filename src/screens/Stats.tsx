@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useApp } from '../context/AppContext'
-import { exportSessionsCSV, getCSVPath } from '../lib/storage'
+
 import { formatDuration } from '../lib/format'
 import { useSessions } from '../hooks/useSessions'
 import { useSettings } from '../context/SettingsContext'
+import { platform, isTauri } from '../lib/platform'
 import { COLOR_PALETTES } from '../lib/colors'
 import {
   useFilteredSessions,
@@ -103,7 +104,7 @@ export function Stats() {
   const { settings } = useSettings()
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
   const [granularity, setGranularity] = useState<Granularity>('week')
-  const [csvPath, setCsvPath] = useState<string>('')
+  const [csvPath, setCsvPath] = useState<string | null>(null)
   const [sessionSort, setSessionSort] = useState<SessionSortMode>('predictions')
   const sessionTableRef = useRef<HTMLDivElement>(null)
 
@@ -119,7 +120,10 @@ export function Stats() {
   const notable = useNotableSessions(filteredSessions, 3)
 
   useEffect(() => {
-    getCSVPath().then(setCsvPath).catch(console.error)
+    // CSV path is only available on Tauri
+    if (isTauri) {
+      platform.getSessionsStoragePath().then(p => p && setCsvPath(p)).catch(console.error)
+    }
   }, [])
 
   useEffect(() => {
@@ -140,7 +144,7 @@ export function Stats() {
 
   const handleExport = async () => {
     try {
-      const csv = await exportSessionsCSV()
+      const csv = await platform.exportSessionsCSV()
       const blob = new Blob([csv], { type: 'text/csv' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -286,6 +290,13 @@ export function Stats() {
             </Button>
           </section>
         </>
+      )}
+
+      {/* Privacy notice (web only) */}
+      {!isTauri && (
+        <p className="text-center text-xs text-zinc-600 mt-4">
+          Your data is stored in your browser and never leaves your device.
+        </p>
       )}
     </div>
   )

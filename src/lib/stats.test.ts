@@ -7,7 +7,7 @@ import {
   calibrationColor,
   DURATION_BUCKETS,
 } from './stats'
-import type { Session } from './storage'
+import type { Session } from './session'
 
 function makeSession(overrides: Partial<Session> = {}): Session {
   return {

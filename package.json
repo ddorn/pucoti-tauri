@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:web": "tsc -b && vite build",
+    "preview:web": "vite preview",
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build --bundles deb",
+    "tauri:dev": "VITE_PLATFORM=tauri tauri dev",
+    "tauri:build": "VITE_PLATFORM=tauri tauri build --bundles deb",
     "test": "vitest run",
     "test:watch": "vitest",
     "version": "node scripts/sync-version.cjs && git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && echo \"---- Don't forget to git push --tags! ----\""
@@ -27,6 +29,7 @@
     "@tauri-apps/plugin-notification": "^2.1.1",
     "@tauri-apps/plugin-shell": "^2.1.1",
     "@types/canvas-confetti": "^1.9.0",
+    "idb": "^8.0.3",
     "motion": "^12.29.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -52,6 +55,7 @@
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.46.4",
     "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^3.2.4"
   }
 }

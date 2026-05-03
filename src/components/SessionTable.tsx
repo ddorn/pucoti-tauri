@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { formatDuration, formatTime } from '../lib/format'
-import type { Session } from '../lib/storage'
+import type { Session } from '../lib/session'
 import { filterMeaningful } from '../lib/stats'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './catalyst/table'
 import { Text } from './catalyst/text'
