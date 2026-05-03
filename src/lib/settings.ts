@@ -2,96 +2,11 @@ import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { Command } from '@tauri-apps/plugin-shell'
 import { getDataDir } from './paths'
-import type { Corner } from './window'
 
-export interface Settings {
-  // Notification
-  notificationCommand: string // Custom command with {title} and {body} placeholders
-
-  // Bell behavior
-  bellRepeatIntervalSeconds: number; // How frequently the bell repeats during overtime (in seconds)
-  customBellPath: string; // Path to custom bell sound file (empty = use default)
-
-  // Window sizes
-  normalWindowWidth: number
-  normalWindowHeight: number
-  smallWindowWidth: number
-  smallWindowHeight: number
-
-  // Small window behavior
-  smallWindowBorderless: boolean
-
-  // Timer start behavior
-  onTimerStart: 'nothing' | 'corner' | 'minimize'
-
-  // Corner margins
-  cornerMarginTop: number
-  cornerMarginRight: number
-  cornerMarginBottom: number
-  cornerMarginLeft: number
-
-  // Small window corner position
-  corner: Corner
-
-  // AI Productivity Experiment
-  enableAiProductivityExperiment: boolean;
-
-  // Accent color
-  accentColor: 'red' | 'orange' | 'amber' | 'yellow' | 'lime' | 'green' | 'emerald' | 'teal' | 'cyan' | 'sky' | 'blue' | 'indigo' | 'violet' | 'purple' | 'fuchsia' | 'pink' | 'rose';
-  randomColorOnCompletion: boolean; // Randomly change accent color on timer completion
-
-  // Last used values
-  lastUsedDuration: number; // in seconds
-  lastUsedTimerType: 'predict' | 'timebox' | 'ai-ab';
-
-  // Timer start percentage
-  timerStartPercentage: number; // Percentage of prediction where timer starts (0-100, default 100)
-
-  // Completion hook
-  completionCommand: string; // Shell command to run on timer completion with {focus}, {predicted}, {actual} placeholders
-
-  // Prefill hook
-  prefillCommand: string; // Shell command to run to prefill intent input (output becomes input text)
-
-  // GNOME panel indicator (Linux only)
-  useGnomePanelIndicator: boolean;
-
-  // Update checking
-  checkForUpdatesAutomatically: boolean;
-  dismissedUpdateVersion: string; // Version string that was dismissed in banner
-
-  // Calibration training
-  scrambleTimer: boolean; // Scrambles countdown with random symbols for estimation training
-}
-
-export const DEFAULT_SETTINGS: Settings = {
-  notificationCommand: '', // Empty = use default OS notification
-  bellRepeatIntervalSeconds: 20,
-  customBellPath: '', // Empty = use bundled default bell
-  normalWindowWidth: 600,
-  normalWindowHeight: 500,
-  smallWindowWidth: 220,
-  smallWindowHeight: 80,
-  smallWindowBorderless: false,
-  onTimerStart: 'nothing',
-  cornerMarginTop: 16,
-  cornerMarginRight: 16,
-  cornerMarginBottom: 16,
-  cornerMarginLeft: 16,
-  corner: 'bottom-right',
-  enableAiProductivityExperiment: false,
-  accentColor: 'amber',
-  randomColorOnCompletion: false,
-  lastUsedDuration: 20 * 60, // 20 minutes
-  lastUsedTimerType: 'predict',
-  timerStartPercentage: 100,
-  completionCommand: '',
-  prefillCommand: '',
-  useGnomePanelIndicator: false,
-  checkForUpdatesAutomatically: true,
-  dismissedUpdateVersion: '',
-  scrambleTimer: false,
-}
+export type { Settings } from './settings-types'
+export { DEFAULT_SETTINGS } from './settings-types'
+import type { Settings } from './settings-types'
+import { DEFAULT_SETTINGS } from './settings-types'
 
 async function getSettingsPath(): Promise<string> {
   const dir = await getDataDir()
@@ -110,7 +25,6 @@ export async function loadSettings(): Promise<Settings> {
       delete saved.lastUsedMode
     }
 
-    // Merge with defaults to handle new settings added in updates
     return { ...DEFAULT_SETTINGS, ...saved }
   } catch (err) {
     console.error('Failed to load settings. Using default settings.', err)
@@ -128,11 +42,7 @@ export async function saveSettings(settings: Settings): Promise<void> {
   }
 }
 
-/**
- * Execute a shell command template with placeholder substitution.
- * String values are shell-escaped and quoted, numbers are substituted raw.
- */
-async function executeShellTemplate(
+export async function executeShellTemplate(
   command: string,
   placeholders: Record<string, string | number>,
   label: string,

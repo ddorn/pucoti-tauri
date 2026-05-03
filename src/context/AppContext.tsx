@@ -6,9 +6,8 @@ import { useBellSubscriber } from '../hooks/useBellSubscriber'
 import { useStorageSubscriber } from '../hooks/useStorageSubscriber'
 import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
-import { executeCompletionHook } from '../lib/settings'
-import { setSmallMode, setNormalMode } from '../lib/window'
 import { checkForUpdates, type UpdateInfo } from '../lib/update-checker'
+import { platform, isTauri } from '../lib/platform'
 import packageJson from '../../package.json'
 
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
@@ -75,14 +74,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Automatically apply window mode changes when displayMode changes
   useEffect(() => {
     if (displayMode === 'normal') {
-      setNormalMode(settingsRef.current).catch(console.error);
+      platform.setNormalMode(settingsRef.current).catch(console.error);
     } else if (displayMode === 'small') {
-      setSmallMode(settingsRef.current).catch(console.error);
+      platform.setSmallMode(settingsRef.current).catch(console.error);
     }
     // zen mode is UI-only, no window function needed
-
-    // Corner is changed by directly updating the settings.
-    // Is this a good thing? It's probably fine.
   }, [displayMode, settings.corner])
 
   // Subscribe to timer events for screen navigation and completion data
@@ -105,14 +101,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Run completion hook
         if (settings.completionCommand) {
-          executeCompletionHook(
+          platform.executeCompletionHook(
             event.state.focusText,
             event.state.predictedSeconds ?? 0,
             event.elapsed,
             settings.completionCommand,
           ).catch(err => console.error('Completion hook failed:', err))
         }
-
 
         // Navigate to completion screen
         setScreen('completion')
@@ -136,9 +131,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
   }, [])
 
-  // Check for updates on mount (if enabled in settings)
+  // Check for updates on mount (desktop only — web is always current)
   useEffect(() => {
-    if (settings.checkForUpdatesAutomatically) {
+    if (isTauri && settings.checkForUpdatesAutomatically) {
       checkForUpdates(packageJson.version).then(update => {
         if (update) {
           console.log('[Update Check] Update available:', update.version)

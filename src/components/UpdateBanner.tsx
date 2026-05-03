@@ -1,7 +1,7 @@
 import { IconX, IconExternalLink } from '@tabler/icons-react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
-import { open as openUrl } from '@tauri-apps/plugin-shell'
+import { platform } from '../lib/platform'
 
 export function UpdateBanner() {
   const { updateInfo, dismissUpdate } = useApp()
@@ -11,7 +11,7 @@ export function UpdateBanner() {
   if (updateInfo.version === settings.dismissedUpdateVersion) return null
 
   const handleViewRelease = async () => {
-    await openUrl(updateInfo.url)
+    await platform.openUrl(updateInfo.url)
   }
 
   const handleDismiss = () => {

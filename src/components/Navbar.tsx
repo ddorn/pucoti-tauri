@@ -2,6 +2,7 @@
 import { useApp } from '../context/AppContext'
 import { MiniTimer } from './MiniTimer'
 import { UpdateBanner } from './UpdateBanner'
+import { isTauri } from '../lib/platform'
 
 export function Navbar() {
   const { screen, displayMode, setScreen, updateInfo } = useApp()
@@ -14,9 +15,12 @@ export function Navbar() {
   // Show mini timer when not on the timer screen
   const showMiniTimer = screen !== 'timer'
 
+  // UpdateBanner is desktop-only (web is always current)
+  const showUpdateBanner = isTauri && !!updateInfo
+
   // Calculate navbar height for spacer
   // UpdateBanner adds ~49px when visible, nav is ~61px
-  const navbarHeight = updateInfo ? '110px' : '61px'
+  const navbarHeight = showUpdateBanner ? '110px' : '61px'
 
   return (
     <>
@@ -25,7 +29,7 @@ export function Navbar() {
 
       {/* Fixed navbar */}
       <div className="fixed top-0 left-0 right-0 z-50">
-        <UpdateBanner />
+        {isTauri && <UpdateBanner />}
         <nav className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/50 bg-surface-raised/50 backdrop-blur-sm">
           <div className="flex items-center gap-1">
             <NavButton

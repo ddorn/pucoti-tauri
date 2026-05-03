@@ -1,5 +1,5 @@
 import { Badge } from './catalyst/badge'
-import type { Session } from '../lib/storage'
+import type { Session } from '../lib/session'
 
 export function StatusBadge({ status }: { status: Session['status'] }) {
   switch (status) {

@@ -8,18 +8,15 @@ import { Heading } from '../components/catalyst/heading'
 import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
-import { executeCustomNotification, executeCompletionHook, executePrefillHook } from '../lib/settings'
-import { getExtensionStatus, enableExtension, disableExtension, type ExtensionStatus } from '../lib/gnome-extension';
-import { sendNotification } from '@tauri-apps/plugin-notification'
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { open as openUrl } from '@tauri-apps/plugin-shell';
-import { playBell } from '../lib/sound'
+import type { ExtensionStatus } from '../lib/gnome-extension';
 import { ColorPicker } from '../components/ColorPicker'
 import { RadioGroup } from '../components/RadioGroup';
 import packageJson from '../../package.json'
 import { getRandomAccentColor } from '../lib/colors';
 import { IconChevronDown } from '@tabler/icons-react'
 import { Kbd } from '../components/Kbd'
+import { platform, isTauri } from '../lib/platform'
+import { DesktopOnly } from '../components/DesktopOnly'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -35,9 +32,13 @@ export function Settings() {
   const [checkingForUpdates, setCheckingForUpdates] = useState(false)
   const [updateCheckResult, setUpdateCheckResult] = useState<'success' | 'no-updates' | 'error' | null>(null)
 
-  // Check extension status on mount
+  // Check extension status on mount (Tauri only — GNOME extension is desktop-only)
   useEffect(() => {
-    getExtensionStatus().then(setExtensionStatus)
+    if (isTauri) {
+      import('../lib/gnome-extension').then(({ getExtensionStatus }) => {
+        getExtensionStatus().then(setExtensionStatus)
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -69,14 +70,13 @@ export function Settings() {
       const title = 'Test Notification'
       const body = 'This is a test notification from Pucoti'
 
-      if (settings.notificationCommand) {
-        const success = await executeCustomNotification(title, body, settings.notificationCommand)
+      if (settings.notificationCommand && isTauri) {
+        const success = await platform.executeCustomNotification(title, body, settings.notificationCommand)
         if (!success) {
-          // Fallback to default
-          await sendNotification({ title, body })
+          await platform.showNotification(title, body)
         }
       } else {
-        await sendNotification({ title, body })
+        await platform.showNotification(title, body)
       }
     } catch (err) {
       console.error('Notification test failed:', err)
@@ -87,15 +87,12 @@ export function Settings() {
 
   const handleSelectBell = async () => {
     try {
-      const selected = await openDialog({
-        multiple: false,
-        filters: [{
-          name: 'Audio',
-          extensions: ['mp3']
-        }]
-      });
+      const selected = await platform.openFileDialog([{
+        name: 'Audio',
+        extensions: ['mp3']
+      }]);
 
-      if (selected && typeof selected === 'string') {
+      if (selected) {
         await updateSettings({ customBellPath: selected });
       }
     } catch (err) {
@@ -110,7 +107,7 @@ export function Settings() {
   const handleTestBell = async () => {
     setTestingBell(true);
     try {
-      playBell(settings.customBellPath);
+      platform.playBell(settings.customBellPath);
       // Wait a bit before re-enabling button
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (err) {
@@ -142,8 +139,8 @@ export function Settings() {
     <div className="p-6 max-w-3xl mx-auto">
       <Heading level={1} className="mb-16">Settings</Heading>
 
-      {/* Update available banner */}
-      {updateInfo && (
+      {/* Update available banner (desktop only) */}
+      {isTauri && updateInfo && (
         <div className="mb-12 p-6 rounded-lg bg-accent/10 border-2 border-accent/30 shadow-lg">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
@@ -155,7 +152,7 @@ export function Settings() {
               </Text>
               <Button
                 color={settings.accentColor}
-                onClick={() => openUrl(updateInfo.url)}
+                onClick={() => platform.openUrl(updateInfo.url)}
               >
                 View Release on GitHub
               </Button>
@@ -200,139 +197,141 @@ export function Settings() {
           </CheckboxField>
         </section>
 
-        {/* Window & Display */}
-        <section className={sectionClasses}>
-          <Heading level={2} className="mb-6">
-            Window & Display
-          </Heading>
+        {/* Window & Display (desktop only) */}
+        <DesktopOnly>
+          <section className={sectionClasses}>
+            <Heading level={2} className="mb-6">
+              Window & Display
+            </Heading>
 
-          <div className="space-y-6">
-            <div>
+            <div className="space-y-6">
+              <div>
+                <div className={subsectionLabelClasses}>
+                  Timer start behavior
+                </div>
+                <RadioGroup
+                  name="timer-start"
+                  options={timerStartOptions}
+                  value={settings.onTimerStart}
+                  onChange={(value) => updateSettings({ onTimerStart: value as 'nothing' | 'corner' | 'minimize' })}
+                />
+              </div>
+
+            </div>
+
+            <div className={subsectionClasses}>
               <div className={subsectionLabelClasses}>
-                Timer start behavior
+                Window sizes
               </div>
-              <RadioGroup
-                name="timer-start"
-                options={timerStartOptions}
-                value={settings.onTimerStart}
-                onChange={(value) => updateSettings({ onTimerStart: value as 'nothing' | 'corner' | 'minimize' })}
-              />
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Normal width</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.normalWindowWidth}
+                      onChange={(val) => updateSettings({ normalWindowWidth: val })}
+                      min={300}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Normal height</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.normalWindowHeight}
+                      onChange={(val) => updateSettings({ normalWindowHeight: val })}
+                      min={200}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Small width</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.smallWindowWidth}
+                      onChange={(val) => updateSettings({ smallWindowWidth: val })}
+                      min={200}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Small height</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.smallWindowHeight}
+                      onChange={(val) => updateSettings({ smallWindowHeight: val })}
+                      min={80}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+              </div>
             </div>
 
-          </div>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Window sizes
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Corner margins
+              </div>
+              <Text className={descriptionClasses}>
+                Distance from screen edges when in small corner mode
+              </Text>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Top</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.cornerMarginTop}
+                      onChange={(val) => updateSettings({ cornerMarginTop: val })}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Right</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.cornerMarginRight}
+                      onChange={(val) => updateSettings({ cornerMarginRight: val })}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Bottom</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.cornerMarginBottom}
+                      onChange={(val) => updateSettings({ cornerMarginBottom: val })}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+                <div className='flex items-center gap-3'>
+                  <span className="text-base text-zinc-300 w-30">Left</span>
+                  <span className={smallNumberInputAndUnitClasses}>
+                    <ValidatedNumericInput
+                      value={settings.cornerMarginLeft}
+                      onChange={(val) => updateSettings({ cornerMarginLeft: val })}
+                    />
+                    <span className="text-base text-zinc-500">px</span>
+                  </span>
+                </div>
+              </div>
+              <CheckboxField>
+                <Checkbox
+                  checked={settings.smallWindowBorderless}
+                  onChange={(checked) => updateSettings({ smallWindowBorderless: checked })}
+                  color={settings.accentColor}
+                />
+                <Label>Borderless small window</Label>
+                <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
+              </CheckboxField>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Normal width</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.normalWindowWidth}
-                    onChange={(val) => updateSettings({ normalWindowWidth: val })}
-                    min={300}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Normal height</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.normalWindowHeight}
-                    onChange={(val) => updateSettings({ normalWindowHeight: val })}
-                    min={200}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Small width</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.smallWindowWidth}
-                    onChange={(val) => updateSettings({ smallWindowWidth: val })}
-                    min={200}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Small height</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.smallWindowHeight}
-                    onChange={(val) => updateSettings({ smallWindowHeight: val })}
-                    min={80}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Corner margins
-            </div>
-            <Text className={descriptionClasses}>
-              Distance from screen edges when in small corner mode
-            </Text>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Top</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.cornerMarginTop}
-                    onChange={(val) => updateSettings({ cornerMarginTop: val })}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Right</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.cornerMarginRight}
-                    onChange={(val) => updateSettings({ cornerMarginRight: val })}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Bottom</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.cornerMarginBottom}
-                    onChange={(val) => updateSettings({ cornerMarginBottom: val })}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-              <div className='flex items-center gap-3'>
-                <span className="text-base text-zinc-300 w-30">Left</span>
-                <span className={smallNumberInputAndUnitClasses}>
-                  <ValidatedNumericInput
-                    value={settings.cornerMarginLeft}
-                    onChange={(val) => updateSettings({ cornerMarginLeft: val })}
-                  />
-                  <span className="text-base text-zinc-500">px</span>
-                </span>
-              </div>
-            </div>
-            <CheckboxField>
-              <Checkbox
-                checked={settings.smallWindowBorderless}
-                onChange={(checked) => updateSettings({ smallWindowBorderless: checked })}
-                color={settings.accentColor}
-              />
-              <Label>Borderless small window</Label>
-              <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
-            </CheckboxField>
-          </div>
-        </section>
+          </section>
+        </DesktopOnly>
 
         {/* Sound */}
         <section className={sectionClasses}>
@@ -340,51 +339,54 @@ export function Settings() {
             Sound
           </Heading>
 
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Custom bell sound
-            </div>
-            {settings.customBellPath ? (
-              <div className={subsectionClasses}>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="text"
-                    value={settings.customBellPath}
-                    readOnly
-                    className="flex-1"
-                  />
-                  <Button
-                    outline
-                    onClick={handleClearBell}
-                  >
-                    Clear
-                  </Button>
-                  <Button
-                    outline
-                    onClick={handleTestBell}
-                    disabled={testingBell}
-                  >
-                    {testingBell ? 'Playing...' : 'Test'}
-                  </Button>
-                </div>
-                <Text className={descriptionClasses}>
-                  Using custom bell sound
-                </Text>
+          {/* Custom bell sound (desktop only — web always uses bundled bell) */}
+          <DesktopOnly>
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Custom bell sound
               </div>
-            ) : (
+              {settings.customBellPath ? (
                 <div className={subsectionClasses}>
-                <Button
-                  outline
-                  onClick={handleSelectBell}
-                >
-                  Select Custom Bell
-                </Button>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={settings.customBellPath}
+                      readOnly
+                      className="flex-1"
+                    />
+                    <Button
+                      outline
+                      onClick={handleClearBell}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      outline
+                      onClick={handleTestBell}
+                      disabled={testingBell}
+                    >
+                      {testingBell ? 'Playing...' : 'Test'}
+                    </Button>
+                  </div>
                   <Text className={descriptionClasses}>
-                  Choose a custom MP3 sound file. Leave empty to use default bell.
-                </Text>
-              </div>
-            )}
-          </div>
+                    Using custom bell sound
+                  </Text>
+                </div>
+              ) : (
+                <div className={subsectionClasses}>
+                  <Button
+                    outline
+                    onClick={handleSelectBell}
+                  >
+                    Select Custom Bell
+                  </Button>
+                  <Text className={descriptionClasses}>
+                    Choose a custom MP3 sound file. Leave empty to use default bell.
+                  </Text>
+                </div>
+              )}
+            </div>
+          </DesktopOnly>
 
           <div className={subsectionClasses}>
             <div className={subsectionLabelClasses}>
@@ -402,162 +404,176 @@ export function Settings() {
               How frequently the bell repeats during overtime. Set to 0 to disable repeat. Default is 20 seconds.
             </Text>
           </div>
+
+          {/* Test bell button (available on all platforms) */}
+          <div className={subsectionClasses}>
+            <Button
+              outline
+              onClick={handleTestBell}
+              disabled={testingBell}
+            >
+              {testingBell ? 'Playing...' : 'Test Bell'}
+            </Button>
+          </div>
         </section>
 
-        {/* Hooks & Automation */}
-        <section className={sectionClasses}>
-          <Heading level={2} className="mb-6">
-            Hooks & Automation
-          </Heading>
+        {/* Hooks & Automation (desktop only) */}
+        <DesktopOnly>
+          <section className={sectionClasses}>
+            <Heading level={2} className="mb-6">
+              Hooks & Automation
+            </Heading>
 
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Overtime notification command
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={settings.notificationCommand}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  updateSettings({ notificationCommand: e.target.value })
-                }
-                placeholder="notify-send {title} {body}"
-                className="flex-1"
-              />
-              <Button
-                outline
-                onClick={handleTestNotification}
-                disabled={testingNotification}
-              >
-                {testingNotification ? 'Sending...' : 'Test'}
-              </Button>
-            </div>
-            <Text className={descriptionClasses}>
-              Shell command to run when the timer goes into overtime. Leave empty for default OS notifications. Use <code className="px-1 py-0.5 rounded bg-zinc-800">{'{title}'}</code> and <code className="px-1 py-0.5 rounded bg-zinc-800">{'{body}'}</code> as placeholders.
-            </Text>
-          </div>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Completion hook
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={settings.completionCommand}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  updateSettings({ completionCommand: e.target.value })
-                }
-                placeholder="notify-send 'Done' '{focus}: {actual}s / {predicted}s'"
-                className="flex-1"
-              />
-              <Button
-                outline
-                onClick={async () => {
-                  setTestingCompletionHook(true)
-                  try {
-                    await executeCompletionHook('Sample task', 300, 420, settings.completionCommand)
-                  } catch (err) {
-                    console.error('Completion hook test failed:', err)
-                  } finally {
-                    setTestingCompletionHook(false)
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Overtime notification command
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={settings.notificationCommand}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateSettings({ notificationCommand: e.target.value })
                   }
-                }}
-                disabled={testingCompletionHook || !settings.completionCommand.trim()}
-              >
-                {testingCompletionHook ? 'Running...' : 'Test'}
-              </Button>
-            </div>
-            <Text className={descriptionClasses}>
-              Shell command to run when a timer is completed. Available placeholders: <code className="px-1 py-0.5 rounded bg-zinc-800">{'{focus}'}</code> (focus text), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{predicted}'}</code> (predicted seconds), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{actual}'}</code> (actual seconds).
-            </Text>
-          </div>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Prefill hook
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={settings.prefillCommand}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  updateSettings({ prefillCommand: e.target.value })
-                }
-                placeholder="echo 'Work on project 25m'"
-                className="flex-1"
-              />
-              <Button
-                outline
-                onClick={async () => {
-                  setTestingPrefillHook(true)
-                  setPrefillTestResult(null)
-                  try {
-                    const result = await executePrefillHook(settings.prefillCommand)
-                    setPrefillTestResult(result ?? '(empty or failed)')
-                  } catch (err) {
-                    console.error('Prefill hook test failed:', err)
-                    setPrefillTestResult('(error)')
-                  } finally {
-                    setTestingPrefillHook(false)
-                  }
-                }}
-                disabled={testingPrefillHook || !settings.prefillCommand.trim()}
-              >
-                {testingPrefillHook ? 'Running...' : 'Test'}
-              </Button>
-            </div>
-            {prefillTestResult !== null && (
+                  placeholder="notify-send {title} {body}"
+                  className="flex-1"
+                />
+                <Button
+                  outline
+                  onClick={handleTestNotification}
+                  disabled={testingNotification}
+                >
+                  {testingNotification ? 'Sending...' : 'Test'}
+                </Button>
+              </div>
               <Text className={descriptionClasses}>
-                Output: <code className="px-1 py-0.5 rounded bg-zinc-800">{prefillTestResult}</code>
+                Shell command to run when the timer goes into overtime. Leave empty for default OS notifications. Use <code className="px-1 py-0.5 rounded bg-zinc-800">{'{title}'}</code> and <code className="px-1 py-0.5 rounded bg-zinc-800">{'{body}'}</code> as placeholders.
               </Text>
-            )}
-            <Text className={descriptionClasses}>
-              Shell command whose stdout will prefill the intent input field. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
-            </Text>
-          </div>
+            </div>
 
-          {/* GNOME Panel Indicator - Linux only */}
-          {extensionStatus && extensionStatus !== 'not-gnome' && (
-            <div className="pt-4 border-t border-white/10">
-              <CheckboxField>
-                <Checkbox
-                  checked={settings.useGnomePanelIndicator}
-                  onChange={async (checked) => {
-                    await updateSettings({ useGnomePanelIndicator: checked })
-                    if (checked && (extensionStatus === 'enabled' || extensionStatus === 'disabled')) {
-                      setEnablingExtension(true)
-                      await enableExtension()
-                      setEnablingExtension(false)
-                      setExtensionStatus('enabled')
-                    } else if (!checked && extensionStatus === 'enabled') {
-                      setEnablingExtension(true);
-                      await disableExtension();
-                      setEnablingExtension(false);
-                      setExtensionStatus('disabled')
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Completion hook
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={settings.completionCommand}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateSettings({ completionCommand: e.target.value })
+                  }
+                  placeholder="notify-send 'Done' '{focus}: {actual}s / {predicted}s'"
+                  className="flex-1"
+                />
+                <Button
+                  outline
+                  onClick={async () => {
+                    setTestingCompletionHook(true)
+                    try {
+                      await platform.executeCompletionHook('Sample task', 300, 420, settings.completionCommand)
+                    } catch (err) {
+                      console.error('Completion hook test failed:', err)
+                    } finally {
+                      setTestingCompletionHook(false)
                     }
                   }}
-                  color={settings.accentColor}
-                />
-                <Label>GNOME panel indicator</Label>
-                <Description>
-                  {extensionStatus === 'not-installed' && (
-                    <span className="text-amber-400">Extension not found. Install pucoti via deb/rpm package or run ./gnome-extension/install.sh from the source directory</span>
-                  )}
-                  {extensionStatus === 'not-loaded' && (
-                    <span className="text-amber-400">Extension installed but not loaded. Log out and back in to activate it.</span>
-                  )}
-                  {extensionStatus === 'disabled' && (
-                    <span>{enablingExtension ? 'Enabling extension...' : 'Extension is setup but disabled.'}</span>
-                  )}
-                  {extensionStatus === 'enabled' && (
-                    <span>{enablingExtension ? 'Disabling extension...' : 'Extension active. Timer will be visible in top panel when running.'}</span>
-                  )}
-                </Description>
-              </CheckboxField>
+                  disabled={testingCompletionHook || !settings.completionCommand.trim()}
+                >
+                  {testingCompletionHook ? 'Running...' : 'Test'}
+                </Button>
+              </div>
+              <Text className={descriptionClasses}>
+                Shell command to run when a timer is completed. Available placeholders: <code className="px-1 py-0.5 rounded bg-zinc-800">{'{focus}'}</code> (focus text), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{predicted}'}</code> (predicted seconds), <code className="px-1 py-0.5 rounded bg-zinc-800">{'{actual}'}</code> (actual seconds).
+              </Text>
             </div>
-          )}
-        </section>
+
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Prefill hook
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={settings.prefillCommand}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateSettings({ prefillCommand: e.target.value })
+                  }
+                  placeholder="echo 'Work on project 25m'"
+                  className="flex-1"
+                />
+                <Button
+                  outline
+                  onClick={async () => {
+                    setTestingPrefillHook(true)
+                    setPrefillTestResult(null)
+                    try {
+                      const result = await platform.executePrefillHook(settings.prefillCommand)
+                      setPrefillTestResult(result ?? '(empty or failed)')
+                    } catch (err) {
+                      console.error('Prefill hook test failed:', err)
+                      setPrefillTestResult('(error)')
+                    } finally {
+                      setTestingPrefillHook(false)
+                    }
+                  }}
+                  disabled={testingPrefillHook || !settings.prefillCommand.trim()}
+                >
+                  {testingPrefillHook ? 'Running...' : 'Test'}
+                </Button>
+              </div>
+              {prefillTestResult !== null && (
+                <Text className={descriptionClasses}>
+                  Output: <code className="px-1 py-0.5 rounded bg-zinc-800">{prefillTestResult}</code>
+                </Text>
+              )}
+              <Text className={descriptionClasses}>
+                Shell command whose stdout will prefill the intent input field. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
+              </Text>
+            </div>
+
+            {/* GNOME Panel Indicator - Linux only */}
+            {extensionStatus && extensionStatus !== 'not-gnome' && (
+              <div className="pt-4 border-t border-white/10">
+                <CheckboxField>
+                  <Checkbox
+                    checked={settings.useGnomePanelIndicator}
+                    onChange={async (checked) => {
+                      await updateSettings({ useGnomePanelIndicator: checked })
+                      const { enableExtension, disableExtension } = await import('../lib/gnome-extension')
+                      if (checked && (extensionStatus === 'enabled' || extensionStatus === 'disabled')) {
+                        setEnablingExtension(true)
+                        await enableExtension()
+                        setEnablingExtension(false)
+                        setExtensionStatus('enabled')
+                      } else if (!checked && extensionStatus === 'enabled') {
+                        setEnablingExtension(true);
+                        await disableExtension();
+                        setEnablingExtension(false);
+                        setExtensionStatus('disabled')
+                      }
+                    }}
+                    color={settings.accentColor}
+                  />
+                  <Label>GNOME panel indicator</Label>
+                  <Description>
+                    {extensionStatus === 'not-installed' && (
+                      <span className="text-amber-400">Extension not found. Install pucoti via deb/rpm package or run ./gnome-extension/install.sh from the source directory</span>
+                    )}
+                    {extensionStatus === 'not-loaded' && (
+                      <span className="text-amber-400">Extension installed but not loaded. Log out and back in to activate it.</span>
+                    )}
+                    {extensionStatus === 'disabled' && (
+                      <span>{enablingExtension ? 'Enabling extension...' : 'Extension is setup but disabled.'}</span>
+                    )}
+                    {extensionStatus === 'enabled' && (
+                      <span>{enablingExtension ? 'Disabling extension...' : 'Extension active. Timer will be visible in top panel when running.'}</span>
+                    )}
+                  </Description>
+                </CheckboxField>
+              </div>
+            )}
+          </section>
+        </DesktopOnly>
 
         {/* Appearance */}
         <section className={sectionClasses}>
@@ -584,71 +600,73 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Updates */}
-        <section className={sectionClasses}>
-          <Heading level={2}>
-            Updates
-          </Heading>
+        {/* Updates (desktop only — web is always current) */}
+        {isTauri && (
+          <section className={sectionClasses}>
+            <Heading level={2}>
+              Updates
+            </Heading>
 
-          <div className={subsectionClasses}>
-            <CheckboxField>
-              <Checkbox
-                checked={settings.checkForUpdatesAutomatically}
-                onChange={(checked) => updateSettings({ checkForUpdatesAutomatically: checked })}
-                color={settings.accentColor}
-              />
-              <Label>Check for updates automatically</Label>
-              <Description>
-                Check for new versions when the app starts
-              </Description>
-            </CheckboxField>
-          </div>
+            <div className={subsectionClasses}>
+              <CheckboxField>
+                <Checkbox
+                  checked={settings.checkForUpdatesAutomatically}
+                  onChange={(checked) => updateSettings({ checkForUpdatesAutomatically: checked })}
+                  color={settings.accentColor}
+                />
+                <Label>Check for updates automatically</Label>
+                <Description>
+                  Check for new versions when the app starts
+                </Description>
+              </CheckboxField>
+            </div>
 
-          <div className={subsectionClasses}>
-            <Button
-              onClick={async () => {
-                setCheckingForUpdates(true)
-                setUpdateCheckResult(null)
-                try {
-                  const result = await checkForUpdatesNow()
-                  setUpdateCheckResult(result)
-                } finally {
-                  setCheckingForUpdates(false)
-                }
-              }}
-              disabled={checkingForUpdates}
-            >
-              {checkingForUpdates ? 'Checking...' : 'Check for Updates Now'}
-            </Button>
+            <div className={subsectionClasses}>
+              <Button
+                onClick={async () => {
+                  setCheckingForUpdates(true)
+                  setUpdateCheckResult(null)
+                  try {
+                    const result = await checkForUpdatesNow()
+                    setUpdateCheckResult(result)
+                  } finally {
+                    setCheckingForUpdates(false)
+                  }
+                }}
+                disabled={checkingForUpdates}
+              >
+                {checkingForUpdates ? 'Checking...' : 'Check for Updates Now'}
+              </Button>
 
-            {/* Status messages */}
-            {updateCheckResult === 'no-updates' && (
-              <Text className={descriptionClasses}>
-                You're up to date! Running version {packageJson.version}
-              </Text>
-            )}
-            {updateCheckResult === 'error' && (
-              <Text className="text-base text-red-400">
-                Failed to check for updates. Please check your internet connection and try again.
-              </Text>
-            )}
-            {updateInfo && (
-              <Text className={descriptionClasses}>
-                Version {updateInfo.version} is available.{' '}
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    openUrl(updateInfo.url)
-                  }}
-                  className="text-accent hover:underline"
-                >
-                  View release
-                </a>
-              </Text>
-            )}
-          </div>
-        </section>
+              {/* Status messages */}
+              {updateCheckResult === 'no-updates' && (
+                <Text className={descriptionClasses}>
+                  You're up to date! Running version {packageJson.version}
+                </Text>
+              )}
+              {updateCheckResult === 'error' && (
+                <Text className="text-base text-red-400">
+                  Failed to check for updates. Please check your internet connection and try again.
+                </Text>
+              )}
+              {updateInfo && (
+                <Text className={descriptionClasses}>
+                  Version {updateInfo.version} is available.{' '}
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      platform.openUrl(updateInfo.url)
+                    }}
+                    className="text-accent hover:underline"
+                  >
+                    View release
+                  </a>
+                </Text>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Advanced */}
         <section className="pt-6 border-t border-white/10">

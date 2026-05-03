@@ -2,17 +2,10 @@ import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
 import { formatTimestamp } from './format'
 import { getDataDir } from './paths'
+import type { Session } from './session'
+import type { SessionStatus } from './session'
 
-export type SessionStatus = 'completed' | 'canceled' | 'unknown'
-
-export interface Session {
-  timestamp: Date
-  focusText: string
-  predictedSeconds: number
-  actualSeconds: number
-  status: SessionStatus
-  tags: string[]
-}
+export type { Session, SessionStatus } from './session'
 
 function escapeCSV(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -71,7 +64,7 @@ export async function loadSessions(): Promise<Session[]> {
   }
 
   const lines = content.trim().split('\n')
-  if (lines.length <= 1) return [] // Only header or empty
+  if (lines.length <= 1) return []
 
   const sessions: Session[] = []
   for (let i = 1; i < lines.length; i++) {
@@ -98,7 +91,6 @@ export async function loadSessions(): Promise<Session[]> {
 export async function appendSession(session: Session): Promise<void> {
   const csvPath = await getCSVPath()
 
-  // Check if file exists, if not write header
   const fileExists = await exists(csvPath)
 
   const line = [

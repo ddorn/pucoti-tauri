@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import type { Session } from '../lib/storage'
+import type { Session } from '../lib/session'
 import type { TimeRange, Granularity, OnTimeResult, DurationBucket, CalibrationStats, AdjustmentCurve } from '../lib/stats'
 import {
   filterByTimeRange,
