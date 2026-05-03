@@ -6,6 +6,7 @@ import { timerMachine } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
 import { nextCorner } from '../lib/corner';
 import { platform, isTauri } from '../lib/platform';
+import { executePrefillHook } from '../lib/shell-hooks';
 import { Text } from '../components/catalyst/text'
 import { CountdownDisplay } from '../components/CountdownDisplay';
 import { parseCommand } from '../lib/command-parser'
@@ -38,7 +39,7 @@ export function Timer() {
     if (!settings.prefillCommand || editLoading) return
     setEditLoading(true)
     try {
-      const result = await platform.executePrefillHook(settings.prefillCommand)
+      const result = await executePrefillHook(settings.prefillCommand)
       if (result) {
         setEditInput(result)
       }

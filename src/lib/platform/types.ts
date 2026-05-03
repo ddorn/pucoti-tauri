@@ -2,13 +2,13 @@ import type { Session } from '../session'
 import type { Settings } from '../settings-types'
 
 export interface Platform {
-  isTauri: boolean
-
   // Storage
   loadSessions(): Promise<Session[]>
   appendSession(session: Session): Promise<void>
   exportSessionsCSV(): Promise<string>
   importSessionsCSV(csv: string): Promise<void>
+  /** Filesystem path of the sessions CSV (shown in UI). Null on platforms without disk storage. */
+  getSessionsStoragePath(): Promise<string | null>
 
   // Settings persistence
   loadSettings(): Promise<Settings>
@@ -27,8 +27,37 @@ export interface Platform {
   // Shell / desktop capabilities
   openUrl(url: string): Promise<void>
   openFileDialog(filters?: Array<{ name: string; extensions: string[] }>): Promise<string | null>
-  executeShellTemplate(command: string, placeholders: Record<string, string | number>, label: string): Promise<boolean>
-  executePrefillHook(command: string): Promise<string | null>
-  executeCompletionHook(focus: string, predicted: number, actual: number, command: string): Promise<boolean>
-  executeCustomNotification(title: string, body: string, command: string): Promise<boolean>
+  /** Execute a shell command. Returns null if the platform doesn't support shell exec (e.g. web). */
+  runShell(command: string): Promise<ShellResult | null>
+
+  // GNOME extension (no-op on non-supporting platforms)
+  gnome: GnomePlatform
+}
+
+export interface ShellResult {
+  code: number
+  stdout: string
+  stderr: string
+}
+
+export type GnomeExtensionStatus =
+  | 'enabled'
+  | 'disabled'
+  | 'not-loaded'
+  | 'not-installed'
+  | 'not-gnome'
+
+export interface GnomePanelState {
+  running: boolean
+  remainingSeconds: number
+  focusText: string
+  isOvertime: boolean
+}
+
+export interface GnomePlatform {
+  detect(): Promise<boolean>
+  getStatus(): Promise<GnomeExtensionStatus>
+  enable(): Promise<boolean>
+  disable(): Promise<boolean>
+  updatePanel(state: GnomePanelState): void
 }

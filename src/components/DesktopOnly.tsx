@@ -14,9 +14,8 @@ export function DesktopOnlyBadge() {
     <a
       href={INSTALL_URL}
       target="_blank"
-      rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-zinc-800 text-zinc-500 ring-1 ring-zinc-700 hover:bg-zinc-700 hover:text-zinc-300 transition-colors cursor-pointer"
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent ring-1 ring-accent/30 hover:bg-accent/20 hover:text-accent/80 transition-colors cursor-pointer text-shadow-none"
     >
       Desktop only
     </a>

@@ -8,6 +8,7 @@ import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
 import { checkForUpdates, type UpdateInfo } from '../lib/update-checker'
 import { platform, isTauri } from '../lib/platform'
+import { executeCompletionHook } from '../lib/shell-hooks'
 import packageJson from '../../package.json'
 
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
@@ -104,7 +105,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Run completion hook
         if (settings.completionCommand) {
-          platform.executeCompletionHook(
+          executeCompletionHook(
             event.state.focusText,
             event.state.predictedSeconds ?? 0,
             event.elapsed,

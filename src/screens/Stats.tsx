@@ -122,7 +122,7 @@ export function Stats() {
   useEffect(() => {
     // CSV path is only available on Tauri
     if (isTauri) {
-      import('../lib/storage').then(({ getCSVPath }) => getCSVPath()).then(setCsvPath).catch(console.error)
+      platform.getSessionsStoragePath().then(p => p && setCsvPath(p)).catch(console.error)
     }
   }, [])
 

@@ -1,10 +1,8 @@
 import { getCurrentWindow, primaryMonitor, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
 import { Command } from '@tauri-apps/plugin-shell'
-import type { Settings } from './settings-types'
-
-export type { Corner } from './corner'
-import type { Corner } from './corner'
+import type { Settings } from '../../settings-types'
+import type { Corner } from '../../corner'
 
 /**
  * Platform-agnostic window management interface
@@ -313,4 +311,3 @@ export async function initializeWindowForPlatform(): Promise<void> {
   }
 }
 
-export { nextCorner } from './corner'

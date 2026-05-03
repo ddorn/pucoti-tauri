@@ -8,7 +8,7 @@ import { Heading } from '../components/catalyst/heading'
 import { Checkbox, CheckboxField } from '../components/catalyst/checkbox';
 import { Label, Description } from '../components/catalyst/fieldset';
 import { ValidatedNumericInput } from '../components/ValidatedNumericInput';
-import type { ExtensionStatus } from '../lib/gnome-extension';
+import type { GnomeExtensionStatus } from '../lib/platform/types';
 import { ColorPicker } from '../components/ColorPicker'
 import { RadioGroup } from '../components/RadioGroup';
 import packageJson from '../../package.json'
@@ -16,6 +16,7 @@ import { getRandomAccentColor } from '../lib/colors';
 import { IconChevronDown } from '@tabler/icons-react'
 import { Kbd } from '../components/Kbd'
 import { platform, isTauri } from '../lib/platform'
+import { executeCustomNotification, executeCompletionHook, executePrefillHook } from '../lib/shell-hooks'
 import { DesktopOnly, DesktopOnlyBadge } from '../components/DesktopOnly'
 
 export function Settings() {
@@ -26,7 +27,7 @@ export function Settings() {
   const [testingCompletionHook, setTestingCompletionHook] = useState(false)
   const [testingPrefillHook, setTestingPrefillHook] = useState(false)
   const [prefillTestResult, setPrefillTestResult] = useState<string | null>(null)
-  const [extensionStatus, setExtensionStatus] = useState<ExtensionStatus | null>(null)
+  const [extensionStatus, setExtensionStatus] = useState<GnomeExtensionStatus | null>(null)
   const [enablingExtension, setEnablingExtension] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [checkingForUpdates, setCheckingForUpdates] = useState(false)
@@ -35,9 +36,7 @@ export function Settings() {
   // Check extension status on mount (Tauri only — GNOME extension is desktop-only)
   useEffect(() => {
     if (isTauri) {
-      import('../lib/gnome-extension').then(({ getExtensionStatus }) => {
-        getExtensionStatus().then(setExtensionStatus)
-      })
+      platform.gnome.getStatus().then(setExtensionStatus)
     }
   }, [])
 
@@ -71,7 +70,7 @@ export function Settings() {
       const body = 'This is a test notification from Pucoti'
 
       if (settings.notificationCommand && isTauri) {
-        const success = await platform.executeCustomNotification(title, body, settings.notificationCommand)
+        const success = await executeCustomNotification(title, body, settings.notificationCommand)
         if (!success) {
           await platform.showNotification(title, body)
         }
@@ -496,7 +495,7 @@ export function Settings() {
                   onClick={async () => {
                     setTestingCompletionHook(true)
                     try {
-                      await platform.executeCompletionHook('Sample task', 300, 420, settings.completionCommand)
+                      await executeCompletionHook('Sample task', 300, 420, settings.completionCommand)
                     } catch (err) {
                       console.error('Completion hook test failed:', err)
                     } finally {
@@ -533,7 +532,7 @@ export function Settings() {
                     setTestingPrefillHook(true)
                     setPrefillTestResult(null)
                     try {
-                      const result = await platform.executePrefillHook(settings.prefillCommand)
+                      const result = await executePrefillHook(settings.prefillCommand)
                       setPrefillTestResult(result ?? '(empty or failed)')
                     } catch (err) {
                       console.error('Prefill hook test failed:', err)
@@ -565,15 +564,14 @@ export function Settings() {
                     checked={settings.useGnomePanelIndicator}
                     onChange={async (checked) => {
                       await updateSettings({ useGnomePanelIndicator: checked })
-                      const { enableExtension, disableExtension } = await import('../lib/gnome-extension')
                       if (checked && (extensionStatus === 'enabled' || extensionStatus === 'disabled')) {
                         setEnablingExtension(true)
-                        await enableExtension()
+                        await platform.gnome.enable()
                         setEnablingExtension(false)
                         setExtensionStatus('enabled')
                       } else if (!checked && extensionStatus === 'enabled') {
                         setEnablingExtension(true);
-                        await disableExtension();
+                        await platform.gnome.disable();
                         setEnablingExtension(false);
                         setExtensionStatus('disabled')
                       }

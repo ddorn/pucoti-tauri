@@ -1,51 +1,9 @@
 import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
-import { formatTimestamp } from './format'
+import { formatTimestamp } from '../../format'
 import { getDataDir } from './paths'
-import type { Session } from './session'
-import type { SessionStatus } from './session'
-
-export type { Session, SessionStatus } from './session'
-
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    if (inQuotes) {
-      if (char === '"') {
-        if (line[i + 1] === '"') {
-          current += '"'
-          i++
-        } else {
-          inQuotes = false
-        }
-      } else {
-        current += char
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true
-      } else if (char === ',') {
-        result.push(current)
-        current = ''
-      } else {
-        current += char
-      }
-    }
-  }
-  result.push(current)
-  return result
-}
+import type { Session, SessionStatus } from '../../session'
+import { escapeCSV, parseCSVLine } from '../csv'
 
 export async function getCSVPath(): Promise<string> {
   const dir = await getDataDir()

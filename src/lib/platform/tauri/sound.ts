@@ -1,6 +1,6 @@
 import { sendNotification } from '@tauri-apps/plugin-notification'
 import { invoke } from '@tauri-apps/api/core'
-import { executeCustomNotification } from './settings'
+import { executeCustomNotification } from '../../shell-hooks'
 
 /**
  * Plays a bell sound (custom or default).

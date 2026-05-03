@@ -6,19 +6,16 @@
  * Use `isTauri` for conditional UI rendering.
  * Use `platform.*` for all platform-dependent operations.
  *
- * Tauri SDK packages are only imported (and bundled) when VITE_PLATFORM=tauri.
- * When building for web, the tauri branch is unreachable dead code that Vite
- * can eliminate, keeping the web bundle free of Tauri SDK code.
+ * The chosen implementation is loaded via dynamic import, so the unused
+ * implementation (and its transitive Tauri/web-only dependencies) is never
+ * pulled into the bundle.
  */
 import type { Platform } from './types'
-import { tauriPlatform } from './tauri'
-import { webPlatform } from './web'
 
 export type { Platform }
 
-// Compile-time constant — dead-code elimination removes the unused branch.
 export const isTauri: boolean = import.meta.env.VITE_PLATFORM === 'tauri'
 
-export const platform: Platform = (import.meta.env.VITE_PLATFORM === 'tauri')
-  ? tauriPlatform
-  : webPlatform
+export const platform: Platform = isTauri
+  ? (await import('./tauri')).tauriPlatform
+  : (await import('./web')).webPlatform

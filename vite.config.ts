@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import path from 'path'
 
 const isTauriEnv = process.env.VITE_PLATFORM === 'tauri'
 
@@ -47,17 +46,6 @@ export default defineConfig({
   base: isTauriEnv ? './' : '/',
   build: {
     outDir: 'dist',
-  },
-  resolve: {
-    alias: isTauriEnv
-      ? {}
-      : {
-          // Stub out Tauri-only modules so @tauri-apps/* code never enters the web bundle.
-          [path.resolve(__dirname, 'src/lib/platform/tauri.ts')]:
-            path.resolve(__dirname, 'src/lib/platform/stubs/tauri-stub.ts'),
-          [path.resolve(__dirname, 'src/hooks/useDbusSubscriber.ts')]:
-            path.resolve(__dirname, 'src/lib/platform/stubs/dbus-stub.ts'),
-        },
   },
   define: {
     // Polyfill for libraries expecting Node.js global variable
