@@ -79,6 +79,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       platform.setSmallMode(settingsRef.current).catch(console.error);
     }
     // zen mode is UI-only, no window function needed
+
+    // Corner is changed by directly updating the settings.
+    // Is this a good thing? It's probably fine.
   }, [displayMode, settings.corner])
 
   // Subscribe to timer events for screen navigation and completion data

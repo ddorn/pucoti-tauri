@@ -16,7 +16,7 @@ import { getRandomAccentColor } from '../lib/colors';
 import { IconChevronDown } from '@tabler/icons-react'
 import { Kbd } from '../components/Kbd'
 import { platform, isTauri } from '../lib/platform'
-import { DesktopOnly } from '../components/DesktopOnly'
+import { DesktopOnly, DesktopOnlyBadge } from '../components/DesktopOnly'
 
 export function Settings() {
   const { settings, loading, updateSettings, resetSettings } = useSettings()
@@ -197,13 +197,123 @@ export function Settings() {
           </CheckboxField>
         </section>
 
-        {/* Window & Display (desktop only) */}
-        <DesktopOnly>
-          <section className={sectionClasses}>
-            <Heading level={2} className="mb-6">
-              Window & Display
-            </Heading>
+        {/* Sound */}
+        <section className={sectionClasses}>
+          <Heading level={2} className="mb-6">
+            Sound
+          </Heading>
 
+          {/* Custom bell sound (desktop only — web always uses bundled bell) */}
+          <DesktopOnly>
+            <div className={subsectionClasses}>
+              <div className={subsectionLabelClasses}>
+                Custom bell sound
+              </div>
+              {settings.customBellPath ? (
+                <div className={subsectionClasses}>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="text"
+                      value={settings.customBellPath}
+                      readOnly
+                      className="flex-1"
+                    />
+                    <Button
+                      outline
+                      onClick={handleClearBell}
+                    >
+                      Clear
+                    </Button>
+                    <Button
+                      outline
+                      onClick={handleTestBell}
+                      disabled={testingBell}
+                    >
+                      {testingBell ? 'Playing...' : 'Test'}
+                    </Button>
+                  </div>
+                  <Text className={descriptionClasses}>
+                    Using custom bell sound
+                  </Text>
+                </div>
+              ) : (
+                <div className={subsectionClasses}>
+                  <Button
+                    outline
+                    onClick={handleSelectBell}
+                  >
+                    Select Custom Bell
+                  </Button>
+                  <Text className={descriptionClasses}>
+                    Choose a custom MP3 sound file. Leave empty to use default bell.
+                  </Text>
+                </div>
+              )}
+            </div>
+          </DesktopOnly>
+
+          <div className={subsectionClasses}>
+            <div className={subsectionLabelClasses}>
+              Bell repeat interval
+            </div>
+            <div className={smallNumberInputAndUnitClasses}>
+              <ValidatedNumericInput
+                value={settings.bellRepeatIntervalSeconds}
+                onChange={(val) => updateSettings({ bellRepeatIntervalSeconds: val })}
+                min={0}
+              />
+              <span className="text-base text-zinc-400">seconds</span>
+            </div>
+            <Text className={descriptionClasses}>
+              How frequently the bell repeats during overtime. Set to 0 to disable repeat. Default is 20 seconds.
+            </Text>
+          </div>
+
+          {/* Test bell button (available on all platforms) */}
+          <div className={subsectionClasses}>
+            <Button
+              outline
+              onClick={handleTestBell}
+              disabled={testingBell}
+            >
+              {testingBell ? 'Playing...' : 'Test Bell'}
+            </Button>
+          </div>
+        </section>
+
+        {/* Appearance */}
+        <section className={sectionClasses}>
+          <Heading level={2} className="mb-6">
+            Appearance
+          </Heading>
+
+          <div className={subsectionClasses}>
+            <div className={subsectionLabelClasses}>
+              Accent color
+            </div>
+            <ColorPicker
+              value={settings.accentColor}
+              onChange={(color) => updateSettings({ accentColor: color, randomColorOnCompletion: false })}
+              randomEnabled={settings.randomColorOnCompletion}
+              onRandomSelect={() => updateSettings({ randomColorOnCompletion: true, accentColor: getRandomAccentColor() })}
+            />
+            <Text className={descriptionClasses}>
+              Choose the accent color used throughout the app.
+              {settings.randomColorOnCompletion && (
+                <span className="text-accent"> Random mode enabled - color will change after each completed timer.</span>
+              )}
+            </Text>
+          </div>
+        </section>
+
+        {/* Window & Display (desktop only) */}
+        <section className={sectionClasses}>
+          <Heading level={2} className="mb-6 flex items-center gap-3">
+            Window & Display
+            <DesktopOnlyBadge />
+          </Heading>
+
+          <DesktopOnly>
             <div className="space-y-6">
               <div>
                 <div className={subsectionLabelClasses}>
@@ -216,7 +326,6 @@ export function Settings() {
                   onChange={(value) => updateSettings({ onTimerStart: value as 'nothing' | 'corner' | 'minimize' })}
                 />
               </div>
-
             </div>
 
             <div className={subsectionClasses}>
@@ -330,100 +439,17 @@ export function Settings() {
                 <Description>Remove window decorations in small corner mode. May not work on all window managers.</Description>
               </CheckboxField>
             </div>
-          </section>
-        </DesktopOnly>
-
-        {/* Sound */}
-        <section className={sectionClasses}>
-          <Heading level={2} className="mb-6">
-            Sound
-          </Heading>
-
-          {/* Custom bell sound (desktop only — web always uses bundled bell) */}
-          <DesktopOnly>
-            <div className={subsectionClasses}>
-              <div className={subsectionLabelClasses}>
-                Custom bell sound
-              </div>
-              {settings.customBellPath ? (
-                <div className={subsectionClasses}>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      value={settings.customBellPath}
-                      readOnly
-                      className="flex-1"
-                    />
-                    <Button
-                      outline
-                      onClick={handleClearBell}
-                    >
-                      Clear
-                    </Button>
-                    <Button
-                      outline
-                      onClick={handleTestBell}
-                      disabled={testingBell}
-                    >
-                      {testingBell ? 'Playing...' : 'Test'}
-                    </Button>
-                  </div>
-                  <Text className={descriptionClasses}>
-                    Using custom bell sound
-                  </Text>
-                </div>
-              ) : (
-                <div className={subsectionClasses}>
-                  <Button
-                    outline
-                    onClick={handleSelectBell}
-                  >
-                    Select Custom Bell
-                  </Button>
-                  <Text className={descriptionClasses}>
-                    Choose a custom MP3 sound file. Leave empty to use default bell.
-                  </Text>
-                </div>
-              )}
-            </div>
           </DesktopOnly>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Bell repeat interval
-            </div>
-            <div className={smallNumberInputAndUnitClasses}>
-              <ValidatedNumericInput
-                value={settings.bellRepeatIntervalSeconds}
-                onChange={(val) => updateSettings({ bellRepeatIntervalSeconds: val })}
-                min={0}
-              />
-              <span className="text-base text-zinc-400">seconds</span>
-            </div>
-            <Text className={descriptionClasses}>
-              How frequently the bell repeats during overtime. Set to 0 to disable repeat. Default is 20 seconds.
-            </Text>
-          </div>
-
-          {/* Test bell button (available on all platforms) */}
-          <div className={subsectionClasses}>
-            <Button
-              outline
-              onClick={handleTestBell}
-              disabled={testingBell}
-            >
-              {testingBell ? 'Playing...' : 'Test Bell'}
-            </Button>
-          </div>
         </section>
 
         {/* Hooks & Automation (desktop only) */}
-        <DesktopOnly>
-          <section className={sectionClasses}>
-            <Heading level={2} className="mb-6">
-              Hooks & Automation
-            </Heading>
+        <section className={sectionClasses}>
+          <Heading level={2} className="mb-6 flex items-center gap-3">
+            Hooks & Automation
+            <DesktopOnlyBadge />
+          </Heading>
 
+          <DesktopOnly>
             <div className={subsectionClasses}>
               <div className={subsectionLabelClasses}>
                 Overtime notification command
@@ -572,32 +598,7 @@ export function Settings() {
                 </CheckboxField>
               </div>
             )}
-          </section>
-        </DesktopOnly>
-
-        {/* Appearance */}
-        <section className={sectionClasses}>
-          <Heading level={2} className="mb-6">
-            Appearance
-          </Heading>
-
-          <div className={subsectionClasses}>
-            <div className={subsectionLabelClasses}>
-              Accent color
-            </div>
-            <ColorPicker
-              value={settings.accentColor}
-              onChange={(color) => updateSettings({ accentColor: color, randomColorOnCompletion: false })}
-              randomEnabled={settings.randomColorOnCompletion}
-              onRandomSelect={() => updateSettings({ randomColorOnCompletion: true, accentColor: getRandomAccentColor() })}
-            />
-            <Text className={descriptionClasses}>
-              Choose the accent color used throughout the app.
-              {settings.randomColorOnCompletion && (
-                <span className="text-accent"> Random mode enabled - color will change after each completed timer.</span>
-              )}
-            </Text>
-          </div>
+          </DesktopOnly>
         </section>
 
         {/* Updates (desktop only — web is always current) */}
