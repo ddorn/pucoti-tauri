@@ -214,6 +214,64 @@ class SwayPlatform implements WindowPlatform {
 }
 
 /**
+ * GNOME Shell platform implementation
+ * Uses the pucoti GNOME extension's D-Bus window management interface
+ * to move/resize windows — necessary because Wayland prevents apps from
+ * setting their own position via the compositor protocol.
+ */
+class GnomePlatform implements WindowPlatform {
+  async setCornerMode(settings: Settings): Promise<void> {
+    const { smallWindowWidth, smallWindowHeight,
+      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
+
+    const display = await this.getDisplaySize();
+    const positions = calculateCornerPositions(display, smallWindowWidth, smallWindowHeight,
+      { cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft });
+    const pos = positions[corner];
+
+    console.log('[window] GNOME - Corner mode:', corner, 'position:', pos, 'size:', smallWindowWidth + 'x' + smallWindowHeight);
+
+    // Exit fullscreen first (in case zen mode was active).
+    // Decorations are always off on Linux (tauri.linux.conf.json), no need to set them here.
+    await getCurrentWindow().setFullscreen(false).catch(() => {});
+
+    await getCurrentWindow().setSize(new LogicalSize(smallWindowWidth, smallWindowHeight));
+    await this._callExtension('MoveResize',
+      `${Math.round(pos.x)} ${Math.round(pos.y)} ${Math.round(smallWindowWidth)} ${Math.round(smallWindowHeight)}`);
+    await this._callExtension('MakeAbove', 'true');
+    await this._callExtension('Stick', 'true');
+  }
+
+  async setNormalMode(settings: Settings): Promise<void> {
+    const { normalWindowWidth, normalWindowHeight } = settings;
+
+    console.log('[window] GNOME - Normal mode:', normalWindowWidth + 'x' + normalWindowHeight);
+
+    const display = await this.getDisplaySize();
+    const x = Math.round((display.width - normalWindowWidth) / 2);
+    const y = Math.round((display.height - normalWindowHeight) / 2);
+
+    await this._callExtension('MakeAbove', 'false');
+    await this._callExtension('Stick', 'false');
+    await getCurrentWindow().setSize(new LogicalSize(normalWindowWidth, normalWindowHeight));
+    await this._callExtension('MoveResize', `${x} ${y} ${normalWindowWidth} ${normalWindowHeight}`);
+  }
+
+  async getDisplaySize(): Promise<{ width: number; height: number }> {
+    return new DefaultPlatform().getDisplaySize();
+  }
+
+  private async _callExtension(method: string, args: string): Promise<void> {
+    const cmd = Command.create('run-sh', ['-c',
+      `gdbus call --session --dest org.pucoti.Window --object-path /org/pucoti/Window --method org.pucoti.Window.${method} ${args}`]);
+    const result = await cmd.execute();
+    if (result.code !== 0) {
+      console.warn(`[window] GNOME extension call ${method} failed:`, result.stderr);
+    }
+  }
+}
+
+/**
  * Platform detection and management
  */
 let currentPlatform: WindowPlatform | null = null;
@@ -238,6 +296,22 @@ async function detectSway(): Promise<boolean> {
 }
 
 /**
+ * Detect if the pucoti GNOME Shell extension's window management D-Bus interface is available
+ */
+async function detectGnomeExtension(): Promise<boolean> {
+  try {
+    const cmd = Command.create('run-sh', ['-c',
+      'gdbus call --session --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.NameHasOwner "org.pucoti.Window"']);
+    const result = await cmd.execute();
+    const detected = result.stdout.trim().includes('true');
+    console.log('[window] GNOME extension detection:', detected);
+    return detected;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get the appropriate platform implementation (cached after first detection)
  */
 async function getPlatform(): Promise<WindowPlatform> {
@@ -247,6 +321,9 @@ async function getPlatform(): Promise<WindowPlatform> {
   if (await detectSway()) {
     console.log('[window] Using Sway platform');
     currentPlatform = new SwayPlatform();
+  } else if (await detectGnomeExtension()) {
+    console.log('[window] Using GNOME platform');
+    currentPlatform = new GnomePlatform();
   } else {
     console.log('[window] Using default platform');
     currentPlatform = new DefaultPlatform();
@@ -294,6 +371,17 @@ export async function setSmallMode(settings: Settings): Promise<void> {
 export async function setNormalMode(
   settings: Settings
 ): Promise<void> {
+  // Exit fullscreen if active (e.g. returning from zen mode)
+  try {
+    const window = getCurrentWindow()
+    const isFs = await window.isFullscreen()
+    if (isFs) {
+      await window.setFullscreen(false)
+    }
+  } catch (err) {
+    console.error('[window] Fullscreen check/exit failed (may not be supported on this platform):', err)
+  }
+
   const platform = await getPlatform();
   await platform.setNormalMode(settings);
 }
@@ -301,9 +389,15 @@ export async function setNormalMode(
 /**
  * Initialize window decorations based on platform
  * Called at app startup to ensure correct decoration state
+ *
+ * On Linux, tauri.linux.conf.json sets decorations:false at window creation,
+ * so no dynamic decoration changes are needed for GNOME.
+ * On Sway, we additionally disable Tauri's client-side decorations here
+ * (redundant with the config but kept for clarity).
  */
 export async function initializeWindowForPlatform(): Promise<void> {
-  if (await detectSway()) {
+  const platform = await getPlatform();
+  if (platform instanceof SwayPlatform) {
     // On Sway, always disable Tauri's client-side decorations
     // Sway handles decorations natively via 'border' command
     const window = getCurrentWindow();
