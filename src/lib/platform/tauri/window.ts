@@ -298,6 +298,27 @@ export async function setNormalMode(
 }
 
 /**
+ * Logical size of the monitor the window is currently on (physical size divided
+ * by the monitor's scale factor, matching the LogicalSize used for window sizing).
+ * Used to cap window resizing so the window never exceeds the screen. Returns
+ * null if monitor info is unavailable.
+ */
+export async function getMaxWindowSize(): Promise<{ width: number; height: number } | null> {
+  try {
+    const monitor = (await currentMonitor()) ?? (await primaryMonitor())
+    if (!monitor) return null
+    const scale = monitor.scaleFactor || 1
+    return {
+      width: Math.floor(monitor.size.width / scale),
+      height: Math.floor(monitor.size.height / scale),
+    }
+  } catch (err) {
+    console.error('[window] Failed to get monitor size:', err)
+    return null
+  }
+}
+
+/**
  * Initialize window decorations based on platform
  * Called at app startup to ensure correct decoration state
  */

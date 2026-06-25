@@ -128,8 +128,13 @@ export function Timer() {
           : { width: settings[widthKey], height: settings[heightKey] }
 
         // Clamp the scale factor (not each dimension independently) so the aspect
-        // ratio is preserved and neither dimension drops below its minimum.
-        const clampedFactor = Math.max(factor, minW / seed.width, minH / seed.height)
+        // ratio is preserved: keep both dimensions at/above their minimum and, when
+        // the monitor size is known, at/below the screen.
+        const minFactor = Math.max(minW / seed.width, minH / seed.height)
+        const max = await platform.getMaxWindowSize()
+        const maxFactor = max ? Math.min(max.width / seed.width, max.height / seed.height) : Infinity
+        // The floor wins if the screen is somehow smaller than the minimum size.
+        const clampedFactor = Math.min(Math.max(factor, minFactor), Math.max(minFactor, maxFactor))
         const width = Math.round(seed.width * clampedFactor)
         const height = Math.round(seed.height * clampedFactor)
         resizeTargetRef.current = { mode: displayMode, width, height }

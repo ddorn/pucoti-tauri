@@ -23,6 +23,8 @@ export interface Platform {
   setNormalMode(settings: Settings): Promise<void>
   initializeWindowForPlatform(): Promise<void>
   onCloseRequested(handler: () => Promise<void>): Promise<() => void>
+  /** Logical size of the current monitor, used to cap window resizing. Null when unavailable (e.g. web). */
+  getMaxWindowSize(): Promise<{ width: number; height: number } | null>
 
   // Shell / desktop capabilities
   openUrl(url: string): Promise<void>

@@ -7,7 +7,7 @@ import type { Session } from '../../session'
 import { loadSessions, appendSession, exportSessionsCSV, getCSVPath } from './storage'
 import { loadSettings, saveSettings } from './settings'
 import { playBell, showNotification } from './sound'
-import { setSmallMode, setNormalMode, initializeWindowForPlatform } from './window'
+import { setSmallMode, setNormalMode, initializeWindowForPlatform, getMaxWindowSize } from './window'
 import {
   detectGnome,
   getExtensionStatus,
@@ -59,6 +59,7 @@ export const tauriPlatform: Platform = {
   setSmallMode,
   setNormalMode,
   initializeWindowForPlatform,
+  getMaxWindowSize,
 
   async onCloseRequested(handler) {
     const win = getCurrentWindow()

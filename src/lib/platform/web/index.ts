@@ -23,6 +23,7 @@ export const webPlatform: Platform = {
   setSmallMode: async () => {},
   setNormalMode: async () => {},
   initializeWindowForPlatform: async () => {},
+  getMaxWindowSize: async () => null,
 
   async onCloseRequested() {
     return () => {}
