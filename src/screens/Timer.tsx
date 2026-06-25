@@ -27,6 +27,12 @@ export function Timer() {
   const [noPredictionWarning, setNoPredictionWarning] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Live window-resize target + debounced persist, so rapid +/- presses compound
+  // (tick-driven re-renders don't reset them) and key auto-repeat doesn't thrash
+  // settings.json on every repeat.
+  const resizeTargetRef = useRef<{ mode: 'normal' | 'small'; width: number; height: number } | null>(null)
+  const resizePersistRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Parse command in real-time
   const parsed = useMemo(() => parseCommand(editInput), [editInput])
 
@@ -102,6 +108,46 @@ export function Timer() {
         return
       }
 
+      // Resize the active window (normal or small) by a factor, keeping aspect
+      // ratio, and re-apply the mode so it stays centered / pinned to its corner.
+      const resizeActiveWindow = async (factor: number) => {
+        if (!isTauri) return
+        // zen mode is fullscreen — nothing to resize
+        if (displayMode !== 'normal' && displayMode !== 'small') return
+
+        // Minimums must match what the Settings screen enforces (Settings.tsx),
+        // otherwise the keybinding can persist a size the settings form rejects.
+        const [widthKey, heightKey, minW, minH] = displayMode === 'normal'
+          ? ['normalWindowWidth', 'normalWindowHeight', 300, 200] as const
+          : ['smallWindowWidth', 'smallWindowHeight', 200, 80] as const
+
+        // Seed from the live target if we're still in the same resize burst,
+        // otherwise from the committed settings.
+        const seed = resizeTargetRef.current?.mode === displayMode
+          ? resizeTargetRef.current
+          : { width: settings[widthKey], height: settings[heightKey] }
+
+        // Clamp the scale factor (not each dimension independently) so the aspect
+        // ratio is preserved and neither dimension drops below its minimum.
+        const clampedFactor = Math.max(factor, minW / seed.width, minH / seed.height)
+        const width = Math.round(seed.width * clampedFactor)
+        const height = Math.round(seed.height * clampedFactor)
+        resizeTargetRef.current = { mode: displayMode, width, height }
+
+        // Apply the geometry live for responsiveness...
+        const next = { ...settings, [widthKey]: width, [heightKey]: height }
+        if (displayMode === 'normal') await platform.setNormalMode(next)
+        else await platform.setSmallMode(next)
+
+        // ...but coalesce the settings write so auto-repeat persists only once.
+        if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
+        resizePersistRef.current = setTimeout(() => {
+          resizePersistRef.current = null
+          resizeTargetRef.current = null
+          void updateSettings({ [widthKey]: width, [heightKey]: height })
+        }, 250)
+      }
+
       switch (e.key.toLowerCase()) {
         case 'tab':
           e.preventDefault()
@@ -170,11 +216,26 @@ export function Timer() {
         case '?':
           await updateSettings({ scrambleTimer: !settings.scrambleTimer })
           break
+
+        case '+':
+        case '=':
+          e.preventDefault()
+          await resizeActiveWindow(1.25)
+          break
+
+        case '-':
+        case '_':
+          e.preventDefault()
+          await resizeActiveWindow(0.8)
+          break
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
+    }
   }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, handlePrefill])
 
   const handleEditSubmit = useCallback((forceTimebox: boolean = false) => {
@@ -362,6 +423,7 @@ export function Timer() {
               <Shortcut keys={['J', 'K']} label="±5 minutes" />
               <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
               {isTauri && <Shortcut keys={['c']} label="Cycle corners" />}
+              {isTauri && <Shortcut keys={['+', '-']} label="Resize window" />}
               <Shortcut keys={['q']} label="Cancel" />
               <Shortcut keys={['s']} label="Stats" />
               <Shortcut keys={[',']} label="Settings" />
