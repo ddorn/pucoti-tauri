@@ -48,7 +48,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { settings, updateSettings } = useSettings()
+  const { settings, updateSettings, loading } = useSettings()
 
   const [screen, setScreenRaw] = useState<Screen>('timer')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('normal')
@@ -74,6 +74,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Automatically apply window mode changes when displayMode changes
   useEffect(() => {
+    // Wait until settings are loaded from disk. Otherwise this runs on mount with
+    // DEFAULT_SETTINGS and, because the deps don't include the window sizes, never
+    // re-applies once the saved sizes arrive (unless `corner` happens to change),
+    // leaving the window at its default startup size.
+    if (loading) return
     if (displayMode === 'normal') {
       platform.setNormalMode(settingsRef.current).catch(console.error);
     } else if (displayMode === 'small') {
@@ -83,7 +88,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Corner is changed by directly updating the settings.
     // Is this a good thing? It's probably fine.
-  }, [displayMode, settings.corner])
+  }, [displayMode, settings.corner, loading])
 
   // Subscribe to timer events for screen navigation and completion data
   useEffect(() => {
