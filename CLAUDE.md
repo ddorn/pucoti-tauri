@@ -166,13 +166,13 @@ Windows, and Linux WMs without a dedicated implementation. A platform may define
   between the floating and tiling layouts
 - Tauri decorations are always off, in both modes: they add a GTK title bar on top
   of the border niri draws itself, so `smallWindowBorderless` has no effect here
-- **Sticky corner window**: niri has nothing like Sway's `sticky`, so corner mode
-  spawns `niri msg --json event-stream` and moves the window to each workspace
-  that becomes active on its own output (other screens switching are ignored).
-  The follower stops when the window leaves corner mode, and only a floating
-  window follows - tiling it is how a user pins it to one workspace. This needs
-  `shell:allow-spawn`/`shell:allow-kill`, since the stream outlives a single
-  `execute` (scopes are per permission entry, so `allow-spawn` carries its own).
+- **Sticky window**: niri has nothing like Sway's `sticky`, so startup spawns
+  `niri msg --json event-stream` and moves the window to each workspace that
+  becomes active on its own output (other screens switching are ignored). This
+  runs in every display mode; what decides whether the window follows is whether
+  it is floating, since tiling it is how a user pins it to one workspace. The
+  stream outlives a single `execute`, so it needs `shell:allow-spawn` - and
+  scopes are per permission entry, so that entry carries its own `allow` list
 - Users who want the corner placement to survive a restart of the window can put
   it in their niri config instead, though the app does not depend on it:
   `window-rule { match app-id="pucoti"; open-floating true;

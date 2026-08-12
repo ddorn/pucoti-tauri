@@ -277,8 +277,8 @@ interface NiriWorkspace {
  * working area rather than the output size. niri exposes no working area over
  * IPC, so it is measured (see `measureWorkingArea`) and cached per output.
  *
- * Sticky: niri has no sticky windows, so corner mode follows the active
- * workspace itself (see `startFollowingWorkspaces`).
+ * Sticky: niri has no sticky windows, so the app follows the active workspace
+ * itself while it is floating (see `startFollowingWorkspaces`).
  *
  * Decorations: Tauri's are always off, like on Sway. Keeping them adds a GTK
  * title bar on top of the border niri already draws, and floating windows are
@@ -287,7 +287,7 @@ interface NiriWorkspace {
 class NiriPlatform implements WindowPlatform {
   private workingArea: { output: string; width: number; height: number; } | null = null;
   /** Running `niri msg event-stream`, see `startFollowingWorkspaces` */
-  private follower: Child | null = null;
+  private follower: Promise<Child> | null = null;
 
   private async run(args: string[]): Promise<string | null> {
     const cmd = Command.create('run-niri', args);
@@ -469,8 +469,6 @@ class NiriPlatform implements WindowPlatform {
 
     // Unsigned values set an absolute position (a leading +/- would be relative)
     await this.action(['move-floating-window', '-x', String(Math.round(pos.x)), '-y', String(Math.round(pos.y))], id);
-
-    await this.startFollowingWorkspaces();
   }
 
   async setNormalMode(settings: Settings): Promise<void> {
@@ -486,7 +484,6 @@ class NiriPlatform implements WindowPlatform {
       return;
     }
 
-    await this.stopFollowingWorkspaces();
     await this.resize(id, normalWindowWidth, normalWindowHeight);
     await this.action(['center-window'], id);
   }
@@ -495,38 +492,44 @@ class NiriPlatform implements WindowPlatform {
     const window = getCurrentWindow();
     await window.setDecorations(false);
     console.log('[window] Disabled Tauri decorations for niri');
+
+    await this.startFollowingWorkspaces();
   }
 
   /**
-   * Keep the corner window on the workspace the user is looking at.
+   * Keep the window on the workspace the user is looking at.
    *
    * niri has no sticky windows, so we follow its event stream and move our
    * window along whenever another workspace becomes active. Only workspaces on
    * the output the window is already on count: with several screens, the window
    * stays on its screen and follows that screen's switches.
    *
-   * The follower is a `niri msg event-stream` child process. It is stopped when
-   * the window leaves corner mode, and dies on its own if the app goes away,
-   * since writing the next event to a closed pipe kills it.
+   * This runs for as long as the app does, in every display mode - what decides
+   * whether the window follows is whether it is floating, which is checked per
+   * event. The `niri msg event-stream` child is torn down with the app, so it
+   * never needs stopping.
    */
   private async startFollowingWorkspaces(): Promise<void> {
     if (this.follower) return;
 
     const command = Command.create('run-niri', ['msg', '--json', 'event-stream']);
     command.stdout.on('data', (line) => void this.onWorkspaceActivated(line));
-    command.on('close', () => { this.follower = null; });
+    command.on('close', () => {
+      this.follower = null;
+      console.warn('[window] niri event stream closed, no longer following workspaces');
+    });
     command.on('error', (err) => console.error('[window] niri event stream failed:', err));
 
-    this.follower = await command.spawn();
-    console.log('[window] niri: following workspace switches');
-  }
-
-  private async stopFollowingWorkspaces(): Promise<void> {
-    const follower = this.follower;
-    if (!follower) return;
-    this.follower = null;
-    await follower.kill();
-    console.log('[window] niri: stopped following workspace switches');
+    // Assigned before awaiting: a second caller must see it, or we end up with
+    // two streams
+    this.follower = command.spawn();
+    try {
+      await this.follower;
+      console.log('[window] niri: following workspace switches');
+    } catch (err) {
+      this.follower = null;
+      console.error('[window] niri: could not follow workspace switches:', err);
+    }
   }
 
   /**
@@ -542,7 +545,8 @@ class NiriPlatform implements WindowPlatform {
     if (!activated) return;
 
     const own = await this.getWindow();
-    // Tiling the window is how the user pins it to a single workspace
+    // Only a floating window follows: tiling it is how the user pins it to a
+    // single workspace
     if (!own || !own.is_floating) return;
 
     const workspaces = await this.getWorkspaces();
@@ -581,8 +585,12 @@ class NiriPlatform implements WindowPlatform {
 
 /**
  * Platform detection and management
+ *
+ * The detection, not its result, is what gets cached: it is asynchronous, and
+ * callers that overlap have to end up with the same platform instance - a second
+ * one would duplicate everything it owns, such as niri's event stream.
  */
-let currentPlatform: WindowPlatform | null = null;
+let currentPlatform: Promise<WindowPlatform> | null = null;
 
 /**
  * Read an environment variable of the running app, empty string if unset
@@ -601,23 +609,24 @@ async function readEnv(name: string): Promise<string> {
 }
 
 /**
- * Get the appropriate platform implementation (cached after first detection)
+ * Get the appropriate platform implementation (detected once)
  */
-async function getPlatform(): Promise<WindowPlatform> {
-  if (currentPlatform) return currentPlatform;
+function getPlatform(): Promise<WindowPlatform> {
+  if (!currentPlatform) currentPlatform = detectPlatform();
+  return currentPlatform;
+}
 
+async function detectPlatform(): Promise<WindowPlatform> {
   if (await readEnv('SWAYSOCK')) {
     console.log('[window] Using Sway platform');
-    currentPlatform = new SwayPlatform();
+    return new SwayPlatform();
   } else if (await readEnv('NIRI_SOCKET')) {
     console.log('[window] Using niri platform');
-    currentPlatform = new NiriPlatform();
+    return new NiriPlatform();
   } else {
     console.log('[window] Using default platform');
-    currentPlatform = new DefaultPlatform();
+    return new DefaultPlatform();
   }
-
-  return currentPlatform;
 }
 
 /**
