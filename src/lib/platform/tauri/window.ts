@@ -1,6 +1,6 @@
 import { getCurrentWindow, primaryMonitor, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
-import { Command } from '@tauri-apps/plugin-shell'
+import { Command, type Child } from '@tauri-apps/plugin-shell'
 import { invoke } from '@tauri-apps/api/core'
 import type { Settings } from '../../settings-types'
 import type { Corner } from '../../corner'
@@ -248,10 +248,21 @@ interface NiriWindow {
   id: number;
   pid: number | null;
   workspace_id: number | null;
+  is_floating: boolean;
   layout: {
     tile_size: [number, number];
     tile_pos_in_workspace_view: [number, number] | null;
   };
+}
+
+/**
+ * A workspace as reported by `niri msg --json workspaces`
+ */
+interface NiriWorkspace {
+  id: number;
+  idx: number;
+  name: string | null;
+  output: string | null;
 }
 
 /**
@@ -266,12 +277,17 @@ interface NiriWindow {
  * working area rather than the output size. niri exposes no working area over
  * IPC, so it is measured (see `measureWorkingArea`) and cached per output.
  *
+ * Sticky: niri has no sticky windows, so corner mode follows the active
+ * workspace itself (see `startFollowingWorkspaces`).
+ *
  * Decorations: Tauri's are always off, like on Sway. Keeping them adds a GTK
  * title bar on top of the border niri already draws, and floating windows are
  * moved and resized with the compositor's own bindings anyway.
  */
 class NiriPlatform implements WindowPlatform {
   private workingArea: { output: string; width: number; height: number; } | null = null;
+  /** Running `niri msg event-stream`, see `startFollowingWorkspaces` */
+  private follower: Child | null = null;
 
   private async run(args: string[]): Promise<string | null> {
     const cmd = Command.create('run-niri', args);
@@ -309,6 +325,17 @@ class NiriPlatform implements WindowPlatform {
     }
   }
 
+  private async getWorkspaces(): Promise<NiriWorkspace[]> {
+    const stdout = await this.run(['msg', '--json', 'workspaces']);
+    if (stdout === null) return [];
+    try {
+      return JSON.parse(stdout);
+    } catch (err) {
+      console.error('[window] niri: failed to parse workspaces:', err);
+      return [];
+    }
+  }
+
   /**
    * The output our window is on, null if it cannot be determined.
    *
@@ -316,22 +343,21 @@ class NiriPlatform implements WindowPlatform {
    * focus: the two differ whenever the user works on another monitor.
    */
   private async getOutput(win: NiriWindow): Promise<{ name: string; width: number; height: number; } | null> {
-    const [workspacesJson, outputsJson] = await Promise.all([
-      this.run(['msg', '--json', 'workspaces']),
+    const [workspaces, outputsJson] = await Promise.all([
+      this.getWorkspaces(),
       this.run(['msg', '--json', 'outputs']),
     ]);
-    if (workspacesJson === null || outputsJson === null) return null;
+    if (outputsJson === null) return null;
+
+    const name = workspaces.find((w) => w.id === win.workspace_id)?.output;
+    if (!name) return null;
 
     try {
-      const workspaces: { id: number; output: string | null; }[] = JSON.parse(workspacesJson);
-      const name = workspaces.find((w) => w.id === win.workspace_id)?.output;
-      if (!name) return null;
-
       const logical = JSON.parse(outputsJson)[name]?.logical;
       if (!logical) return null;
       return { name, width: logical.width, height: logical.height };
     } catch (err) {
-      console.error('[window] niri: failed to resolve the output:', err);
+      console.error('[window] niri: failed to parse outputs:', err);
       return null;
     }
   }
@@ -443,6 +469,8 @@ class NiriPlatform implements WindowPlatform {
 
     // Unsigned values set an absolute position (a leading +/- would be relative)
     await this.action(['move-floating-window', '-x', String(Math.round(pos.x)), '-y', String(Math.round(pos.y))], id);
+
+    await this.startFollowingWorkspaces();
   }
 
   async setNormalMode(settings: Settings): Promise<void> {
@@ -458,6 +486,7 @@ class NiriPlatform implements WindowPlatform {
       return;
     }
 
+    await this.stopFollowingWorkspaces();
     await this.resize(id, normalWindowWidth, normalWindowHeight);
     await this.action(['center-window'], id);
   }
@@ -466,6 +495,68 @@ class NiriPlatform implements WindowPlatform {
     const window = getCurrentWindow();
     await window.setDecorations(false);
     console.log('[window] Disabled Tauri decorations for niri');
+  }
+
+  /**
+   * Keep the corner window on the workspace the user is looking at.
+   *
+   * niri has no sticky windows, so we follow its event stream and move our
+   * window along whenever another workspace becomes active. Only workspaces on
+   * the output the window is already on count: with several screens, the window
+   * stays on its screen and follows that screen's switches.
+   *
+   * The follower is a `niri msg event-stream` child process. It is stopped when
+   * the window leaves corner mode, and dies on its own if the app goes away,
+   * since writing the next event to a closed pipe kills it.
+   */
+  private async startFollowingWorkspaces(): Promise<void> {
+    if (this.follower) return;
+
+    const command = Command.create('run-niri', ['msg', '--json', 'event-stream']);
+    command.stdout.on('data', (line) => void this.onWorkspaceActivated(line));
+    command.on('close', () => { this.follower = null; });
+    command.on('error', (err) => console.error('[window] niri event stream failed:', err));
+
+    this.follower = await command.spawn();
+    console.log('[window] niri: following workspace switches');
+  }
+
+  private async stopFollowingWorkspaces(): Promise<void> {
+    const follower = this.follower;
+    if (!follower) return;
+    this.follower = null;
+    await follower.kill();
+    console.log('[window] niri: stopped following workspace switches');
+  }
+
+  /**
+   * Move our window to a workspace that just became active, if it should follow
+   */
+  private async onWorkspaceActivated(line: string): Promise<void> {
+    let activated: { id: number; } | undefined;
+    try {
+      activated = JSON.parse(line)?.WorkspaceActivated;
+    } catch {
+      return; // Some other event, or a partial line
+    }
+    if (!activated) return;
+
+    const own = await this.getWindow();
+    // Tiling the window is how the user pins it to a single workspace
+    if (!own || !own.is_floating) return;
+
+    const workspaces = await this.getWorkspaces();
+    const target = workspaces.find((w) => w.id === activated.id);
+    const current = workspaces.find((w) => w.id === own.workspace_id);
+    if (!target || !current || target.id === current.id) return;
+    if (target.output !== current.output) return; // Another screen switched
+
+    // A workspace reference is a name or an index. Names only exist for named
+    // workspaces, so fall back to the index, which niri resolves on the output
+    // the window is on - the output we just checked the target is on too.
+    const reference = target.name || String(target.idx);
+    await this.run(['msg', 'action', 'move-window-to-workspace',
+      '--window-id', String(own.id), '--focus', 'false', reference]);
   }
 
   /**
