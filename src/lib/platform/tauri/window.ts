@@ -1,17 +1,20 @@
 import { getCurrentWindow, primaryMonitor, currentMonitor } from '@tauri-apps/api/window'
 import { LogicalSize, LogicalPosition } from '@tauri-apps/api/dpi'
 import { Command } from '@tauri-apps/plugin-shell'
+import { invoke } from '@tauri-apps/api/core'
 import type { Settings } from '../../settings-types'
 import type { Corner } from '../../corner'
 
 /**
  * Platform-agnostic window management interface
- * Each platform (Sway, Hyprland, generic Tauri, etc.) implements this interface
+ * Each platform (Sway, niri, generic Tauri, etc.) implements this interface
  */
 interface WindowPlatform {
   setCornerMode(settings: Settings): Promise<void>;
   setNormalMode(settings: Settings): Promise<void>;
   getDisplaySize(): Promise<{ width: number; height: number; }>;
+  /** Called once at app startup to set up platform-specific window state */
+  initialize?(): Promise<void>;
 }
 
 /**
@@ -34,7 +37,7 @@ function calculateCornerPositions(
 
 /**
  * Default platform implementation using Tauri window APIs
- * Used for macOS, Windows, and Linux window managers other than Sway
+ * Used for macOS, Windows, and Linux window managers without a dedicated implementation
  */
 class DefaultPlatform implements WindowPlatform {
   async setCornerMode(settings: Settings): Promise<void> {
@@ -164,6 +167,13 @@ class SwayPlatform implements WindowPlatform {
     await window.setDecorations(false);
   }
 
+  async initialize(): Promise<void> {
+    // Sway handles decorations natively via 'border', so Tauri's must stay off
+    const window = getCurrentWindow();
+    await window.setDecorations(false);
+    console.log('[window] Disabled Tauri decorations for Sway');
+  }
+
   async getDisplaySize(): Promise<{ width: number; height: number; x: number; y: number; }> {
     // Use swaymsg to get workspace dimensions (usable area excluding swaybar)
     try {
@@ -213,26 +223,289 @@ class SwayPlatform implements WindowPlatform {
 }
 
 /**
+ * Process id of the app, asked once from the backend and cached
+ */
+let processId: number | null = null;
+
+async function getProcessId(): Promise<number | null> {
+  if (processId === null) {
+    try {
+      processId = await invoke<number>('process_id');
+    } catch (err) {
+      console.error('[window] Failed to get process id:', err);
+      return null;
+    }
+  }
+  return processId;
+}
+
+/**
+ * A window as reported by `niri msg --json windows`
+ * `tile_pos_in_workspace_view` is the window position relative to the output
+ * (null when its workspace is not visible)
+ */
+interface NiriWindow {
+  id: number;
+  pid: number | null;
+  workspace_id: number | null;
+  layout: {
+    tile_size: [number, number];
+    tile_pos_in_workspace_view: [number, number] | null;
+  };
+}
+
+/**
+ * niri window manager platform implementation
+ * Uses `niri msg action` for floating placement. Every action targets our own
+ * window by id, so a mode switch never moves whichever window happens to be
+ * focused - if our window cannot be found, the mode switch is skipped.
+ *
+ * Coordinates: `move-floating-window` positions a window relative to the *working
+ * area* of its output (what is left after bars take their exclusive zones), and
+ * niri does not keep windows fully on screen, so corner placement needs the
+ * working area rather than the output size. niri exposes no working area over
+ * IPC, so it is measured (see `measureWorkingArea`) and cached per output.
+ *
+ * Decorations: Tauri's are always off, like on Sway. Keeping them adds a GTK
+ * title bar on top of the border niri already draws, and floating windows are
+ * moved and resized with the compositor's own bindings anyway.
+ */
+class NiriPlatform implements WindowPlatform {
+  private workingArea: { output: string; width: number; height: number; } | null = null;
+
+  private async run(args: string[]): Promise<string | null> {
+    const cmd = Command.create('run-niri', args);
+    const result = await cmd.execute();
+    if (result.code !== 0) {
+      console.error('[window] niri', args.join(' '), 'failed - code:', result.code, 'stderr:', result.stderr);
+      return null;
+    }
+    return result.stdout;
+  }
+
+  private async action(args: string[], id: number): Promise<void> {
+    console.log('[window] niri msg action', args.join(' '), '(id ' + id + ')');
+    await this.run(['msg', 'action', ...args, '--id', String(id)]);
+  }
+
+  /**
+   * Our own window, found by process id so that a second instance of the app is
+   * never the one that gets moved. Null if niri does not know about it (yet).
+   */
+  private async getWindow(): Promise<NiriWindow | null> {
+    const [stdout, pid] = await Promise.all([
+      this.run(['msg', '--json', 'windows']),
+      getProcessId(),
+    ]);
+    if (stdout === null || pid === null) return null;
+    try {
+      const windows: NiriWindow[] = JSON.parse(stdout);
+      const own = windows.find((w) => w.pid === pid);
+      if (!own) console.warn('[window] niri: no window for pid', pid);
+      return own ?? null;
+    } catch (err) {
+      console.error('[window] niri: failed to parse windows:', err);
+      return null;
+    }
+  }
+
+  /**
+   * The output our window is on, null if it cannot be determined.
+   *
+   * Positions are per-output, so this has to follow the window rather than the
+   * focus: the two differ whenever the user works on another monitor.
+   */
+  private async getOutput(win: NiriWindow): Promise<{ name: string; width: number; height: number; } | null> {
+    const [workspacesJson, outputsJson] = await Promise.all([
+      this.run(['msg', '--json', 'workspaces']),
+      this.run(['msg', '--json', 'outputs']),
+    ]);
+    if (workspacesJson === null || outputsJson === null) return null;
+
+    try {
+      const workspaces: { id: number; output: string | null; }[] = JSON.parse(workspacesJson);
+      const name = workspaces.find((w) => w.id === win.workspace_id)?.output;
+      if (!name) return null;
+
+      const logical = JSON.parse(outputsJson)[name]?.logical;
+      if (!logical) return null;
+      return { name, width: logical.width, height: logical.height };
+    } catch (err) {
+      console.error('[window] niri: failed to resolve the output:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Resize our window and wait until niri reports the new size.
+   *
+   * Resizes go through the client, so for a frame or two niri still reports the
+   * old size - centering or measuring before the new size lands is off by half
+   * the difference.
+   */
+  private async resize(id: number, width: number, height: number): Promise<NiriWindow | null> {
+    await this.action(['set-window-width', String(width)], id);
+    await this.action(['set-window-height', String(height)], id);
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const own = await this.getWindow();
+      if (!own) return null;
+      const [w, h] = own.layout.tile_size;
+      if (Math.abs(w - width) <= 1 && Math.abs(h - height) <= 1) return own;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
+    console.warn('[window] niri: window never reached', width + 'x' + height, '(size constraints?)');
+    return this.getWindow();
+  }
+
+  /**
+   * Measure the working area of the output our (floating) window is on.
+   *
+   * niri has no IPC for the working area, but it does report window positions
+   * relative to the output, so we read our window at two known spots: at the
+   * working area origin (0, 0) and centered. The centered position is
+   * `origin + (area - size) / 2`, which gives the area size.
+   *
+   * The window must already be floating, and it visibly moves - callers place it
+   * at its final position right after.
+   */
+  private async measureWorkingArea(id: number): Promise<{ width: number; height: number; } | null> {
+    await this.action(['move-floating-window', '-x', '0', '-y', '0'], id);
+    const atOrigin = (await this.getWindow())?.layout.tile_pos_in_workspace_view;
+
+    await this.action(['center-window'], id);
+    const centered = await this.getWindow();
+    const atCenter = centered?.layout.tile_pos_in_workspace_view;
+
+    if (!atOrigin || !atCenter || !centered) {
+      console.warn('[window] niri: could not measure working area (window position unknown)');
+      return null;
+    }
+
+    const [width, height] = centered.layout.tile_size;
+    return {
+      width: 2 * (atCenter[0] - atOrigin[0]) + width,
+      height: 2 * (atCenter[1] - atOrigin[1]) + height,
+    };
+  }
+
+  /**
+   * Working area of the current output, measured once per output and cached.
+   * Falls back to the output size (bars not excluded) if measuring fails.
+   */
+  private async getWorkingArea(win: NiriWindow): Promise<{ width: number; height: number; }> {
+    const output = await this.getOutput(win);
+    if (this.workingArea && this.workingArea.output === output?.name) {
+      return this.workingArea;
+    }
+
+    const measured = await this.measureWorkingArea(win.id);
+    if (measured && output) {
+      // Positions are reported rounded to physical pixels, and the measurement
+      // doubles that error, so keep it within the output it is part of
+      const area = {
+        width: Math.min(measured.width, output.width),
+        height: Math.min(measured.height, output.height),
+      };
+      console.log('[window] niri working area on', output.name, ':', area.width + 'x' + area.height);
+      this.workingArea = { output: output.name, ...area };
+      return area;
+    }
+
+    console.warn('[window] niri: falling back to the output size, bars are not excluded');
+    return output ?? this.getDisplaySize();
+  }
+
+  async setCornerMode(settings: Settings): Promise<void> {
+    const { smallWindowWidth, smallWindowHeight,
+      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft, corner } = settings;
+
+    const own = await this.getWindow();
+    if (!own) {
+      console.error('[window] niri: skipping corner mode, own window not found');
+      return;
+    }
+    const id = own.id;
+
+    // Size first: the working area is measured from where the window lands, so
+    // it has to be measured at the size we are about to place
+    await this.action(['move-window-to-floating'], id);
+    await this.resize(id, smallWindowWidth, smallWindowHeight);
+
+    const area = await this.getWorkingArea(own);
+    const positions = calculateCornerPositions(area, smallWindowWidth, smallWindowHeight, {
+      cornerMarginTop, cornerMarginRight, cornerMarginBottom, cornerMarginLeft,
+    });
+    const pos = positions[corner];
+
+    console.log('[window] niri - Corner mode:', corner, 'position:', pos, 'size:', smallWindowWidth + 'x' + smallWindowHeight);
+
+    // Unsigned values set an absolute position (a leading +/- would be relative)
+    await this.action(['move-floating-window', '-x', String(Math.round(pos.x)), '-y', String(Math.round(pos.y))], id);
+  }
+
+  async setNormalMode(settings: Settings): Promise<void> {
+    const { normalWindowWidth, normalWindowHeight } = settings;
+
+    console.log('[window] niri - Normal mode:', normalWindowWidth + 'x' + normalWindowHeight);
+
+    // Leave the window in whichever layout it is in: resizing and centering work
+    // for both floating and tiled windows
+    const id = (await this.getWindow())?.id;
+    if (id === undefined) {
+      console.error('[window] niri: skipping normal mode, own window not found');
+      return;
+    }
+
+    await this.resize(id, normalWindowWidth, normalWindowHeight);
+    await this.action(['center-window'], id);
+  }
+
+  async initialize(): Promise<void> {
+    const window = getCurrentWindow();
+    await window.setDecorations(false);
+    console.log('[window] Disabled Tauri decorations for niri');
+  }
+
+  /**
+   * Size of the output our window is on. This is the full output, bars included -
+   * `getWorkingArea` is what corner placement uses.
+   */
+  async getDisplaySize(): Promise<{ width: number; height: number; }> {
+    const stdout = await this.run(['msg', '--json', 'focused-output']);
+    if (stdout !== null) {
+      try {
+        const logical = JSON.parse(stdout)?.logical;
+        if (logical) return { width: logical.width, height: logical.height };
+      } catch (err) {
+        console.error('[window] niri: failed to parse focused-output:', err);
+      }
+    }
+
+    console.log('[window] niri falling back to Tauri window API');
+    return new DefaultPlatform().getDisplaySize();
+  }
+}
+
+/**
  * Platform detection and management
  */
 let currentPlatform: WindowPlatform | null = null;
 
 /**
- * Detect if running under Sway window manager
- * Checks for $SWAYSOCK which Sway always sets to its IPC socket path
+ * Read an environment variable of the running app, empty string if unset
+ * Compositors advertise themselves this way: Sway sets $SWAYSOCK and niri sets
+ * $NIRI_SOCKET to their IPC socket path
  */
-async function detectSway(): Promise<boolean> {
+async function readEnv(name: string): Promise<string> {
   try {
-    const cmd = Command.create('run-sh', ['-c', 'echo $SWAYSOCK']);
+    const cmd = Command.create('run-sh', ['-c', `printf %s "$${name}"`]);
     const result = await cmd.execute();
-    const swaysock = result.stdout.trim();
-    console.log('[window] Sway detection - SWAYSOCK:', swaysock);
-    const isSway = swaysock.length > 0;
-    console.log('[window] Running under Sway:', isSway);
-    return isSway;
+    return result.stdout.trim();
   } catch (err) {
-    console.error('[window] Sway detection failed:', err);
-    return false;
+    console.error(`[window] Failed to read $${name}:`, err);
+    return '';
   }
 }
 
@@ -242,10 +515,12 @@ async function detectSway(): Promise<boolean> {
 async function getPlatform(): Promise<WindowPlatform> {
   if (currentPlatform) return currentPlatform;
 
-  // Detect platform
-  if (await detectSway()) {
+  if (await readEnv('SWAYSOCK')) {
     console.log('[window] Using Sway platform');
     currentPlatform = new SwayPlatform();
+  } else if (await readEnv('NIRI_SOCKET')) {
+    console.log('[window] Using niri platform');
+    currentPlatform = new NiriPlatform();
   } else {
     console.log('[window] Using default platform');
     currentPlatform = new DefaultPlatform();
@@ -263,6 +538,11 @@ async function getPlatform(): Promise<WindowPlatform> {
  * - Tauri's client-side decorations are ALWAYS disabled (setDecorations(false))
  * - Sway manages native window decorations via 'border' command:
  * - smallWindowBorderless setting controls Sway's 'border' command only
+ *
+ * On niri:
+ * - Tauri's client-side decorations are ALWAYS disabled, in both modes: they add
+ *   a GTK title bar on top of the border niri draws itself
+ * - smallWindowBorderless has no effect
  *
  * On other platforms (macOS, Windows, other Linux WMs):
  * - Tauri renders client-side decorations (title bar with buttons)
@@ -323,12 +603,7 @@ export async function getMaxWindowSize(): Promise<{ width: number; height: numbe
  * Called at app startup to ensure correct decoration state
  */
 export async function initializeWindowForPlatform(): Promise<void> {
-  if (await detectSway()) {
-    // On Sway, always disable Tauri's client-side decorations
-    // Sway handles decorations natively via 'border' command
-    const window = getCurrentWindow();
-    await window.setDecorations(false);
-    console.log('[window] Disabled Tauri decorations for Sway');
-  }
+  const platform = await getPlatform();
+  await platform.initialize?.();
 }
 

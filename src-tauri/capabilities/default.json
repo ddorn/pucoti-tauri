@@ -51,6 +51,11 @@
           "name": "run-swaymsg",
           "cmd": "swaymsg",
           "args": true
+        },
+        {
+          "name": "run-niri",
+          "cmd": "niri",
+          "args": true
         }
       ]
     },
