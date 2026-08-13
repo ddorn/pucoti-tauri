@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
-import { loadSettings, saveSettings, DEFAULT_SETTINGS, type Settings } from '../lib/settings'
+import { DEFAULT_SETTINGS, type Settings } from '../lib/settings-types'
+import { platform } from '../lib/platform'
 
 interface SettingsContextValue {
   settings: Settings
@@ -18,7 +19,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function initSettings() {
       try {
-        const loaded = await loadSettings()
+        const loaded = await platform.loadSettings()
         setSettings(loaded)
       } catch (err) {
         console.error('Failed to load settings:', err)
@@ -33,7 +34,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const newSettings = { ...settings, ...updates }
     setSettings(newSettings)
     try {
-      await saveSettings(newSettings)
+      await platform.saveSettings(newSettings)
     } catch (err) {
       console.error('Failed to save settings:', err)
       // Revert state on error
@@ -44,7 +45,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const resetSettings = useCallback(async () => {
     setSettings(DEFAULT_SETTINGS)
-    await saveSettings(DEFAULT_SETTINGS)
+    await platform.saveSettings(DEFAULT_SETTINGS)
   }, [])
 
   return (

@@ -1,5 +1,5 @@
 // Embed the default bell sound at compile time (325KB)
-const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../bell.mp3");
+const DEFAULT_BELL_MP3: &[u8] = include_bytes!("../../public/bell.mp3");
 
 use tauri::Manager;
 
@@ -78,6 +78,12 @@ fn play_bell_internal(custom_bell_path: Option<String>) -> Result<(), Box<dyn st
   sink.sleep_until_end();
 
   Ok(())
+}
+
+/// Process id of the running app, used to find our own window in compositor IPC
+#[tauri::command]
+fn process_id() -> u32 {
+  std::process::id()
 }
 
 /// Update timer state for D-Bus service (Linux only)
@@ -194,7 +200,7 @@ pub fn run() {
     .plugin(tauri_plugin_notification::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_dialog::init())
-    .invoke_handler(tauri::generate_handler![play_bell, update_timer_state])
+    .invoke_handler(tauri::generate_handler![play_bell, update_timer_state, process_id])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }

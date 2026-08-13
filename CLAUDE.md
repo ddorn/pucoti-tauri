@@ -15,6 +15,13 @@ npm run tauri:dev        # Run Tauri in development mode (includes frontend dev 
 npm run tauri            # Direct access to Tauri CLI
 ```
 
+### Installing a Local Build
+```bash
+make install                        # binary, desktop entry and icons into ~/.local
+sudo make install PREFIX=/usr/local # system-wide
+make uninstall
+```
+
 ### Frontend Development
 ```bash
 npm run lint             # Run ESLint
@@ -127,19 +134,56 @@ Provides calibration analytics:
 - **Adjustment Curve**: models what % buffer needed for X% on-time rate
 - **Linear Regression**: predicts actual time from predicted time with R²
 
-### Window Management (`src/lib/window.ts`)
+### Window Management (`src/lib/platform/tauri/window.ts`)
 
-Handles three window modes with special Sway WM support:
+Handles three window modes:
 
 1. **Normal Mode**: Standard centered window (default 600x500)
 2. **Small Mode**: Corner-positioned floating window (default 240x120)
 3. **Zen Mode**: Fullscreen (UI-only, window API not involved)
 
-**Sway-specific behavior**:
-- Detects Sway via `$XDG_CURRENT_DESKTOP`
+Each compositor is a `WindowPlatform` implementation, picked once at startup by
+`getPlatform()` and cached. `DefaultPlatform` (Tauri window APIs) covers macOS,
+Windows, and Linux WMs without a dedicated implementation. A platform may define
+`initialize()` for startup-only setup (Sway uses it to turn off Tauri decorations).
+
+**Sway-specific behavior** (detected via `$SWAYSOCK`):
 - Uses `swaymsg` for precise multi-monitor positioning
+- Positions relative to the focused workspace rect, so bars are excluded
 - Enables sticky mode for small windows
 - Combines multiple commands in single swaymsg call for atomicity
+- Tauri decorations are always off; Sway draws them natively via `border`
+
+**niri-specific behavior** (detected via `$NIRI_SOCKET`):
+- Uses `niri msg action` (`move-window-to-floating`, `set-window-width/height`,
+  `move-floating-window`, `center-window`)
+- Targets our own window by `--id`, found by matching the `process_id` Tauri
+  command against `niri msg --json windows`, so mode switches never move another
+  window (including a second instance of the app)
+- `move-floating-window` positions relative to the **working area** (what bars
+  leave over) and niri does not keep windows on screen, so corner placement needs
+  the working area. niri exposes none over IPC, so it is measured: the window is
+  read at `(0, 0)` and centered, and since the centered position is
+  `origin + (area - size) / 2`, the difference gives the area. Measured once per
+  output and cached; clamped to the output size to absorb pixel rounding.
+- Resizes are async (they go through the client), so `resize()` waits for niri to
+  report the new size before centering or measuring - otherwise both land off by
+  half the size difference
+- Normal mode is layout-neutral: it resizes and centers without moving the window
+  between the floating and tiling layouts
+- Tauri decorations are always off, in both modes: they add a GTK title bar on top
+  of the border niri draws itself, so `smallWindowBorderless` has no effect here
+- **Sticky window**: niri has nothing like Sway's `sticky`, so startup spawns
+  `niri msg --json event-stream` and moves the window to each workspace that
+  becomes active on its own output (other screens switching are ignored). This
+  runs in every display mode; what decides whether the window follows is whether
+  it is floating, since tiling it is how a user pins it to one workspace. The
+  stream outlives a single `execute`, so it needs `shell:allow-spawn` - and
+  scopes are per permission entry, so that entry carries its own `allow` list
+- Users who want the corner placement to survive a restart of the window can put
+  it in their niri config instead, though the app does not depend on it:
+  `window-rule { match app-id="pucoti"; open-floating true;
+  default-floating-position x=8 y=8 relative-to="bottom-right" }`
 
 **Multi-monitor handling**: Attempts to use current window's monitor rather than primary monitor.
 
@@ -169,7 +213,8 @@ Minimal Rust backend (`src-tauri/src/lib.rs`) provides:
 - Shell command execution via tauri-plugin-shell
 - Filesystem access via tauri-plugin-fs
 - OS notifications via tauri-plugin-notification
-- Custom shell commands: `run-sh`, `run-swaymsg` (defined in tauri.conf.json's shell scope)
+- Custom shell commands: `run-sh`, `run-swaymsg`, `run-niri` (scoped in `src-tauri/capabilities/default.json`)
+- `process_id` command: the app's pid, used to find our own window in compositor IPC
 - Add capabilities to src-tauri/capabilities/default.json to allow the app to access the necessary APIs.
 
 Frontend communicates via `@tauri-apps/api` and plugin imports.

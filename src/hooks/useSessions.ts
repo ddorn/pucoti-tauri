@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { loadSessions, type Session } from '../lib/storage'
+import type { Session } from '../lib/session'
+import { platform } from '../lib/platform'
 
 export function useSessions() {
   const [sessions, setSessions] = useState<Session[]>([])
@@ -7,7 +8,7 @@ export function useSessions() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadSessions()
+    platform.loadSessions()
       .then(setSessions)
       .catch(err => {
         console.error('Failed to load sessions:', err)

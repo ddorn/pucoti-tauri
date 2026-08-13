@@ -1,15 +1,9 @@
 import { Command } from '@tauri-apps/plugin-shell'
 import { exists } from '@tauri-apps/plugin-fs'
 import { homeDir } from '@tauri-apps/api/path'
+import type { GnomeExtensionStatus } from '../types'
 
 const EXTENSION_UUID = 'pucoti@pucoti.dev'
-
-export type ExtensionStatus =
-  | 'enabled'           // Extension is installed and enabled
-  | 'disabled'          // Extension is installed but disabled
-  | 'not-loaded'        // Files exist but GNOME hasn't loaded it (needs re-login)
-  | 'not-installed'     // Extension files not found
-  | 'not-gnome'         // Not running GNOME
 
 /**
  * Detect if currently running under GNOME (not just if GNOME is installed)
@@ -35,7 +29,7 @@ export async function detectGnome(): Promise<boolean> {
 /**
  * Check the status of the GNOME extension.
  */
-export async function getExtensionStatus(): Promise<ExtensionStatus> {
+export async function getExtensionStatus(): Promise<GnomeExtensionStatus> {
   // First check if we're actually running GNOME
   if (!await detectGnome()) {
     return 'not-gnome';

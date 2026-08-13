@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Pucoti
+Comment=A timer to stay on track and make predictions to overcome the planning fallacy.
+Exec=pucoti
+Icon=pucoti
+StartupWMClass=pucoti
+Categories=Utility;
+Terminal=false

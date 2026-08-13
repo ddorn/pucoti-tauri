@@ -1,58 +1,9 @@
 import { resolve } from '@tauri-apps/api/path';
 import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
-import { formatTimestamp } from './format'
+import { formatTimestamp } from '../../format'
 import { getDataDir } from './paths'
-
-export type SessionStatus = 'completed' | 'canceled' | 'unknown'
-
-export interface Session {
-  timestamp: Date
-  focusText: string
-  predictedSeconds: number
-  actualSeconds: number
-  status: SessionStatus
-  tags: string[]
-}
-
-function escapeCSV(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    if (inQuotes) {
-      if (char === '"') {
-        if (line[i + 1] === '"') {
-          current += '"'
-          i++
-        } else {
-          inQuotes = false
-        }
-      } else {
-        current += char
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true
-      } else if (char === ',') {
-        result.push(current)
-        current = ''
-      } else {
-        current += char
-      }
-    }
-  }
-  result.push(current)
-  return result
-}
+import type { Session, SessionStatus } from '../../session'
+import { escapeCSV, parseCSVLine } from '../csv'
 
 export async function getCSVPath(): Promise<string> {
   const dir = await getDataDir()
@@ -71,7 +22,7 @@ export async function loadSessions(): Promise<Session[]> {
   }
 
   const lines = content.trim().split('\n')
-  if (lines.length <= 1) return [] // Only header or empty
+  if (lines.length <= 1) return []
 
   const sessions: Session[] = []
   for (let i = 1; i < lines.length; i++) {
@@ -98,7 +49,6 @@ export async function loadSessions(): Promise<Session[]> {
 export async function appendSession(session: Session): Promise<void> {
   const csvPath = await getCSVPath()
 
-  // Check if file exists, if not write header
   const fileExists = await exists(csvPath)
 
   const line = [

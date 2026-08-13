@@ -6,9 +6,9 @@ import { useBellSubscriber } from '../hooks/useBellSubscriber'
 import { useStorageSubscriber } from '../hooks/useStorageSubscriber'
 import { useDbusSubscriber } from '../hooks/useDbusSubscriber'
 import { useWindowSubscriber } from '../hooks/useWindowSubscriber'
-import { executeCompletionHook } from '../lib/settings'
-import { setSmallMode, setNormalMode } from '../lib/window'
 import { checkForUpdates, type UpdateInfo } from '../lib/update-checker'
+import { platform, isTauri } from '../lib/platform'
+import { executeCompletionHook } from '../lib/shell-hooks'
 import packageJson from '../../package.json'
 
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
@@ -48,7 +48,7 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { settings, updateSettings } = useSettings()
+  const { settings, updateSettings, loading } = useSettings()
 
   const [screen, setScreenRaw] = useState<Screen>('timer')
   const [displayMode, setDisplayMode] = useState<DisplayMode>('normal')
@@ -74,16 +74,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Automatically apply window mode changes when displayMode changes
   useEffect(() => {
+    // Wait until settings are loaded from disk. Otherwise this runs on mount with
+    // DEFAULT_SETTINGS and, because the deps don't include the window sizes, never
+    // re-applies once the saved sizes arrive (unless `corner` happens to change),
+    // leaving the window at its default startup size.
+    if (loading) return
     if (displayMode === 'normal') {
-      setNormalMode(settingsRef.current).catch(console.error);
+      platform.setNormalMode(settingsRef.current).catch(console.error);
     } else if (displayMode === 'small') {
-      setSmallMode(settingsRef.current).catch(console.error);
+      platform.setSmallMode(settingsRef.current).catch(console.error);
     }
     // zen mode is UI-only, no window function needed
 
     // Corner is changed by directly updating the settings.
     // Is this a good thing? It's probably fine.
-  }, [displayMode, settings.corner])
+  }, [displayMode, settings.corner, loading])
 
   // Subscribe to timer events for screen navigation and completion data
   useEffect(() => {
@@ -113,7 +118,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ).catch(err => console.error('Completion hook failed:', err))
         }
 
-
         // Navigate to completion screen
         setScreen('completion')
 
@@ -136,9 +140,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
   }, [])
 
-  // Check for updates on mount (if enabled in settings)
+  // Check for updates on mount (desktop only — web is always current)
   useEffect(() => {
-    if (settings.checkForUpdatesAutomatically) {
+    if (isTauri && settings.checkForUpdatesAutomatically) {
       checkForUpdates(packageJson.version).then(update => {
         if (update) {
           console.log('[Update Check] Update available:', update.version)

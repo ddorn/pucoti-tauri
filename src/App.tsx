@@ -6,7 +6,7 @@ import { Stats } from './screens/Stats'
 import { Settings } from './screens/Settings'
 import { Completion } from './screens/Completion'
 import { Navbar } from './components/Navbar'
-import { initializeWindowForPlatform } from './lib/window';
+import { platform } from './lib/platform';
 import { applyAccentColor } from './lib/colors';
 
 function AppContent() {
@@ -34,7 +34,7 @@ function AppWithSettings({ children }: { children: React.ReactNode }) {
 
   // Initialize window decorations for platform (e.g., disable on Sway)
   useEffect(() => {
-    initializeWindowForPlatform();
+    platform.initializeWindowForPlatform();
   }, [])
 
   // Apply accent color when settings change

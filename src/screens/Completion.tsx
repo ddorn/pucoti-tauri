@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
-import { loadSessions, type Session } from '../lib/storage'
+import type { Session } from '../lib/session'
+import { platform } from '../lib/platform'
 import { getCompletionRemark } from '../lib/completion-remarks'
 import { formatDuration } from '../lib/format'
 import { COLOR_PALETTES, getRandomAccentColor, type AccentColor } from '../lib/colors';
@@ -151,7 +152,7 @@ export function Completion() {
 
   // Load sessions on mount
   useEffect(() => {
-    loadSessions().then(setSessions).catch(console.error)
+    platform.loadSessions().then(setSessions).catch(console.error)
   }, [])
 
   // Fire confetti on mount

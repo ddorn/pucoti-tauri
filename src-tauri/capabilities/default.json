@@ -51,6 +51,21 @@
           "name": "run-swaymsg",
           "cmd": "swaymsg",
           "args": true
+        },
+        {
+          "name": "run-niri",
+          "cmd": "niri",
+          "args": true
+        }
+      ]
+    },
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "run-niri",
+          "cmd": "niri",
+          "args": true
         }
       ]
     },
