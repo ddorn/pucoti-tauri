@@ -15,6 +15,13 @@ npm run tauri:dev        # Run Tauri in development mode (includes frontend dev 
 npm run tauri            # Direct access to Tauri CLI
 ```
 
+### Installing a Local Build
+```bash
+make install                        # binary, desktop entry and icons into ~/.local
+sudo make install PREFIX=/usr/local # system-wide
+make uninstall
+```
+
 ### Frontend Development
 ```bash
 npm run lint             # Run ESLint

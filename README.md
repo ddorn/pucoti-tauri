@@ -93,6 +93,16 @@ npm install && npm run tauri:build
 
 The executable will be in `src-tauri/target/release/`.
 
+To also install the desktop entry and icons — which is what makes your window
+manager, launcher and task switcher show Pucoti's name and icon — use:
+
+```bash
+make install                       # into ~/.local, no root needed
+sudo make install PREFIX=/usr/local # system-wide
+```
+
+`make uninstall` removes everything it installed.
+
 **GNOME extension (manual install):**
 ```bash
 ./gnome-extension/install.sh
