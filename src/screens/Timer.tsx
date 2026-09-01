@@ -42,6 +42,10 @@ export function Timer() {
   // Parse command in real-time
   const parsed = useMemo(() => parseCommand(editInput), [editInput])
 
+  // No room to hold another timer. At a depth of 1 holding is off altogether, so the
+  // shortcut is not offered rather than offered and refused.
+  const stackIsFull = heldStates.length + 1 >= settings.maxStackDepth
+
   // Clear warning when input changes
   useEffect(() => {
     setNoPredictionWarning(false)
@@ -226,14 +230,15 @@ export function Timer() {
             timerMachine.complete()
             break
           }
-          // Normal mode first, either way: the palette lives there, and so does the
-          // warning explaining a refusal - in corner or zen it would go unseen.
-          if (displayMode !== 'normal') {
-            setDisplayMode('normal')
-          }
-          if (isUserTimer(timerState) && timerMachine.getStack().length >= settings.maxStackDepth) {
+          // Refusing has to be a no-op, so the cap is checked before anything else -
+          // the warning renders in every display mode instead.
+          if (isUserTimer(timerState) && stackIsFull) {
             setStackFullWarning(true)
             break
+          }
+          // Ensure we're in normal mode when entering edit mode
+          if (displayMode !== 'normal') {
+            setDisplayMode('normal')
           }
           openPalette()
           break
@@ -276,7 +281,7 @@ export function Timer() {
       window.removeEventListener('keydown', handleKeyDown)
       if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
     }
-  }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, openPalette])
+  }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, openPalette, stackIsFull])
 
   const handleEditSubmit = useCallback((forceTimebox: boolean = false) => {
     // If input is empty, just close edit mode
@@ -332,6 +337,10 @@ export function Timer() {
     setEditMode(false)
     setEditInput('')
     setNoPredictionWarning(false)
+    // Abandon any prefill still in flight, so its result cannot land in the next
+    // palette and its loading state cannot outlive this one.
+    prefillRunRef.current++
+    setEditLoading(false)
   }, [])
 
   const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -378,6 +387,7 @@ export function Timer() {
           className="min-h-[66vh]!"
           scrambled={settings.scrambleTimer}
         />
+        {stackFullWarning && <StackFullWarning max={settings.maxStackDepth} compact />}
       </div>
     )
   }
@@ -445,12 +455,7 @@ export function Timer() {
         )}
 
         {/* Refused push: the stack is full on purpose */}
-        {stackFullWarning && (
-          <p className="text-amber-500 text-lg mt-2 text-center">
-            {settings.maxStackDepth} timers already — finish one with <Kbd>Enter</Kbd> or bin it
-            with <Kbd>q</Kbd> first
-          </p>
-        )}
+        {stackFullWarning && <StackFullWarning max={settings.maxStackDepth} />}
 
         {/* Big countdown - viewport proportional */}
         <CountdownDisplay
@@ -496,7 +501,7 @@ export function Timer() {
               <Shortcut keys={['s']} label="Stats" />
               <Shortcut keys={[',']} label="Settings" />
               <Shortcut keys={['Enter']} label={isUserTimer(timerState) ? "Complete" : "Set intent"} />
-              {isUserTimer(timerState) && (
+              {isUserTimer(timerState) && !stackIsFull && (
                 <Shortcut keys={['Shift', 'Enter']} label="New timer, hold this one" />
               )}
               <Shortcut keys={['?']} label={settings.scrambleTimer ? "Unscramble timer" : "Scramble timer"} />
@@ -519,6 +524,16 @@ export function Timer() {
         </div>
       )}
     </div>
+  )
+}
+
+function StackFullWarning({ max, compact }: { max: number; compact?: boolean }) {
+  return (
+    <p className={clsx('text-amber-500 text-center', compact ? 'text-xs' : 'text-lg mt-2')}>
+      {max === 1
+        ? 'Holding a timer is off — raise "Timers at once" in settings'
+        : `${max} timers already — finish one or bin it first`}
+    </p>
   )
 }
 

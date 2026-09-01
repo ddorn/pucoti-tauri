@@ -15,8 +15,7 @@ export function useStorageSubscriber() {
             timestamp: event.state.startTime,
             focusText: event.state.focusText,
             predictedSeconds: event.state.predictedSeconds ?? 0,
-            actualSeconds: event.wallSeconds,
-            focusSeconds: event.elapsed,
+            actualSeconds: event.elapsed,
             status: event.type === 'completed' ? 'completed' : 'canceled',
             tags: event.state.tags,
           })
@@ -37,8 +36,7 @@ export function useStorageSubscriber() {
             timestamp: state.startTime,
             focusText: state.focusText,
             predictedSeconds: state.predictedSeconds ?? 0,
-            actualSeconds: computed.wallElapsed,
-            focusSeconds: computed.elapsed,
+            actualSeconds: computed.elapsed,
             status: 'unknown',
             tags: state.tags,
           })

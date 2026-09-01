@@ -27,10 +27,12 @@ export interface TimerState {
 }
 
 export interface TimerComputed {
-  /** Seconds this timer spent on screen. This is what the countdown counts. */
+  /**
+   * Seconds this timer spent on screen. This is what the countdown counts, and what is
+   * recorded as the session's actual time - the wall clock a held timer spent waiting
+   * is deliberately not kept anywhere.
+   */
   elapsed: number
-  /** Seconds since the timer started, including any time spent on hold. */
-  wallElapsed: number
   remaining: number
   isOvertime: boolean
 }
@@ -43,8 +45,8 @@ export type TimerEvent =
   | { type: 'tick'; elapsed: number; remaining: number; isOvertime: boolean }
   | { type: 'overtime_entered'; focusText: string; elapsed: number }
   | { type: 'overtime_exited' }
-  | { type: 'completed'; state: TimerState; elapsed: number; wallSeconds: number }
-  | { type: 'canceled'; state: TimerState; elapsed: number; wallSeconds: number }
+  | { type: 'completed'; state: TimerState; elapsed: number }
+  | { type: 'canceled'; state: TimerState; elapsed: number }
 
 type Listener = (event: TimerEvent) => void
 
@@ -60,7 +62,8 @@ export function isUserTimer(state: TimerState | null): boolean {
  * There is no navigation on purpose. The only way back to a held timer is to complete
  * or cancel the one on top of it. See docs/stacked-timers.md.
  *
- * Invariants:
+ * Invariants, which hold whenever an event is emitted - the stack is put right before
+ * anyone is told about the change:
  * - the stack is never empty once initialized, so there is always a countdown on screen
  * - only the top may be a `scratch`/`transient` timer; held timers are always `user`
  * - only the top is running; every other entry has `heldSince` set
@@ -87,7 +90,7 @@ export class TimerMachine {
 
   /** The whole stack, bottom first. */
   getStack(): readonly TimerState[] {
-    return this.stack
+    return [...this.stack]
   }
 
   /** The timers on hold, bottom first. Never includes the one on screen. */
@@ -109,14 +112,8 @@ export class TimerMachine {
     const wallMs = now - state.startTime.getTime()
     const heldMs = state.heldMs + (state.heldSince ? now - state.heldSince.getTime() : 0)
     const elapsed = Math.floor((wallMs - heldMs) / 1000)
-    const predicted = state.predictedSeconds ?? 0
-    const remaining = predicted + state.adjustmentSeconds - elapsed
-    return {
-      elapsed,
-      wallElapsed: Math.floor(wallMs / 1000),
-      remaining,
-      isOvertime: remaining < 0,
-    }
+    const remaining = (state.predictedSeconds ?? 0) + state.adjustmentSeconds - elapsed
+    return { elapsed, remaining, isOvertime: remaining < 0 }
   }
 
   /**
@@ -151,7 +148,7 @@ export class TimerMachine {
       heldSince: null,
     })
     this.wasOvertime = false
-    this.startTicking()
+    this.ensureTicking()
     this.emit({ type: 'started', state: this.getState()! })
   }
 
@@ -166,10 +163,11 @@ export class TimerMachine {
    * Finish the timer on screen. A transient placeholder takes its place so that the
    * held timer stays frozen while the completion screen is up - see dismissTransient().
    */
-  complete(): { state: TimerState; elapsed: number; wallSeconds: number } | null {
+  complete(): { state: TimerState; elapsed: number } | null {
     if (!isUserTimer(this.getState())) return null
-    const result = this.popTop('completed')
+    const result = this.popTop()
     this.pushPlaceholder('transient')
+    this.emit({ type: 'completed', ...result })
     return result
   }
 
@@ -177,7 +175,7 @@ export class TimerMachine {
    * Bin the timer on screen and reveal whatever was underneath. Cancelling a
    * placeholder just restarts its countdown, which is what `q` has always done.
    */
-  cancel(): { state: TimerState; elapsed: number; wallSeconds: number } | null {
+  cancel(): { state: TimerState; elapsed: number } | null {
     const top = this.getState()
     if (!top) return null
     if (top.kind !== 'user') {
@@ -185,8 +183,9 @@ export class TimerMachine {
       this.pushPlaceholder(top.kind)
       return null
     }
-    const result = this.popTop('canceled')
+    const result = this.popTop()
     this.resumeTop()
+    this.emit({ type: 'canceled', ...result })
     return result
   }
 
@@ -219,12 +218,9 @@ export class TimerMachine {
     this.stack[this.stack.length - 1] = state
   }
 
-  private popTop(type: 'completed' | 'canceled') {
+  private popTop() {
     const state = this.stack.pop()!
-    const computed = this.computedFor(state)
-    const result = { state, elapsed: computed.elapsed, wallSeconds: computed.wallElapsed }
-    this.emit({ type, ...result })
-    return result
+    return { state, elapsed: this.computedFor(state).elapsed }
   }
 
   private pushPlaceholder(kind: 'scratch' | 'transient') {
@@ -239,7 +235,7 @@ export class TimerMachine {
       heldSince: null,
     })
     this.wasOvertime = false
-    this.startTicking()
+    this.ensureTicking()
     this.emit({ type: 'started', state: this.getState()! })
   }
 
@@ -259,14 +255,19 @@ export class TimerMachine {
     // Clearing this makes a timer that is still in overtime ring once as it comes back,
     // which is exactly when you want to hear that it has already blown its prediction.
     this.wasOvertime = false
-    this.startTicking()
+    this.ensureTicking()
     this.emit({ type: 'resumed', state: this.getState()! })
   }
 
-  private startTicking() {
+  /**
+   * Idempotent: the tick runs for the life of the machine, since there is always a
+   * countdown on screen. Called wherever the stack changes so the very first timer
+   * starts it, and so a reader does not have to know that it never stops.
+   */
+  private ensureTicking() {
     if (this.tickInterval) return
     this.tickInterval = window.setInterval(() => this.tick(), TIMER_TICK_INTERVAL)
-    this.tick() // Immediate first tick
+    this.tick()
   }
 
   private tick() {

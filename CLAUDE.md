@@ -66,8 +66,10 @@ The app uses a centralized timer state machine with React hooks for subscription
      dropped when it is left). `isUserTimer()` is the test for "is this a real timer",
      and decides whether a new timer replaces the current one or holds it.
    - Computed values: `elapsed` (time on screen - what the countdown counts),
-     `wallElapsed`, `remaining`, `isOvertime`. All derived from `startTime` and the held
-     time, never accumulated.
+     `remaining`, `isOvertime`. All derived from `startTime` and the held time, never
+     accumulated.
+   - Events are emitted only once the stack is consistent, so no listener ever sees a
+     held timer sitting on top
    - Updates at 200ms intervals for smooth UI
 
 3. **AppProvider** (`src/context/AppContext.tsx`)
@@ -133,16 +135,10 @@ timerMachine.cancel()
 
 **Session Persistence**:
 - All sessions saved to CSV: `~/.local/share/pucoti/sessions.csv`
-- Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags, focus_seconds
-- `actual_seconds` is wall clock (end - start); `focus_seconds` is the time the timer
-  actually spent on screen. They differ only when a timer was held behind another one.
-  **`focus_seconds` is what stats compare against the prediction**, and the only
-  additive quantity - held timers overlap in wall clock, so summing `actual_seconds`
-  would count the same minutes twice.
-- Rows written before stacked timers have no `focus_seconds` and are read back with it
-  equal to `actual_seconds`. The column order lives in `src/lib/platform/csv.ts`
-  (`CSV_HEADER`, `parseSessionFields`, `serializeSessionRow`) so both platform
-  implementations stay in step; the Tauri one rewrites a stale header once per run.
+- Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags
+- `actual_seconds` is the time the timer spent **on screen** - what the countdown
+  counted. Time spent held behind another timer is not counted and not recorded
+  anywhere; see `docs/stacked-timers.md` for why that trade was made.
 - Status types: 'completed', 'canceled', 'unknown'
 - On window close: saves every real timer on the stack with status 'unknown'
 

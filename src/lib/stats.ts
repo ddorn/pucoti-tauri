@@ -57,7 +57,7 @@ const MIN_SESSION_SECONDS = 15
 /** Filter out sessions that are likely mistakes (< 15 seconds predicted or actual) */
 export function filterMeaningful(sessions: Session[]): Session[] {
   return sessions.filter(s =>
-    s.predictedSeconds >= MIN_SESSION_SECONDS && s.focusSeconds >= MIN_SESSION_SECONDS
+    s.predictedSeconds >= MIN_SESSION_SECONDS && s.actualSeconds >= MIN_SESSION_SECONDS
   )
 }
 
@@ -152,7 +152,7 @@ export function computeOnTimeRate(sessions: Session[]): OnTimeResult | null {
   const n = prediction.length
   if (n === 0) return null
 
-  const successes = prediction.filter(s => s.focusSeconds <= s.predictedSeconds).length
+  const successes = prediction.filter(s => s.actualSeconds <= s.predictedSeconds).length
   const p = successes / n
 
   // Wilson score interval for binomial proportion
@@ -181,13 +181,13 @@ export function computeCalibrationStats(sessions: Session[]): CalibrationStats |
   if (predictionSessions.length === 0) return null
 
   const n = predictionSessions.length
-  const totalSecondsTracked = allCompleted.reduce((a, s) => a + s.focusSeconds, 0)
+  const totalSecondsTracked = allCompleted.reduce((a, s) => a + s.actualSeconds, 0)
 
-  const longerCount = predictionSessions.filter(s => s.focusSeconds > s.predictedSeconds).length
+  const longerCount = predictionSessions.filter(s => s.actualSeconds > s.predictedSeconds).length
   const longerPercent = (longerCount / n) * 100
 
   const withinCount = predictionSessions.filter(s => {
-    const error = Math.abs(s.focusSeconds - s.predictedSeconds) / s.predictedSeconds
+    const error = Math.abs(s.actualSeconds - s.predictedSeconds) / s.predictedSeconds
     return error <= 0.1
   }).length
   const withinTenPercent = (withinCount / n) * 100
@@ -269,7 +269,7 @@ export function computeAdjustmentCurve(sessions: Session[]): AdjustmentCurve | n
   for (const adj of adjustments) {
     const multiplier = 1 + adj / 100
     const onTimeCount = completed.filter(s =>
-      s.focusSeconds <= s.predictedSeconds * multiplier
+      s.actualSeconds <= s.predictedSeconds * multiplier
     ).length
     onTimeRates.push((onTimeCount / completed.length) * 100)
   }

@@ -18,7 +18,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { invoke } from '@tauri-apps/api/core'
 import { Command, open as tauriOpenUrl } from '@tauri-apps/plugin-shell'
 import { open as tauriOpenDialog } from '@tauri-apps/plugin-dialog'
-import { parseCSVLine, parseSessionFields } from '../csv'
+import { parseCSVLine } from '../csv'
 
 async function importSessionsCSV(csv: string): Promise<void> {
   const lines = csv.trim().split('\n')
@@ -28,13 +28,17 @@ async function importSessionsCSV(csv: string): Promise<void> {
     const line = lines[i].trim()
     if (!line) continue
 
-    const fields = parseSessionFields(parseCSVLine(line))
-    if (!fields) continue
+    const fields = parseCSVLine(line)
+    if (fields.length < 5) continue
 
+    const [timestamp, focusText, predictedSeconds, actualSeconds, status, tags = ''] = fields
     await appendSession({
-      ...fields,
-      timestamp: new Date(fields.timestamp),
-      status: fields.status as Session['status'],
+      timestamp: new Date(timestamp),
+      focusText,
+      predictedSeconds: parseInt(predictedSeconds, 10),
+      actualSeconds: parseInt(actualSeconds, 10),
+      status: status as Session['status'],
+      tags: tags ? tags.split(';').map(t => t.trim()) : [],
     })
   }
 }

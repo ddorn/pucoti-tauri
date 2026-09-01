@@ -59,7 +59,7 @@ describe('TimerMachine', () => {
   })
 
   describe('held time', () => {
-    it('freezes a held timer and keeps its wall clock running', () => {
+    it('freezes a held timer', () => {
       machine.push('write the intro', 1500, 0, [])
       vi.advanceTimersByTime(MINUTE)
       machine.push('call Marc back', 360, 0, [])
@@ -67,7 +67,6 @@ describe('TimerMachine', () => {
 
       const held = machine.getHeldStates()[0]
       expect(machine.computedFor(held).elapsed).toBe(60)
-      expect(machine.computedFor(held).wallElapsed).toBe(360)
     })
 
     it('picks up where it left off when it comes back', () => {
@@ -95,7 +94,7 @@ describe('TimerMachine', () => {
   })
 
   describe('completing', () => {
-    it('reports focus time and wall clock separately', () => {
+    it('reports only the time spent on screen, not the time spent waiting', () => {
       machine.push('write the intro', 1500, 0, [])
       vi.advanceTimersByTime(MINUTE)
       machine.push('call Marc back', 360, 0, [])
@@ -103,9 +102,7 @@ describe('TimerMachine', () => {
       machine.cancel() // back on 'write the intro', which waited 5 minutes
       vi.advanceTimersByTime(MINUTE)
 
-      const result = machine.complete()!
-      expect(result.elapsed).toBe(120)
-      expect(result.wallSeconds).toBe(420)
+      expect(machine.complete()!.elapsed).toBe(120)
     })
 
     it('leaves a transient countdown on top so the held timer stays frozen', () => {
@@ -158,7 +155,7 @@ describe('TimerMachine', () => {
       const seen = events()
       machine.cancel()
 
-      expect(seen.map(e => e.type)).toEqual(['canceled', 'resumed'])
+      expect(seen.map(e => e.type)).toEqual(['resumed', 'canceled'])
       expect(machine.getState()?.focusText).toBe('write the intro')
     })
 
@@ -187,6 +184,22 @@ describe('TimerMachine', () => {
       const seen = events()
       expect(machine.complete()).toBeNull()
       expect(seen.some(e => e.type === 'completed')).toBe(false)
+    })
+  })
+
+  describe('the stack is consistent before anyone is told', () => {
+    it('never shows a held timer sitting on top', () => {
+      machine.push('write the intro', 1500, 0, [])
+      machine.push('call Marc back', 360, 0, [])
+
+      const tops: (Date | null | undefined)[] = []
+      machine.subscribe(e => {
+        if (e.type !== 'tick') tops.push(machine.getState()?.heldSince)
+      })
+      machine.cancel()
+      machine.complete()
+
+      expect(tops.every(heldSince => heldSince === null)).toBe(true)
     })
   })
 

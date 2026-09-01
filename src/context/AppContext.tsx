@@ -88,27 +88,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Is this a good thing? It's probably fine.
   }, [displayMode, settings.corner, loading])
 
-  // Leaving the completion screen, by any route (Enter, or the navbar to Stats or
-  // Settings): drop the transient countdown and hand the clock back to whatever was
-  // held underneath. Driven by the screen itself rather than by setScreen, which runs
-  // from a subscription that can hold a stale `screen`.
-  const previousScreenRef = useRef(screen)
+  // Hand the clock back to a held timer only when the timer screen actually opens.
+  // Waiting for that (rather than for the completion screen to close) keeps the resume
+  // - and the corner-mode switch that rides on it - from firing while you are reading
+  // Stats or Settings. Until then the transient countdown keeps running, so something
+  // is always on the clock.
   useEffect(() => {
-    if (previousScreenRef.current === 'completion' && screen !== 'completion') {
+    if (screen === 'timer') {
       timerMachine.dismissTransient()
     }
-    previousScreenRef.current = screen
   }, [screen])
 
   // Subscribe to timer events for screen navigation and completion data
   useEffect(() => {
     return timerMachine.subscribe(async event => {
       if (event.type === 'completed') {
+        // Navigate first. complete() has already swapped the finished timer for the
+        // transient countdown, so anything awaited before this shows a blank 5:00 on
+        // the timer screen in the meantime.
+        setScreen('completion')
+
         // Store completion data for the completion screen
         setCompletionData({
           focusText: event.state.focusText,
           predictedSeconds: event.state.predictedSeconds,
-          actualSeconds: event.elapsed, // focus time: what the countdown counted
+          actualSeconds: event.elapsed,
           tags: event.state.tags,
         })
 
@@ -127,11 +131,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             settings.completionCommand,
           ).catch(err => console.error('Completion hook failed:', err))
         }
-
-        // Navigate to completion screen. complete() has already put a transient
-        // countdown on top of the stack, so a held timer stays frozen while the
-        // completion screen is up - dismissed by clearCompletionData below.
-        setScreen('completion')
       }
 
       if (event.type === 'started') {

@@ -201,7 +201,8 @@ export function Settings() {
             <Text className={descriptionClasses}>
               How many timers you can have going at once. Press <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to
               start a new one and put the current one on hold; finish it with <Kbd>Enter</Kbd> or bin
-              it with <Kbd>q</Kbd> to come back. Set to 1 to turn holding off.
+              it with <Kbd>q</Kbd> to come back. Set to 1 and the shortcut disappears — one timer at
+              a time, as before.
             </Text>
           </div>
 

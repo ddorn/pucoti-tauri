@@ -36,7 +36,7 @@ const SORT_OPTIONS = [
 function computeError(session: Session): number | null {
   if (session.predictedSeconds === 0) return null
   if (!session.tags.includes('mode:predict')) return null
-  return ((session.focusSeconds - session.predictedSeconds) / session.predictedSeconds) * 100
+  return ((session.actualSeconds - session.predictedSeconds) / session.predictedSeconds) * 100
 }
 
 function sortSessions(sessions: Session[], mode: SessionSortMode): Session[] {
@@ -59,22 +59,22 @@ function sortSessions(sessions: Session[], mode: SessionSortMode): Session[] {
       break
     case 'most-underestimated':
       sorted.sort((a, b) => {
-        const ea = (a.focusSeconds - a.predictedSeconds) / a.predictedSeconds
-        const eb = (b.focusSeconds - b.predictedSeconds) / b.predictedSeconds
+        const ea = (a.actualSeconds - a.predictedSeconds) / a.predictedSeconds
+        const eb = (b.actualSeconds - b.predictedSeconds) / b.predictedSeconds
         return eb - ea // highest ratio first
       })
       break
     case 'most-overestimated':
       sorted.sort((a, b) => {
-        const ea = (a.focusSeconds - a.predictedSeconds) / a.predictedSeconds
-        const eb = (b.focusSeconds - b.predictedSeconds) / b.predictedSeconds
+        const ea = (a.actualSeconds - a.predictedSeconds) / a.predictedSeconds
+        const eb = (b.actualSeconds - b.predictedSeconds) / b.predictedSeconds
         return ea - eb // lowest ratio first
       })
       break
     case 'best-calibrated':
       sorted.sort((a, b) => {
-        const ea = Math.abs(a.focusSeconds - a.predictedSeconds) / a.predictedSeconds
-        const eb = Math.abs(b.focusSeconds - b.predictedSeconds) / b.predictedSeconds
+        const ea = Math.abs(a.actualSeconds - a.predictedSeconds) / a.predictedSeconds
+        const eb = Math.abs(b.actualSeconds - b.predictedSeconds) / b.predictedSeconds
         return ea - eb // smallest error first
       })
       break
@@ -161,7 +161,7 @@ export function SessionTable({ sessions, initialSort }: {
                     {formatDuration(session.predictedSeconds)}
                   </TableCell>
                   <TableCell>
-                    {formatDuration(session.focusSeconds)}
+                    {formatDuration(session.actualSeconds)}
                   </TableCell>
                   <TableCell className={errorColor}>
                     {errorText}

@@ -35,17 +35,17 @@ timer does not break it, because nothing is ever paused with *nothing* running:
 
 > **Exactly one timer accrues: the one on screen.**
 
-That is the same invariant as before, unchanged. A held timer keeps its wall-clock
-start time, so the time it spent waiting is still recorded (see [CSV](#csv)) — it just
-does not count against its own prediction.
+That is the same invariant as before, unchanged. The time a timer spends waiting is not
+recorded anywhere — see [Storage](#storage) for why that is deliberate.
 
 ### Invariants
 
 These kill most of the edge cases, and are worth preserving:
 
-- **A blank timer is only ever on top.** It is never held (a push over a blank
-  *replaces* it) and never pushed over.
-- **A held timer is always a real timer** — it has an intent, a prediction, or both.
+- **A placeholder is only ever on top.** It is never held (a push over one *replaces*
+  it) and never pushed over.
+- **A held timer is always a timer the user started** (`kind: 'user'`). It may still have
+  no intent — a duration-only timebox is a real timer — so nothing may assume it has one.
 - The stack is never empty: when the last timer pops, a fresh blank one takes its place.
 - The stack does not survive a restart.
 
@@ -65,7 +65,7 @@ No new concept has to be tracked, and `Enter` keeps both of the meanings it has 
 | Blank timer | `Enter` / `Shift`+`Enter` | open the palette (will replace) |
 | Real timer | `Enter` | complete → completion screen, pop |
 | Real timer | `Shift`+`Enter` | open the palette (will hold the current timer) |
-| Real timer, at the cap | `Shift`+`Enter` | warning: *"3 timers already — finish or cancel one first."* The palette does not open. |
+| Real timer, at the cap | `Shift`+`Enter` | warning: *"3 timers already — finish one or bin it first."* Nothing else changes: no palette, and no switch out of corner or zen mode. |
 | Any | `q` | cancel the timer on screen, pop |
 | Palette | `Enter` | start (empty input → close; no duration → warn, then confirm) |
 | Palette | `Shift`+`Enter` | start without a prediction |
@@ -99,9 +99,12 @@ Shift+Enter    Start without prediction
 Tab            Prefill
 ```
 
-Over a blank timer, `Enter` reads plain **Start** and the hints are exactly today's.
-When something is *already* held, one dimmed line sits above the input:
-`On hold: Call Marc back`. At most two names, since the cap is three.
+Over a placeholder, `Enter` reads **Start with prediction** and the hints are exactly
+today's. When something is *already* held, one dimmed line sits above the input:
+`On hold: Call Marc back` — as many names as the cap allows, truncated to one line.
+
+At the cap the `Shift`+`Enter` hint is not shown at all, so a depth of 1 turns holding
+off rather than advertising a shortcut that is always refused.
 
 ### The indicator
 
@@ -109,9 +112,10 @@ Normal mode shows one short sliver per held timer along the bottom edge of the s
 a count, no text, no clocks. **Corner and zen modes show nothing**: space there is
 precious, and the timer on screen should be as big as it can be.
 
-The consequence is that a held timer is invisible while you are in the corner. That is
-acceptable because the moment you complete or cancel, the intent on screen changes to
-the revealed timer, which is itself the signal.
+The consequence is that a held timer is invisible while you are in the corner. The
+signal, when it comes, is that the intent on screen changes to the revealed timer — and
+with `onTimerStart: 'corner'` unset, cancelling also drops you back to the normal
+window, which is hard to miss.
 
 ## Mechanics that are invisible but have to be decided
 
@@ -130,10 +134,12 @@ Completing does not immediately resume the held timer. Instead:
 
 1. `complete()` pops the finished timer and pushes a **transient** blank one — the same
    5m countdown that exists after a completion today. The held timer stays frozen.
-2. Leaving the completion screen (by any route — `Enter`, or the navbar to Stats or
-   Settings) pops the transient and hands the clock back to the held timer. With nothing
-   held there is nothing to hand back to, so the transient simply becomes the idle
-   timer and its countdown carries on rather than restarting.
+2. The transient is dropped and the held timer picks up again when the **timer screen
+   opens**, not when the completion screen closes. Leaving for Stats or Settings leaves
+   the transient running, so a resume — and the corner-mode switch that rides on it —
+   never fires while you are looking at another screen. With nothing held there is
+   nothing to hand back to, so the transient simply becomes the idle timer and its
+   countdown carries on rather than restarting.
 
 So you get time to celebrate without a held timer's clock burning, and the two outcomes
 are the ones you would want: something held → you land back on it; nothing held →
@@ -143,42 +149,35 @@ today's behaviour, unchanged. The transient timer is never saved.
 
 Every timer on the stack is saved with status `unknown`, not just the one on screen.
 
-**Blank timers are never saved.** This also fixes an existing bug: today, closing the
-app while sitting on a blank timer (the boot state, or the completion screen) writes a
-junk row with no intent and a prediction of zero.
+**Placeholder timers are never saved.** This also fixes an existing bug: today, closing
+the app while sitting on the idle countdown (the boot state, or right after finishing a
+timer) writes a junk row with no intent and a prediction of zero.
 
-## CSV
+## Storage
 
-One new column: `focus_seconds`.
+**Nothing changes.** A session still records `actual_seconds`, and it still means "how
+long this timer took" — it is now the time the timer spent *on screen*, which is what
+the countdown was counting all along. Time a timer spent held behind another one is not
+counted, and not recorded anywhere.
 
-| column | meaning |
-| --- | --- |
-| `actual_seconds` | wall clock, `end - start`, unchanged |
-| `focus_seconds` | time this timer actually spent on screen — the number the countdown was counting, and so the one to compare against `predicted_seconds` |
+That last part is a deliberate loss. Keeping wall clock alongside would make
+`wall - actual` the cost of your interruptions, and would let stats answer "on-time rate
+when interrupted versus not". It would also cost a new column, a migration of every
+existing `sessions.csv`, and a second notion of "how long did this take" running through
+every stat, plot and table. The stat is worth having one day; it is not worth having
+before anything reads it, and the column can be added later without disturbing what is
+here now.
 
-`actual_seconds - focus_seconds` is the time lost to interruptions, and
-`focus_seconds < actual_seconds` is the test for "this session was interrupted" — which
-unlocks the stat that motivates the whole feature: **on-time rate when interrupted
-versus not.**
-
-Every existing row is already correct under this schema (`focus_seconds` equals
-`actual_seconds` when nothing was ever held), so there is no backfill. The only
-migration is the header: `appendSession` writes it only when the file does not exist,
-so an existing `sessions.csv` needs its first line rewritten once.
-
-### What is deliberately *not* stored
-
-- **A count of interruptions.** Not derivable, but the least valuable of the three
-  facts: the cost matters more than the tally.
-- **`session_id` / `parent_id`.** In a strict LIFO stack the intervals are properly
-  nested by construction, so "what interrupted what" can be recovered from timestamps
-  and durations. They can be added later without a migration.
+It also keeps the column **additive**, which matters more than it looks: held timers
+overlap in wall clock, so a wall-clock column would count the same minutes twice when
+summed across sessions. Time on screen never does.
 
 ## Settings
 
 `maxStackDepth`, default 3 — the total number of live timers, so two held plus the one
 on screen. At the cap, pushing is refused outright rather than warned about: a hard
-rule is more honest for a discipline tool, and `q` is right there.
+rule is more honest for a discipline tool, and `q` is right there. At 1 the shortcut is
+not offered at all, which is how you turn holding off.
 
 ## Prefill
 
@@ -207,7 +206,7 @@ several things and move between them is the opposite of the pressure this featur
 to create, and it bought that freedom with four navigation keys, a sigil, a
 complete-a-parent-with-children confirmation flow, and two extra CSV columns. The stack
 gets the interruption case — the one that actually breaks predictions — for one key and
-one column.
+no change to storage at all.
 
 The cost is real and worth stating: **rotating between two live tasks is not supported.**
 Getting back to a held timer means completing or cancelling the one above it. Cancelling

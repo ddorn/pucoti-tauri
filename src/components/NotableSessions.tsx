@@ -8,7 +8,7 @@ import type { SessionSortMode } from './SessionTable'
 function SessionRow({ item, type }: { item: NotableSession; type: 'under' | 'over' | 'accurate' }) {
   const s = item.session
   const predicted = formatDuration(s.predictedSeconds)
-  const actual = formatDuration(s.focusSeconds)
+  const actual = formatDuration(s.actualSeconds)
   const label = s.focusText || 'Untitled'
   const when = formatRelativeTime(s.timestamp)
 

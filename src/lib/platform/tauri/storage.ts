@@ -3,7 +3,7 @@ import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
 import { formatTimestamp } from '../../format'
 import { getDataDir } from './paths'
 import type { Session, SessionStatus } from '../../session'
-import { CSV_HEADER, parseCSVLine, parseSessionFields, serializeSessionRow } from '../csv'
+import { escapeCSV, parseCSVLine } from '../csv'
 
 export async function getCSVPath(): Promise<string> {
   const dir = await getDataDir()
@@ -29,55 +29,42 @@ export async function loadSessions(): Promise<Session[]> {
     const line = lines[i].trim()
     if (!line) continue
 
-    const fields = parseSessionFields(parseCSVLine(line))
-    if (!fields) continue
+    const fields = parseCSVLine(line)
+    if (fields.length < 5) continue
 
+    const [timestamp, focusText, predictedSeconds, actualSeconds, status, tags = ''] = fields
     sessions.push({
-      ...fields,
-      timestamp: new Date(fields.timestamp),
-      status: fields.status as SessionStatus,
+      timestamp: new Date(timestamp),
+      focusText,
+      predictedSeconds: parseInt(predictedSeconds, 10),
+      actualSeconds: parseInt(actualSeconds, 10),
+      status: status as SessionStatus,
+      tags: tags ? tags.split(';').map(t => t.trim()) : [],
     })
   }
 
   return sessions
 }
 
-/**
- * Files written before `focus_seconds` existed still carry the old header, and rows are
- * only ever appended - so the header is brought up to date once per run, in place.
- */
-let headerChecked = false
-
-async function ensureHeader(csvPath: string): Promise<void> {
-  if (headerChecked) return
-
-  const content = await readTextFile(csvPath)
-  const newline = content.indexOf('\n')
-  const header = (newline === -1 ? content : content.slice(0, newline)).trim()
-  if (header !== CSV_HEADER) {
-    const rest = newline === -1 ? '' : content.slice(newline + 1)
-    await writeTextFile(csvPath, CSV_HEADER + '\n' + rest)
-  }
-
-  // Only after it worked, so a transient read failure retries on the next append
-  // rather than leaving the file stuck on the old header for the rest of the run.
-  headerChecked = true
-}
-
 export async function appendSession(session: Session): Promise<void> {
   const csvPath = await getCSVPath()
 
-  const line = serializeSessionRow({
-    ...session,
-    timestamp: formatTimestamp(session.timestamp),
-  })
+  const fileExists = await exists(csvPath)
 
-  if (await exists(csvPath)) {
-    await ensureHeader(csvPath)
-    await writeTextFile(csvPath, line + '\n', { append: true })
+  const line = [
+    formatTimestamp(session.timestamp),
+    escapeCSV(session.focusText),
+    session.predictedSeconds.toString(),
+    session.actualSeconds.toString(),
+    session.status,
+    session.tags.join(';'),
+  ].join(',')
+
+  if (!fileExists) {
+    const header = 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
+    await writeTextFile(csvPath, header + line + '\n')
   } else {
-    headerChecked = true
-    await writeTextFile(csvPath, CSV_HEADER + '\n' + line + '\n')
+    await writeTextFile(csvPath, line + '\n', { append: true })
   }
 }
 
@@ -87,6 +74,6 @@ export async function exportSessionsCSV(): Promise<string> {
     return await readTextFile(csvPath)
   } catch (err) {
     console.error('Failed to read CSV for export (returning header only):', err)
-    return CSV_HEADER + '\n'
+    return 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
   }
 }

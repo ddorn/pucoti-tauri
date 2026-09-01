@@ -10,18 +10,15 @@ import {
 import type { Session } from './session'
 
 function makeSession(overrides: Partial<Session> = {}): Session {
-  const session = {
+  return {
     timestamp: new Date('2026-03-01T12:00:00'),
     focusText: 'test',
     predictedSeconds: 600,
     actualSeconds: 600,
-    status: 'completed' as const,
+    status: 'completed',
     tags: ['mode:predict'],
     ...overrides,
   }
-  // A timer that was never held spent all its wall clock on screen, which is every
-  // session here unless a test sets focusSeconds explicitly.
-  return { ...session, focusSeconds: overrides.focusSeconds ?? session.actualSeconds }
 }
 
 describe('computeOnTimeRate', () => {
@@ -100,12 +97,6 @@ describe('computeOnTimeRate', () => {
     const result = computeOnTimeRate(sessions)!
     expect(result.ci95Low).toBeLessThanOrEqual(result.rate)
     expect(result.ci95High).toBeGreaterThanOrEqual(result.rate)
-  })
-
-  it('judges a held timer on its focus time, not its wall clock', () => {
-    // Predicted 10m, spent 9m on it, but sat on hold for 20m behind an interruption.
-    const sessions = [makeSession({ predictedSeconds: 600, actualSeconds: 1740, focusSeconds: 540 })]
-    expect(computeOnTimeRate(sessions)?.rate).toBe(100)
   })
 })
 

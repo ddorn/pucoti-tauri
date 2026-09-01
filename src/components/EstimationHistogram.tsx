@@ -27,7 +27,7 @@ export function EstimationHistogram({
 
     // Calculate error percentages for all sessions
     const errors = predictSessions.map(s =>
-      ((s.focusSeconds - s.predictedSeconds) / s.predictedSeconds) * 100
+      ((s.actualSeconds - s.predictedSeconds) / s.predictedSeconds) * 100
     )
 
     // Determine range for the plot
