@@ -50,15 +50,18 @@ let headerChecked = false
 
 async function ensureHeader(csvPath: string): Promise<void> {
   if (headerChecked) return
-  headerChecked = true
 
   const content = await readTextFile(csvPath)
   const newline = content.indexOf('\n')
   const header = (newline === -1 ? content : content.slice(0, newline)).trim()
-  if (header === CSV_HEADER) return
+  if (header !== CSV_HEADER) {
+    const rest = newline === -1 ? '' : content.slice(newline + 1)
+    await writeTextFile(csvPath, CSV_HEADER + '\n' + rest)
+  }
 
-  const rest = newline === -1 ? '' : content.slice(newline + 1)
-  await writeTextFile(csvPath, CSV_HEADER + '\n' + rest)
+  // Only after it worked, so a transient read failure retries on the next append
+  // rather than leaving the file stuck on the old header for the rest of the run.
+  headerChecked = true
 }
 
 export async function appendSession(session: Session): Promise<void> {
