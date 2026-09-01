@@ -131,7 +131,9 @@ Completing does not immediately resume the held timer. Instead:
 1. `complete()` pops the finished timer and pushes a **transient** blank one — the same
    5m countdown that exists after a completion today. The held timer stays frozen.
 2. Leaving the completion screen (by any route — `Enter`, or the navbar to Stats or
-   Settings) pops the transient. If the stack is then empty, a fresh blank is created.
+   Settings) pops the transient and hands the clock back to the held timer. With nothing
+   held there is nothing to hand back to, so the transient simply becomes the idle
+   timer and its countdown carries on rather than restarting.
 
 So you get time to celebrate without a held timer's clock burning, and the two outcomes
 are the ones you would want: something held → you land back on it; nothing held →

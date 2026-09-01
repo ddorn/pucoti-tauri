@@ -14,8 +14,6 @@ import packageJson from '../../package.json'
 export type Screen = 'timer' | 'stats' | 'settings' | 'completion'
 export type DisplayMode = 'normal' | 'zen' | 'small'
 
-const DEFAULT_COUNTDOWN_SECONDS = 300 // 5 minutes
-
 // Re-export TimerState from timer-machine for convenience
 export type { TimerState } from '../lib/timer-machine'
 
@@ -90,6 +88,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Is this a good thing? It's probably fine.
   }, [displayMode, settings.corner, loading])
 
+  // Leaving the completion screen, by any route (Enter, or the navbar to Stats or
+  // Settings): drop the transient countdown and hand the clock back to whatever was
+  // held underneath. Driven by the screen itself rather than by setScreen, which runs
+  // from a subscription that can hold a stale `screen`.
+  const previousScreenRef = useRef(screen)
+  useEffect(() => {
+    if (previousScreenRef.current === 'completion' && screen !== 'completion') {
+      timerMachine.dismissTransient()
+    }
+    previousScreenRef.current = screen
+  }, [screen])
+
   // Subscribe to timer events for screen navigation and completion data
   useEffect(() => {
     return timerMachine.subscribe(async event => {
@@ -98,7 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCompletionData({
           focusText: event.state.focusText,
           predictedSeconds: event.state.predictedSeconds,
-          actualSeconds: event.elapsed,
+          actualSeconds: event.elapsed, // focus time: what the countdown counted
           tags: event.state.tags,
         })
 
@@ -118,11 +128,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ).catch(err => console.error('Completion hook failed:', err))
         }
 
-        // Navigate to completion screen
+        // Navigate to completion screen. complete() has already put a transient
+        // countdown on top of the stack, so a held timer stays frozen while the
+        // completion screen is up - dismissed by clearCompletionData below.
         setScreen('completion')
-
-        // Reset timer to default countdown state
-        timerMachine.reset()
       }
 
       if (event.type === 'started') {
@@ -137,7 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Initialize timer on mount
   useEffect(() => {
     // Start with default countdown state
-    timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
+    timerMachine.reset()
   }, [])
 
   // Check for updates on mount (desktop only — web is always current)

@@ -1,6 +1,6 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import type { Session, SessionStatus } from '../../session'
-import { escapeCSV, parseCSVLine } from '../csv'
+import { CSV_HEADER, parseCSVLine, parseSessionFields, serializeSessionRow } from '../csv'
 
 const DB_NAME = 'pucoti'
 const DB_VERSION = 1
@@ -22,6 +22,7 @@ function serializeSession(session: Session): object {
     focusText: session.focusText,
     predictedSeconds: session.predictedSeconds,
     actualSeconds: session.actualSeconds,
+    focusSeconds: session.focusSeconds,
     status: session.status,
     tags: session.tags,
   }
@@ -33,6 +34,8 @@ function deserializeSession(raw: Record<string, unknown>): Session {
     focusText: raw.focusText as string,
     predictedSeconds: raw.predictedSeconds as number,
     actualSeconds: raw.actualSeconds as number,
+    // Rows stored before stacked timers have no focusSeconds: nothing could be held.
+    focusSeconds: (raw.focusSeconds as number) ?? (raw.actualSeconds as number),
     status: raw.status as SessionStatus,
     tags: (raw.tags as string[]) ?? [],
   }
@@ -61,20 +64,10 @@ export async function appendSession(session: Session): Promise<void> {
 
 export async function exportSessionsCSV(): Promise<string> {
   const sessions = await loadSessions()
-  const header = 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
   const rows = sessions
-    .map(s =>
-      [
-        s.timestamp.toISOString(),
-        escapeCSV(s.focusText),
-        s.predictedSeconds.toString(),
-        s.actualSeconds.toString(),
-        s.status,
-        s.tags.join(';'),
-      ].join(',')
-    )
+    .map(s => serializeSessionRow({ ...s, timestamp: s.timestamp.toISOString() }))
     .join('\n')
-  return rows ? header + rows + '\n' : header
+  return rows ? CSV_HEADER + '\n' + rows + '\n' : CSV_HEADER + '\n'
 }
 
 export async function importSessionsCSV(csv: string): Promise<void> {
@@ -89,17 +82,13 @@ export async function importSessionsCSV(csv: string): Promise<void> {
     const line = lines[i].trim()
     if (!line) continue
 
-    const fields = parseCSVLine(line)
-    if (fields.length < 5) continue
+    const fields = parseSessionFields(parseCSVLine(line))
+    if (!fields) continue
 
-    const [timestamp, focusText, predictedSeconds, actualSeconds, status, tags = ''] = fields
     const session: Session = {
-      timestamp: new Date(timestamp),
-      focusText,
-      predictedSeconds: parseInt(predictedSeconds, 10),
-      actualSeconds: parseInt(actualSeconds, 10),
-      status: status as SessionStatus,
-      tags: tags ? tags.split(';').map(t => t.trim()) : [],
+      ...fields,
+      timestamp: new Date(fields.timestamp),
+      status: fields.status as SessionStatus,
     }
     await store.add(serializeSession(session))
   }

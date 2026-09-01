@@ -58,6 +58,9 @@ export interface Settings {
 
   // Calibration training
   scrambleTimer: boolean
+
+  // Stacked timers: how many timers can be live at once, held ones included
+  maxStackDepth: number
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -87,4 +90,5 @@ export const DEFAULT_SETTINGS: Settings = {
   checkForUpdatesAutomatically: true,
   dismissedUpdateVersion: '',
   scrambleTimer: false,
+  maxStackDepth: 3,
 }

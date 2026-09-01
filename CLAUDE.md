@@ -55,10 +55,19 @@ The app uses a centralized timer state machine with React hooks for subscription
 2. **TimerMachine** (`src/lib/timer-machine.ts`) - **Singleton State Machine**
    - Pure TypeScript class (no React dependencies)
    - Single source of truth for all timer state
-   - Commands: `start()`, `adjust()`, `complete()`, `cancel()`, `reset()`
-   - Events: `started`, `adjusted`, `tick`, `overtime_entered`, `overtime_exited`, `completed`, `canceled`
-   - State: `focusText`, `predictedSeconds`, `startTime`, `adjustmentSeconds`, `tags`
-   - Computed values: `elapsed`, `remaining`, `isOvertime` (calculated from `startTime`, not interval-based)
+   - Holds a **stack** of timers. The top is the timer on screen and the only one that
+     accrues time; everything under it is held (frozen and silent). There is no
+     navigation - see `docs/stacked-timers.md` for why.
+   - Commands: `push()`, `adjust()`, `complete()`, `cancel()`, `dismissTransient()`, `reset()`
+   - Events: `started`, `adjusted`, `suspended`, `resumed`, `tick`, `overtime_entered`, `overtime_exited`, `completed`, `canceled`
+   - State: `focusText`, `predictedSeconds`, `startTime`, `adjustmentSeconds`, `tags`, `kind`, `heldMs`, `heldSince`
+   - `kind` is `user` (started by the user, the only kind ever saved), `scratch` (the
+     idle countdown) or `transient` (the scratch timer behind the completion screen,
+     dropped when it is left). `isUserTimer()` is the test for "is this a real timer",
+     and decides whether a new timer replaces the current one or holds it.
+   - Computed values: `elapsed` (time on screen - what the countdown counts),
+     `wallElapsed`, `remaining`, `isOvertime`. All derived from `startTime` and the held
+     time, never accumulated.
    - Updates at 200ms intervals for smooth UI
 
 3. **AppProvider** (`src/context/AppContext.tsx`)
@@ -76,12 +85,15 @@ The timer machine uses an event-driven architecture where independent subscriber
    - Plays bell on `overtime_entered` event
    - Shows OS notification with elapsed time
    - Manages repeating bell interval (configurable, default 20s)
+   - Stops on `suspended` too: a timer put on hold must go quiet. It rings once again on
+     resume, because the machine clears `wasOvertime` when it hands the clock back
    - Uses `useSettings()` for bell path and interval
 
 2. **useStorageSubscriber** (`src/hooks/useStorageSubscriber.ts`)
    - Appends session to CSV on `completed` and `canceled` events
-   - Handles window close: saves with status 'unknown' if timer active
-   - Uses `appendSession()` from `src/lib/storage.ts`
+   - Handles window close: saves every timer on the stack with status 'unknown'
+   - Never saves `scratch`/`transient` timers, which would be rows with no intent
+   - Uses `platform.appendSession()`
 
 3. **useDbusSubscriber** (`src/hooks/useDbusSubscriber.ts`)
    - Syncs timer state to GNOME panel indicator on every `tick`
@@ -121,9 +133,18 @@ timerMachine.cancel()
 
 **Session Persistence**:
 - All sessions saved to CSV: `~/.local/share/pucoti/sessions.csv`
-- Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags
+- Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags, focus_seconds
+- `actual_seconds` is wall clock (end - start); `focus_seconds` is the time the timer
+  actually spent on screen. They differ only when a timer was held behind another one.
+  **`focus_seconds` is what stats compare against the prediction**, and the only
+  additive quantity - held timers overlap in wall clock, so summing `actual_seconds`
+  would count the same minutes twice.
+- Rows written before stacked timers have no `focus_seconds` and are read back with it
+  equal to `actual_seconds`. The column order lives in `src/lib/platform/csv.ts`
+  (`CSV_HEADER`, `parseSessionFields`, `serializeSessionRow`) so both platform
+  implementations stay in step; the Tauri one rewrites a stale header once per run.
 - Status types: 'completed', 'canceled', 'unknown'
-- On window close: if timer is active, saves session with status 'unknown'
+- On window close: saves every real timer on the stack with status 'unknown'
 
 ### Statistics Engine (`src/lib/stats.ts`)
 
@@ -198,14 +219,18 @@ Flexible duration input supporting:
 ## Key Screens
 
 1. **Timer** (`src/screens/Timer.tsx`): Active timer display with j/k adjustment keys
-   - Press Enter to edit intent/duration inline (no separate modal)
+   - Press Enter to edit intent/duration inline (no separate modal), or to complete a
+     running timer
+   - Press Shift+Enter to start a new timer, putting the current one on hold (refused at
+     `settings.maxStackDepth`, default 3)
+   - Press q to bin the timer on screen and reveal whatever was held under it
    - Keyboard shortcuts for time adjustment (j/k, digit keys)
    - Display modes: normal, zen, small
 2. **Stats** (`src/screens/Stats.tsx`): Calibration plots and session history
 3. **Settings** (`src/screens/Settings.tsx`): Configure window behavior and notifications
 4. **Completion** (`src/screens/Completion.tsx`): Feedback on estimation accuracy after completing a timer
 
-**Inline Intent Editing**: The Timer screen supports inline editing of intent and duration. Press Enter to enter edit mode, which replaces the intent text with an input field. Real-time parsing shows predicted duration. Shift+Enter triggers the prefill command if configured.
+**Inline Intent Editing**: The Timer screen supports inline editing of intent and duration. Press Enter to enter edit mode, which replaces the intent text with an input field. Real-time parsing shows predicted duration. The prefill command, if configured, runs on every open and drops its result in selected - it must never block the input, and a result that lands after you have started typing is discarded. Tab re-fetches it.
 
 ## Tauri Backend
 
@@ -329,6 +354,12 @@ Follow semantic versioning (patch for fixes, minor for new features, major for b
 6. **Push with tags**: `git push --follow-tags`
 
 **If the build fails after tagging**: Since no release was published, move the tag instead of creating a patch version. Fix the issue, commit, then: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`, re-tag with `git tag vX.Y.Z`, and push again. Also delete any partial draft release on GitHub before re-triggering.
+
+## Design Docs
+
+Longer design rationale lives in `docs/`. `docs/stacked-timers.md` covers the timer
+stack: why held timers freeze, why there is no navigation between them, what each key
+does, and what was considered and dropped.
 
 ## Notes
 - Keep this file (CLAUDE.MD) up to date. Document architecture changes, new important features, new folders.

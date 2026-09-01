@@ -178,8 +178,8 @@ export function useNotableSessions(sessions: Session[], limit = 5): {
     const predictions = predictionOnly(sessions)
     const scored: NotableSession[] = predictions.map(s => ({
       session: s,
-      ratio: s.actualSeconds / s.predictedSeconds,
-      errorPercent: Math.abs(s.actualSeconds - s.predictedSeconds) / s.predictedSeconds * 100,
+      ratio: s.focusSeconds / s.predictedSeconds,
+      errorPercent: Math.abs(s.focusSeconds - s.predictedSeconds) / s.predictedSeconds * 100,
     }))
 
     const sortedByRatio = [...scored].sort((a, b) => b.ratio - a.ratio)

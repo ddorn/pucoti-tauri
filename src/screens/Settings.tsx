@@ -185,6 +185,26 @@ export function Settings() {
             </Text>
           </div>
 
+          <div className={subsectionClasses}>
+            <div className={subsectionLabelClasses}>
+              Timers at once
+            </div>
+            <div className={smallNumberInputAndUnitClasses}>
+              <ValidatedNumericInput
+                value={settings.maxStackDepth}
+                onChange={(val) => updateSettings({ maxStackDepth: val })}
+                min={1}
+                max={9}
+              />
+              <span className="text-base text-zinc-400">timers</span>
+            </div>
+            <Text className={descriptionClasses}>
+              How many timers you can have going at once. Press <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to
+              start a new one and put the current one on hold; finish it with <Kbd>Enter</Kbd> or bin
+              it with <Kbd>q</Kbd> to come back. Set to 1 to turn holding off.
+            </Text>
+          </div>
+
           <CheckboxField>
             <Checkbox
               checked={settings.scrambleTimer}
@@ -552,7 +572,7 @@ export function Settings() {
                 </Text>
               )}
               <Text className={descriptionClasses}>
-                Shell command whose stdout will prefill the intent input field. Use <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd> to trigger. Leave empty to disable.
+                Shell command whose stdout fills the intent input whenever you start a new timer. The text arrives selected, so typing replaces it; <Kbd>Tab</Kbd> fetches it again. Leave empty to disable.
               </Text>
             </div>
 

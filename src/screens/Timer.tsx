@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useApp } from '../context/AppContext'
 import { useSettings } from '../context/SettingsContext'
 import { useTimerState } from '../hooks/useTimerState'
-import { timerMachine } from '../lib/timer-machine'
+import { timerMachine, isUserTimer } from '../lib/timer-machine'
 import { formatDuration } from '../lib/format';
 import { nextCorner } from '../lib/corner';
 import { platform, isTauri } from '../lib/platform';
@@ -17,7 +17,7 @@ const DEFAULT_COUNTDOWN_SECONDS = 300
 
 export function Timer() {
   const { displayMode, setDisplayMode, setScreen } = useApp()
-  const { timerState, elapsed, remaining } = useTimerState()
+  const { timerState, heldStates, elapsed, remaining } = useTimerState()
   const { settings, updateSettings } = useSettings()
 
   // Edit mode state
@@ -25,7 +25,13 @@ export function Timer() {
   const [editInput, setEditInput] = useState('')
   const [editLoading, setEditLoading] = useState(false)
   const [noPredictionWarning, setNoPredictionWarning] = useState(false)
+  const [stackFullWarning, setStackFullWarning] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Mirrors editInput so the async prefill can see what has been typed since it started
+  const editInputRef = useRef('')
+  editInputRef.current = editInput
+  // Bumped on every prefill run so a slow one that lands late is ignored
+  const prefillRunRef = useRef(0)
 
   // Live window-resize target + debounced persist, so rapid +/- presses compound
   // (tick-driven re-renders don't reset them) and key auto-repeat doesn't thrash
@@ -41,25 +47,51 @@ export function Timer() {
     setNoPredictionWarning(false)
   }, [editInput])
 
-  const handlePrefill = useCallback(async () => {
-    if (!settings.prefillCommand || editLoading) return
+  /**
+   * Fetch the prefill command's output into the input.
+   *
+   * Runs on every palette open, so it must never block: the input stays editable and a
+   * result is dropped if it arrives after you have started typing (onlyIfEmpty), or if
+   * a newer run has since started. The text arrives selected, so replacing it costs one
+   * keystroke - which matters because on a push the prefilled intention is usually the
+   * thing you are being interrupted from.
+   */
+  const runPrefill = useCallback(async ({ onlyIfEmpty }: { onlyIfEmpty: boolean }) => {
+    if (!settings.prefillCommand) return
+    const run = ++prefillRunRef.current
     setEditLoading(true)
     try {
       const result = await executePrefillHook(settings.prefillCommand)
-      if (result) {
-        setEditInput(result)
-      }
+      if (run !== prefillRunRef.current) return
+      if (!result) return
+      if (onlyIfEmpty && editInputRef.current !== '') return
+      setEditInput(result)
+      requestAnimationFrame(() => inputRef.current?.select())
     } finally {
-      setEditLoading(false)
+      if (run === prefillRunRef.current) setEditLoading(false)
     }
-  }, [settings.prefillCommand, editLoading])
+  }, [settings.prefillCommand])
+
+  const openPalette = useCallback(() => {
+    setEditMode(true)
+    setEditInput('')
+    editInputRef.current = ''
+    runPrefill({ onlyIfEmpty: true })
+  }, [runPrefill])
 
   // Focus input when entering edit mode
   useEffect(() => {
-    if (editMode && !editLoading) {
+    if (editMode) {
       inputRef.current?.focus()
     }
-  }, [editMode, editLoading])
+  }, [editMode])
+
+  // The stack-full warning is transient: it answers one refused keypress.
+  useEffect(() => {
+    if (!stackFullWarning) return
+    const timeout = setTimeout(() => setStackFullWarning(false), 4000)
+    return () => clearTimeout(timeout)
+  }, [stackFullWarning])
 
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
@@ -185,29 +217,32 @@ export function Timer() {
           }
           break
 
-        case 'enter':
+        case 'enter': {
           e.preventDefault()
-          // Enter edit mode only if there's no focus AND no prediction
-          // Otherwise, complete the timer (which shows completion screen)
-          if (!timerState?.focusText && timerState?.predictedSeconds === null) {
-            // Ensure we're in normal mode when entering edit mode
-            if (displayMode !== 'normal') {
-              setDisplayMode('normal')
-            }
-            setEditMode(true)
-            setEditInput('')
-            // Shift+Enter triggers prefill if command is configured
-            if (e.shiftKey && settings.prefillCommand) {
-              handlePrefill()
-            }
-          } else {
+          // Enter finishes a real timer. Shift+Enter always starts a new one, which
+          // holds the current timer if it is real and replaces it if it is the idle
+          // countdown. Over the idle countdown both keys just open the palette.
+          if (isUserTimer(timerState) && !e.shiftKey) {
             timerMachine.complete()
+            break
           }
+          // Normal mode first, either way: the palette lives there, and so does the
+          // warning explaining a refusal - in corner or zen it would go unseen.
+          if (displayMode !== 'normal') {
+            setDisplayMode('normal')
+          }
+          if (isUserTimer(timerState) && timerMachine.getStack().length >= settings.maxStackDepth) {
+            setStackFullWarning(true)
+            break
+          }
+          openPalette()
           break
+        }
 
         case 'q':
-          // Reset to default countdown (cancel any running timer)
-          timerMachine.start('', null, DEFAULT_COUNTDOWN_SECONDS, [], 'cancel')
+          // Bin the timer on screen, revealing whatever was held under it. On the idle
+          // countdown this just restarts it, which is what q has always done.
+          timerMachine.cancel()
           break
 
         case 's':
@@ -241,7 +276,7 @@ export function Timer() {
       window.removeEventListener('keydown', handleKeyDown)
       if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
     }
-  }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, handlePrefill])
+  }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, openPalette])
 
   const handleEditSubmit = useCallback((forceTimebox: boolean = false) => {
     // If input is empty, just close edit mode
@@ -269,26 +304,29 @@ export function Timer() {
       // Calculate initial adjustment:
       // - For predictions: based on timer start percentage
       // - For timebox with explicit duration: use that duration
-      // - For timebox without duration: preserve current remaining time
+      // - For timebox without duration: keep the countdown you had dialed in, unless
+      //   the current timer is real - that countdown belongs to it and it is about to
+      //   go on hold with it, so the new timer starts from the default instead.
       let initialAdjustment: number
       if (hasPrediction) {
         initialAdjustment = Math.round(parsed.seconds! * (settings.timerStartPercentage / 100 - 1))
       } else if (parsed.seconds !== null) {
         initialAdjustment = parsed.seconds
+      } else if (isUserTimer(timerState)) {
+        initialAdjustment = DEFAULT_COUNTDOWN_SECONDS
       } else {
         initialAdjustment = remaining
       }
 
-      // Cancel previous timer when starting new task
-      timerMachine.start(
+      // Holds the current timer if it is real, replaces it if it is the idle countdown
+      timerMachine.push(
         parsed.intent,
         hasPrediction ? parsed.seconds : null,
         initialAdjustment,
-        tags,
-        'cancel'
+        tags
       )
     }
-  }, [editInput, parsed, settings.timerStartPercentage, remaining, noPredictionWarning])
+  }, [editInput, parsed, settings.timerStartPercentage, remaining, noPredictionWarning, timerState])
 
   const handleEditCancel = useCallback(() => {
     setEditMode(false)
@@ -304,8 +342,11 @@ export function Timer() {
     } else if (e.key === 'Escape') {
       e.preventDefault()
       handleEditCancel()
+    } else if (e.key === 'Tab' && settings.prefillCommand) {
+      e.preventDefault()
+      runPrefill({ onlyIfEmpty: false })
     }
-  }, [handleEditSubmit, handleEditCancel])
+  }, [handleEditSubmit, handleEditCancel, runPrefill, settings.prefillCommand])
 
   if (!timerState) {
     return (
@@ -345,9 +386,24 @@ export function Timer() {
   // Determine what to show in countdown: parsed seconds if available, otherwise current remaining
   const displayRemaining = editMode && parsed.seconds !== null ? parsed.seconds : remaining
 
+  // Spell out what starting a timer will do to the one already running, by name, at the
+  // moment of the decision - that is the whole "is this a push?" affordance.
+  const heldOnStart = isUserTimer(timerState) ? timerState.focusText || 'this timer' : null
+  const startLabel = heldOnStart
+    ? `Start · hold "${truncate(heldOnStart, 24)}"`
+    : 'Start with prediction'
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 select-none">
       <div className="flex flex-col items-center w-full ">
+        {/* What is waiting underneath. Only while the palette is open: the rest of the
+            time the marks at the bottom of the screen carry it, wordlessly. */}
+        {editMode && heldStates.length > 0 && (
+          <p className="text-sm text-zinc-500 mb-2 max-w-[90vw] truncate">
+            On hold: {heldStates.map(s => s.focusText || 'Untitled').join(' · ')}
+          </p>
+        )}
+
         {/* Intent - either editable input or text display */}
         {editMode ? (
           <input
@@ -357,7 +413,6 @@ export function Timer() {
             onChange={(e) => setEditInput(e.target.value)}
             onKeyDown={handleInputKeyDown}
             placeholder={editLoading ? "Prefilling…" : "I want to… 12m"}
-            disabled={editLoading}
             className={clsx(
               "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw]",
               "bg-transparent outline-none",
@@ -368,8 +423,7 @@ export function Timer() {
                   "border-red-500/50 focus:border-red-500" :
                 "border-accent/50 focus:border-accent",
               "text-accent placeholder-zinc-600",
-              "transition-colors",
-              editLoading && "opacity-50 cursor-not-allowed"
+              "transition-colors"
             )}
             autoComplete="off"
             spellCheck={false}
@@ -379,7 +433,7 @@ export function Timer() {
             "text-[10vh] text-center font-medium min-h-[2em] max-w-[90vw] overflow-x-hidden overflow-y-visible overflow-ellipsis whitespace-nowrap",
             timerState.focusText ? "text-accent" : "text-zinc-600"
           )}>
-            {timerState.focusText || 'Enter to set intent'}
+            {timerState.focusText || (isUserTimer(timerState) ? '' : 'Enter to set intent')}
           </p>
         )}
 
@@ -387,6 +441,14 @@ export function Timer() {
         {noPredictionWarning && (
           <p className="text-amber-500 text-lg mt-2 text-center">
             No prediction: add one like <Kbd>15m</Kbd>, or <Kbd>Enter</Kbd> to continue without
+          </p>
+        )}
+
+        {/* Refused push: the stack is full on purpose */}
+        {stackFullWarning && (
+          <p className="text-amber-500 text-lg mt-2 text-center">
+            {settings.maxStackDepth} timers already — finish one with <Kbd>Enter</Kbd> or bin it
+            with <Kbd>q</Kbd> first
           </p>
         )}
 
@@ -416,8 +478,9 @@ export function Timer() {
             <>
               <Shortcut keys={['Esc']} label="Cancel" />
               <Shortcut keys={['5m 30s']} label="Duration syntax" />
-              <Shortcut keys={['Enter']} label="Start with prediction" />
-              <Shortcut keys={['Shift', 'Enter']} label="Start without" />
+              <Shortcut keys={['Enter']} label={startLabel} />
+              <Shortcut keys={['Shift', 'Enter']} label="Start without prediction" />
+              {settings.prefillCommand && <Shortcut keys={['Tab']} label="Prefill" />}
             </>
           ) : (
             <>
@@ -429,20 +492,38 @@ export function Timer() {
               <Shortcut keys={['Shift', '0-9']} label="Set to 10×X minutes" />
               {isTauri && <Shortcut keys={['c']} label="Cycle corners" />}
               {isTauri && <Shortcut keys={['+', '-']} label="Resize window" />}
-              <Shortcut keys={['q']} label="Cancel" />
+              <Shortcut keys={['q']} label={heldStates.length > 0 ? "Cancel, back to held" : "Cancel"} />
               <Shortcut keys={['s']} label="Stats" />
               <Shortcut keys={[',']} label="Settings" />
-              <Shortcut keys={['Enter']} label={timerState.focusText ? "Complete" : "Set intent"} />
-              {settings.prefillCommand && (
-                <Shortcut keys={['Shift', 'Enter']} label="Set intent (prefill)" />
+              <Shortcut keys={['Enter']} label={isUserTimer(timerState) ? "Complete" : "Set intent"} />
+              {isUserTimer(timerState) && (
+                <Shortcut keys={['Shift', 'Enter']} label="New timer, hold this one" />
               )}
               <Shortcut keys={['?']} label={settings.scrambleTimer ? "Unscramble timer" : "Scramble timer"} />
             </>
           )}
         </div>
       </div>
+
+      {/* One mark per held timer: a count, no text, no clocks. Normal mode only -
+          corner and zen keep every pixel for the timer on screen. */}
+      {heldStates.length > 0 && (
+        <div
+          className="fixed bottom-3 left-0 right-0 flex justify-center gap-1.5"
+          role="img"
+          aria-label={`${heldStates.length} timer${heldStates.length > 1 ? 's' : ''} on hold`}
+        >
+          {heldStates.map((held, i) => (
+            <span key={i} className="h-[3px] w-8 rounded-full bg-zinc-600" title={held.focusText} />
+          ))}
+        </div>
+      )}
     </div>
   )
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max - 1) + '…' : text
 }
 
 function Shortcut({ keys, label }: { keys: string[]; label: string }) {

@@ -10,15 +10,18 @@ import {
 import type { Session } from './session'
 
 function makeSession(overrides: Partial<Session> = {}): Session {
-  return {
+  const session = {
     timestamp: new Date('2026-03-01T12:00:00'),
     focusText: 'test',
     predictedSeconds: 600,
     actualSeconds: 600,
-    status: 'completed',
+    status: 'completed' as const,
     tags: ['mode:predict'],
     ...overrides,
   }
+  // A timer that was never held spent all its wall clock on screen, which is every
+  // session here unless a test sets focusSeconds explicitly.
+  return { ...session, focusSeconds: overrides.focusSeconds ?? session.actualSeconds }
 }
 
 describe('computeOnTimeRate', () => {
@@ -98,12 +101,20 @@ describe('computeOnTimeRate', () => {
     expect(result.ci95Low).toBeLessThanOrEqual(result.rate)
     expect(result.ci95High).toBeGreaterThanOrEqual(result.rate)
   })
+
+  it('judges a held timer on its focus time, not its wall clock', () => {
+    // Predicted 10m, spent 9m on it, but sat on hold for 20m behind an interruption.
+    const sessions = [makeSession({ predictedSeconds: 600, actualSeconds: 1740, focusSeconds: 540 })]
+    expect(computeOnTimeRate(sessions)?.rate).toBe(100)
+  })
 })
 
 describe('filterByTimeRange', () => {
-  const old = makeSession({ timestamp: new Date('2025-01-01') })
-  const recent = makeSession({ timestamp: new Date('2026-02-15') })
-  const veryRecent = makeSession({ timestamp: new Date('2026-03-01') })
+  // Relative to now, so the windows stay meaningful as time passes.
+  const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+  const old = makeSession({ timestamp: daysAgo(600) })
+  const recent = makeSession({ timestamp: daysAgo(100) })
+  const veryRecent = makeSession({ timestamp: daysAgo(5) })
   const sessions = [old, recent, veryRecent]
 
   it('returns all sessions for "all"', () => {

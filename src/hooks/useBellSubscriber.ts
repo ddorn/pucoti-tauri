@@ -45,7 +45,14 @@ export function useBellSubscriber() {
         }
       }
 
-      if (event.type === 'overtime_exited' || event.type === 'completed' || event.type === 'canceled') {
+      // 'suspended' matters: a timer put on hold must stop ringing. It rings again on
+      // resume, because the machine clears wasOvertime when it hands the clock back.
+      if (
+        event.type === 'overtime_exited' ||
+        event.type === 'completed' ||
+        event.type === 'canceled' ||
+        event.type === 'suspended'
+      ) {
         stopBellInterval()
       }
     })

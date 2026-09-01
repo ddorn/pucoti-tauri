@@ -3,6 +3,8 @@ import { timerMachine, type TimerState } from '../lib/timer-machine'
 
 interface TimerStateResult {
   timerState: TimerState | null
+  /** Timers on hold under the one on screen, bottom first. */
+  heldStates: readonly TimerState[]
   elapsed: number
   remaining: number
   isOvertime: boolean
@@ -11,6 +13,7 @@ interface TimerStateResult {
 // Cache the snapshot to avoid infinite loops with useSyncExternalStore
 let cachedSnapshot: TimerStateResult = {
   timerState: null,
+  heldStates: [],
   elapsed: 0,
   remaining: 0,
   isOvertime: false,
@@ -21,6 +24,7 @@ function updateSnapshot() {
   const computed = timerMachine.getComputed()
   cachedSnapshot = {
     timerState: state,
+    heldStates: timerMachine.getHeldStates(),
     elapsed: computed?.elapsed ?? 0,
     remaining: computed?.remaining ?? 0,
     isOvertime: computed?.isOvertime ?? false,

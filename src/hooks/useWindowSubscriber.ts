@@ -20,7 +20,9 @@ export function useWindowSubscriber(
     const unsubscribe = timerMachine.subscribe(event => {
       const s = settingsRef.current
 
-      if (event.type === 'started') {
+      // 'resumed' too: coming back to a held timer is a timer starting, as far as this
+      // setting is concerned. The idle countdown has no content, so it never triggers.
+      if (event.type === 'started' || event.type === 'resumed') {
         // Only corner mode if user actually set something (not just a blank reset)
         if (s.onTimerStart === 'corner' && (event.state.focusText || event.state.predictedSeconds !== null)) {
           setDisplayMode('small')

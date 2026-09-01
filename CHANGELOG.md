@@ -1,5 +1,26 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- **Stacked timers**: When something interrupts you, press <kbd>Shift</kbd>+<kbd>Enter</kbd> to start a new timer without losing the one you were on. The old timer goes on hold — its countdown freezes and its bell goes quiet — and comes back the moment you finish the new one with <kbd>Enter</kbd> or bin it with <kbd>q</kbd>.
+  - There is no way to switch between held timers on purpose: the only way back to what you were doing is to finish or bin the thing on top of it. A pile you can browse is a task switcher; this one costs something every time you add to it.
+  - You can have three timers going at once by default. Change it under Settings → Timer → "Timers at once", or set it to 1 to turn holding off entirely.
+  - A small mark at the bottom of the timer screen shows how many timers are waiting. Corner and zen modes show nothing, so the timer on screen stays as big as it was.
+  - After you finish a timer, the held one stays frozen while you look at your completion stats, and picks up again when you leave that screen.
+
+- **Interrupted time is recorded separately**: sessions now store both how long they took start to finish and how long you actually spent on them. Your accuracy is judged on the time you actually spent, so being interrupted no longer makes a good prediction look late.
+
+### Changed
+
+- **Prefill now runs whenever you start a timer**, instead of needing <kbd>Shift</kbd>+<kbd>Enter</kbd>. The text arrives selected, so typing replaces it, and <kbd>Tab</kbd> fetches it again if you cleared it. It no longer blocks the input while the command runs.
+
+### Fixed
+
+- **No more empty sessions**: closing Pucoti while sitting on an idle countdown — the state you get on startup, or right after finishing a timer — no longer records a session with no intent and a prediction of zero.
+- **Timers with only a duration can be completed**: starting a timer with a duration and no intent (like `25m` with <kbd>Shift</kbd>+<kbd>Enter</kbd>) left <kbd>Enter</kbd> opening the intent input instead of finishing the timer.
+
 ## [1.4.0] - 2026-03-06
 
 ### Added
