@@ -1,6 +1,6 @@
 export function playBell(_customBellPath?: string): void {
   // Ignore customBellPath on web — always use bundled bell
-  const audio = new Audio('/bell.mp3')
+  const audio = new Audio(import.meta.env.BASE_URL + 'bell.mp3')
   audio.play().catch(err => {
     console.error('Bell play failed:', err)
   })

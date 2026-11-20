@@ -5,6 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 const isTauriEnv = process.env.VITE_PLATFORM === 'tauri'
 
+// Tauri loads the build over file://, so its paths are relative. On the web the app
+// lives under /app/ of pucoti.com, next to the landing page in site/.
+const base = isTauriEnv ? './' : '/app/'
+
 export default defineConfig({
   plugins: [
     react(),
@@ -20,16 +24,16 @@ export default defineConfig({
           theme_color: '#f59e0b',
           background_color: '#18181b',
           display: 'standalone',
-          start_url: '/',
-          scope: '/',
+          start_url: base,
+          scope: base,
           icons: [
             {
-              src: '/icon-128.png',
+              src: 'icon-128.png',
               sizes: '128x128',
               type: 'image/png',
             },
             {
-              src: '/icon-512.png',
+              src: 'icon-512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable',
@@ -42,8 +46,7 @@ export default defineConfig({
       }),
     ] : []),
   ],
-  // Use relative paths for Tauri (file:// protocol), absolute for web
-  base: isTauriEnv ? './' : '/',
+  base,
   build: {
     outDir: 'dist',
   },
