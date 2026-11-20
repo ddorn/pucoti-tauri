@@ -4,7 +4,8 @@ import { TimerDemo } from './TimerDemo'
 import './site.css'
 
 // The page is static HTML. React only runs the demo, which replaces the screenshot
-// that stands in for it without JavaScript.
+// that stands in for it without JavaScript, and the ending it fills in.
+document.getElementById('ending')?.replaceChildren()
 createRoot(document.getElementById('demo')!).render(
   <StrictMode>
     <TimerDemo />
@@ -58,7 +59,7 @@ if (os && heroDownload) {
   heroDownload.setAttribute('href', `#download-${os}`)
   // Put the visitor's platform first in the download grid
   card?.parentElement?.prepend(card)
-  card?.classList.replace('border-zinc-800', 'border-accent/60')
+  card?.classList.replace('border-line', 'border-accent')
 } else {
   heroDownload?.classList.add('hidden')
 }
@@ -73,8 +74,8 @@ function pickMacArch(arch: MacArch) {
     const active = button.dataset.archPick === arch
     button.setAttribute('aria-pressed', String(active))
     button.className = 'rounded-md px-3 py-1 ' + (active
-      ? 'bg-zinc-800 text-zinc-100'
-      : 'text-zinc-400 hover:text-zinc-100')
+      ? 'bg-ink text-paper'
+      : 'hover:text-ink')
   })
 }
 

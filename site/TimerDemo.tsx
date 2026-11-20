@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 import { CountdownDisplay } from '../src/components/CountdownDisplay'
 import { Kbd } from '../src/components/Kbd'
 import { parseCommand } from '../src/lib/command-parser'
-import { formatDuration } from '../src/lib/format'
+import { formatCountdown, formatDuration } from '../src/lib/format'
 import { formatErrorPercent, getCompletionRemark } from '../src/lib/completion-remarks'
 
 /**
  * A working copy of the timer for the landing page. It is already running when the page
  * opens, timing the visit itself, and docks to the corner of the window once scrolled
- * past, the way the desktop app sits in a corner of the screen.
+ * past, the way the desktop app sits in a corner of the screen. At the bottom of the page
+ * it asks whether the visitor is done reading, grades the guess, and starts the next
+ * timer: getting Pucoti.
  *
  * It uses the app's parser, countdown display and completion remarks, but keeps its own
  * small state rather than the app's timer machine: nothing here is saved, and it must
@@ -17,6 +20,7 @@ import { formatErrorPercent, getCompletionRemark } from '../src/lib/completion-r
  */
 
 const FIRST_TASK = { intent: 'discover Pucoti', seconds: 5 * 60 }
+const NEXT_TASK = { intent: 'get Pucoti', seconds: 2 * 60 }
 const TICK_MS = 200
 const EXAMPLES = ['reply to emails 10m', 'write the intro 25m', 'fix the login bug 45m']
 
@@ -50,6 +54,9 @@ export function TimerDemo() {
   const [noPrediction, setNoPrediction] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [docked, setDocked] = useState(false)
+  /** The run the visitor finished from the bottom of the page, shown there. */
+  const [lastRun, setLastRun] = useState<Run | null>(null)
+  const [endingEl] = useState(() => document.getElementById('ending'))
 
   const inputRef = useRef<HTMLInputElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
@@ -122,21 +129,30 @@ export function TimerDemo() {
       return
     }
     setNoPrediction(false)
+    setLastRun(null)
     setNow(Date.now())
     setView(startTimer(parsed.intent, parsed.seconds))
   }
 
+  function currentRun(timer: Running): Run {
+    return {
+      intent: timer.intent,
+      predicted: timer.predicted,
+      actual: elapsed,
+      remark: getCompletionRemark(errorPercent(timer.predicted, elapsed)),
+    }
+  }
+
   function finish() {
     if (!running) return
-    setView({
-      kind: 'done',
-      run: {
-        intent: running.intent,
-        predicted: running.predicted,
-        actual: elapsed,
-        remark: getCompletionRemark(errorPercent(running.predicted, elapsed)),
-      },
-    })
+    setView({ kind: 'done', run: currentRun(running) })
+  }
+
+  /** Finish from the bottom of the page: grade it there, and go straight to the next timer. */
+  function finishAndStartNext() {
+    if (running) setLastRun(currentRun(running))
+    setNow(Date.now())
+    setView(startTimer(NEXT_TASK.intent, NEXT_TASK.seconds))
   }
 
   function backToEdit() {
@@ -299,6 +315,11 @@ export function TimerDemo() {
           <CountdownDisplay remaining={remaining} accentColor="amber" className="h-14 text-5xl" />
         </button>
       )}
+
+      {endingEl && createPortal(
+        <Ending running={running} elapsed={elapsed} lastRun={lastRun} onFinish={finishAndStartNext} />,
+        endingEl,
+      )}
     </>
   )
 }
@@ -331,6 +352,62 @@ function DoneView({ run, onNext }: { run: Run; onNext: () => void }) {
         <ActionButton keys={['Enter']} label="Try another" onClick={onNext} />
       </div>
     </>
+  )
+}
+
+/** The end of the page, in the page's light style rather than the app's. */
+function Ending({ running, elapsed, lastRun, onFinish }: {
+  running: Running | null
+  elapsed: number
+  lastRun: Run | null
+  onFinish: () => void
+}) {
+  const onNext = running?.intent === NEXT_TASK.intent
+  const reading = running && !onNext
+
+  return (
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20">
+      {lastRun ? (
+        <>
+          <h2 className="text-4xl font-semibold tracking-tight text-ink">
+            You guessed {formatDuration(lastRun.predicted)}, and took {formatDuration(lastRun.actual)}.
+          </h2>
+          <p className="mt-4">That's {formatErrorPercent(errorPercent(lastRun.predicted, lastRun.actual))}.</p>
+          <p className="mt-1">{lastRun.remark}</p>
+        </>
+      ) : reading ? (
+        <>
+          <h2 className="text-4xl font-semibold tracking-tight text-ink">Done reading?</h2>
+          <div className="mt-8 flex flex-wrap gap-x-14 gap-y-6">
+            <div>
+              <p className="font-timer text-6xl font-bold text-ink">{formatCountdown(running.predicted)}</p>
+              <p className="mt-2">you gave <span className="text-ink">{running.intent || 'this'}</span></p>
+            </div>
+            <div>
+              <p className="font-timer text-6xl font-bold text-ink">{formatCountdown(elapsed)}</p>
+              <p className="mt-2">so far</p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <h2 className="text-4xl font-semibold tracking-tight text-ink">Next: get Pucoti.</h2>
+      )}
+
+      {onNext ? (
+        <p className="mt-10 text-2xl font-medium text-ink">
+          Next timer, started for you: <span className="text-accent-muted">get Pucoti</span>, 2 minutes.
+          It's in the corner.
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={onFinish}
+          className="mt-8 rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover"
+        >
+          {reading ? "I'm done" : 'Start: get Pucoti, 2 minutes'}
+        </button>
+      )}
+    </div>
   )
 }
 

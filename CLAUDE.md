@@ -342,14 +342,19 @@ Follow semantic versioning (patch for fixes, minor for new features, major for b
 pucoti.com is two builds deployed together to GitHub Pages by `.github/workflows/pages.yml`
 on every push to `main`:
 
-- **Landing page** (`site/`, `vite.site.config.ts`): static HTML styled with the app's own
-  Tailwind theme (`site/site.css` imports `src/index.css`). Its type scale is short on
-  purpose: h1, h2, h3 and a single `text-lg` body style in one colour; only the demo,
-  which mimics the app's UI, uses anything else. Text is kept to headlines and one-liners.
-  React runs only the hero demo, `site/TimerDemo.tsx`: a timer already running on
+- **Landing page** (`site/`, `vite.site.config.ts`): static HTML using the app's fonts
+  and tokens (`site/site.css` imports `src/index.css`) on a light paper theme defined in
+  `site.css`. Anything that is Pucoti itself (the demo, mock-ups, commands) keeps the
+  app's dark surface so it stands out; amber is too light for text on paper, so text
+  uses `accent-muted`. The type scale is short on purpose: h1, h2, h3 and a single
+  `text-xl` body style in one colour; only the app-like parts use anything else. Text is
+  kept to headlines and one-liners.
+  React runs only the demo, `site/TimerDemo.tsx`: a timer already running on
   "discover Pucoti" when the page opens, which docks to the corner of the window once
-  scrolled past. It reuses the app's parser and `CountdownDisplay` but keeps its own
-  state, because it must not touch the real app's IndexedDB on the same origin.
+  scrolled past. Through a portal it also fills `#ending`, which asks whether the
+  visitor is done reading, grades the guess, and starts the next timer, "get Pucoti",
+  right above the downloads. It reuses the app's parser and `CountdownDisplay` but keeps
+  its own state, because it must not touch the real app's IndexedDB on the same origin.
 - **Web app** under `/app/`: the web build sets `base: '/app/'`, so anything served from
   `public/` must be referenced through `import.meta.env.BASE_URL`, never as `/file`.
 

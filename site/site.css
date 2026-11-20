@@ -1,8 +1,26 @@
 /* The app's tokens, fonts and base styles, so the page and the app cannot drift apart */
 @import '../src/index.css';
 
+/* The page is light: paper and ink. Pucoti itself (the demo, mock-ups, commands) keeps the
+   app's dark surface, so it stands out. Amber is too light for text on paper, so text
+   uses accent-muted; plain accent stays for fills and for text on the dark surfaces. */
+@theme {
+  --color-paper: #f5efe3;
+  --color-paper-raised: #fbf8f1;
+  --color-line: #e3d9c6;
+  --color-ink: #1c1917;
+  --color-ink-muted: #57534e;
+}
+
 html {
+  background-color: var(--color-paper);
+  color-scheme: light;
   scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink-muted);
 }
 
 code {
