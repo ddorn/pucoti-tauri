@@ -343,10 +343,12 @@ pucoti.com is two builds deployed together to GitHub Pages by `.github/workflows
 on every push to `main`:
 
 - **Landing page** (`site/`, `vite.site.config.ts`): static HTML styled with the app's own
-  Tailwind theme (`site/site.css` imports `src/index.css`). React runs only the hero demo,
-  `site/TimerDemo.tsx`, which reuses the app's parser, `CountdownDisplay` and calibration
-  maths but keeps its own state: it needs a fast-forward the real timer must never have,
-  and it must not touch the real app's IndexedDB on the same origin.
+  Tailwind theme (`site/site.css` imports `src/index.css`). Its type scale is short on
+  purpose: h1, h2, h3, `text-lg` body and `text-base` secondary text, nothing smaller.
+  React runs only the hero demo, `site/TimerDemo.tsx`: a timer already running on
+  "discover Pucoti" when the page opens, which docks to the corner of the window once
+  scrolled past. It reuses the app's parser and `CountdownDisplay` but keeps its own
+  state, because it must not touch the real app's IndexedDB on the same origin.
 - **Web app** under `/app/`: the web build sets `base: '/app/'`, so anything served from
   `public/` must be referenced through `import.meta.env.BASE_URL`, never as `/file`.
 
