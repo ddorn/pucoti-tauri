@@ -76,17 +76,19 @@ jobs:
 
           ## Installation
 
+          Pucoti also runs in the browser, with nothing to install: https://pucoti.com/app/
+
           **Linux (Debian/Ubuntu)**:
           ```bash
-          sudo dpkg -i Pucoti___VERSION___amd64.deb
+          sudo apt install ./Pucoti_amd64.deb
           ```
 
           **Linux (Fedora/RHEL/openSUSE)**:
           ```bash
-          sudo rpm -i Pucoti-__VERSION__.x86_64.rpm
+          sudo rpm -i Pucoti_x86_64.rpm
           ```
 
-          **Windows**: Download and run `Pucoti___VERSION___x64_en-US.msi`
+          **Windows**: Download and run `Pucoti_x64.msi`
 
           **macOS**: See the [README](https://github.com/ddorn/pucoti-tauri#installation) for detailed installation instructions.
           HEREDOC
@@ -105,4 +107,7 @@ jobs:
           releaseBody: ${{ steps.changelog.outputs.RELEASE_NOTES }}
           releaseDraft: true
           prerelease: false
+          # No version in the file names, so that releases/latest/download/<file> is a
+          # stable link to the newest build. pucoti.com links to them that way.
+          assetNamePattern: '[name]_[arch][setup][ext]'
           args: ${{ matrix.args }}
