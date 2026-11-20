@@ -1,0 +1,10 @@
+/* The app's tokens, fonts and base styles, so the page and the app cannot drift apart */
+@import '../src/index.css';
+
+html {
+  scroll-behavior: smooth;
+}
+
+code {
+  font-family: var(--font-mono);
+}

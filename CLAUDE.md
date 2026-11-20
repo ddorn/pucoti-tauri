@@ -22,6 +22,13 @@ sudo make install PREFIX=/usr/local # system-wide
 make uninstall
 ```
 
+### Website (pucoti.com)
+```bash
+npm run dev:site         # Landing page dev server (the app's /app/ link is dead here)
+npm run build:pages      # Landing page + web app, into dist-site/
+npm run preview:pages    # Serve dist-site/ as it will be deployed
+```
+
 ### Frontend Development
 ```bash
 npm run lint             # Run ESLint
@@ -329,6 +336,23 @@ Follow semantic versioning (patch for fixes, minor for new features, major for b
 6. **Push with tags**: `git push --follow-tags`
 
 **If the build fails after tagging**: Since no release was published, move the tag instead of creating a patch version. Fix the issue, commit, then: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`, re-tag with `git tag vX.Y.Z`, and push again. Also delete any partial draft release on GitHub before re-triggering.
+
+## Website
+
+pucoti.com is two builds deployed together to GitHub Pages by `.github/workflows/pages.yml`
+on every push to `main`:
+
+- **Landing page** (`site/`, `vite.site.config.ts`): static HTML styled with the app's own
+  Tailwind theme (`site/site.css` imports `src/index.css`). React runs only the hero demo,
+  `site/TimerDemo.tsx`, which reuses the app's parser, `CountdownDisplay` and calibration
+  maths but keeps its own state: it needs a fast-forward the real timer must never have,
+  and it must not touch the real app's IndexedDB on the same origin.
+- **Web app** under `/app/`: the web build sets `base: '/app/'`, so anything served from
+  `public/` must be referenced through `import.meta.env.BASE_URL`, never as `/file`.
+
+Download links point at `releases/latest/download/<file>`. That only works because
+`publish.yml` gives release files version-free names (`assetNamePattern`), so renaming
+them breaks the site.
 
 ## Notes
 - Keep this file (CLAUDE.MD) up to date. Document architecture changes, new important features, new folders.

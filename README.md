@@ -42,23 +42,25 @@ On GNOME, Pucoti can show timer status in the top panel. The extension is includ
 
 ## Installation
 
-Download the latest release from [GitHub Releases](https://github.com/ddorn/pucoti-tauri/releases).
+Pucoti runs in the browser at [pucoti.com/app](https://pucoti.com/app/), with nothing to install. The desktop app adds the small corner window, the GNOME panel indicator and custom commands.
+
+Download the latest release from [pucoti.com](https://pucoti.com/#download) or [GitHub Releases](https://github.com/ddorn/pucoti-tauri/releases).
 
 ### Linux
 
 **Debian/Ubuntu (.deb)**:
 ```bash
-sudo apt install ./Pucoti_*_amd64.deb
+sudo apt install ./Pucoti_amd64.deb
 ```
 
 **Fedora/RHEL/openSUSE (.rpm)**:
 ```bash
-sudo rpm -i Pucoti-*.x86_64.rpm
+sudo rpm -i Pucoti_x86_64.rpm
 ```
 
 ### Windows
 
-Download and run `Pucoti_*_x64_en-US.msi`. Follow the installation wizard.
+Download and run `Pucoti_x64.msi`. Follow the installation wizard.
 
 ### macOS
 

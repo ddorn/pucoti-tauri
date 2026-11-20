@@ -9,6 +9,7 @@ export default defineConfig([
   {
     ignores: [
       'dist/**',
+      'dist-site/**',
       'node_modules/**',
       'src-tauri/target/**',
       'src-tauri/gen/**',
@@ -17,7 +18,7 @@ export default defineConfig([
     ],
   },
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'site/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,

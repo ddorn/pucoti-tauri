@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pucoti · a timer that teaches you how long things take</title>
+    <meta name="description" content="Pucoti is a countdown timer that asks for a prediction before you start and shows how far off you were when you finish. Free and open source, for Linux, Windows, macOS and the browser." />
+    <meta name="theme-color" content="#0f0f0f" />
+    <meta property="og:title" content="Pucoti" />
+    <meta property="og:description" content="A countdown timer that teaches you how long things take." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pucoti.com/" />
+    <link rel="icon" type="image/png" href="/icon-128.png" />
+    <link rel="canonical" href="https://pucoti.com/" />
+  </head>
+  <body class="dark">
+    <header class="sticky top-0 z-10 border-b border-zinc-800/60 bg-surface/80 backdrop-blur">
+      <nav class="mx-auto max-w-6xl flex items-center justify-between gap-4 px-4 sm:px-6 h-14">
+        <a href="/" class="flex items-center gap-2 font-semibold text-zinc-100">
+          <img src="/icon-128.png" alt="" class="size-6" />
+          Pucoti
+        </a>
+        <div class="flex items-center gap-1 sm:gap-4 text-sm">
+          <a href="#how" class="hidden sm:inline text-zinc-400 hover:text-zinc-100">How it works</a>
+          <a href="#download" class="hidden sm:inline text-zinc-400 hover:text-zinc-100">Download</a>
+          <a href="https://github.com/ddorn/pucoti-tauri" class="text-zinc-400 hover:text-zinc-100 px-2">GitHub</a>
+          <a href="/app/" class="rounded-lg bg-accent px-3 py-1.5 font-medium text-black hover:bg-accent-hover">Open app</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero: the pitch on the left, the working demo on the right -->
+      <section class="mx-auto max-w-6xl px-4 sm:px-6 pt-14 sm:pt-20 pb-16 grid lg:grid-cols-[1fr_1.1fr] gap-12 items-center">
+        <div>
+          <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.1]">
+            Get better at guessing how long things take.
+          </h1>
+          <p class="mt-6 text-lg text-zinc-400 leading-relaxed">
+            Pucoti is a countdown timer that asks for a prediction before you start.
+            When you finish, it shows how far off you were. After a few dozen tasks it
+            can tell you how much to add to your estimates, and you'll find you need to
+            add less.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/app/" class="rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover">
+              Open in your browser
+            </a>
+            <a id="hero-download" href="#download" class="rounded-lg border border-zinc-700 px-5 py-3 font-medium text-zinc-100 hover:border-zinc-500">
+              Download
+            </a>
+          </div>
+          <p class="mt-4 text-sm text-zinc-500">
+            Free and open source. No account, and your data stays on your machine.
+          </p>
+        </div>
+
+        <div>
+          <div id="demo">
+            <img src="../docs/screenshots/timer.webp" alt="The Pucoti timer counting down on a task" class="rounded-2xl border border-zinc-800" />
+          </div>
+          <p class="mt-3 text-sm text-zinc-500 text-center">
+            This one runs. Type a task and a guess, press Enter. Fast-forward if you'd rather not wait.
+          </p>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how" class="border-t border-zinc-800/60">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20">
+          <h2 class="text-3xl font-semibold tracking-tight">Predict, work, compare</h2>
+          <div class="mt-10 grid md:grid-cols-3 gap-8">
+            <div>
+              <p class="font-mono text-accent">01</p>
+              <h3 class="mt-2 text-xl font-medium">Say how long</h3>
+              <p class="mt-2 text-zinc-400 leading-relaxed">
+                Type what you're about to do and your guess in one line:
+                <code class="text-zinc-200">write the intro 25m</code>. Pucoti treats it as
+                an 80% guess, the time you'd bet you'll be done by.
+              </p>
+            </div>
+            <div>
+              <p class="font-mono text-accent">02</p>
+              <h3 class="mt-2 text-xl font-medium">Do the thing</h3>
+              <p class="mt-2 text-zinc-400 leading-relaxed">
+                The countdown and your task stay on screen. There's no pause button,
+                because the clock doesn't stop for you either. At zero a bell rings and
+                the timer keeps going, in red.
+              </p>
+            </div>
+            <div>
+              <p class="font-mono text-accent">03</p>
+              <h3 class="mt-2 text-xl font-medium">See how far off you were</h3>
+              <p class="mt-2 text-zinc-400 leading-relaxed">
+                Press Enter when you're done. Pucoti puts your prediction next to what
+                happened, and every task you finish goes into your calibration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="border-t border-zinc-800/60">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20 grid lg:grid-cols-[1fr_1.6fr] gap-12 items-center">
+          <div>
+            <h2 class="text-3xl font-semibold tracking-tight">Your estimates, measured</h2>
+            <p class="mt-4 text-zinc-400 leading-relaxed">
+              Most people underestimate, and most people don't know by how much. The
+              stats page answers it with one number: what to add to your estimates to be
+              on time 80% of the time.
+            </p>
+            <p class="mt-4 text-zinc-400 leading-relaxed">
+              Below that, it breaks your accuracy down by task length and by week, so you
+              can see whether you're improving and where you're furthest off.
+            </p>
+          </div>
+          <img src="../docs/screenshots/stats.webp" alt="Pucoti's stats page: add 14% to your estimates to be on time 80% of the time" loading="lazy" class="rounded-2xl border border-zinc-800" />
+        </div>
+      </section>
+
+      <!-- Desktop -->
+      <section class="border-t border-zinc-800/60">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20 grid lg:grid-cols-[1.6fr_1fr] gap-12 items-center">
+          <img src="../docs/screenshots/small-mode.webp" alt="Pucoti shrunk to a small window in the corner of the screen" loading="lazy" class="rounded-2xl border border-zinc-800 lg:order-first order-last" />
+          <div>
+            <h2 class="text-3xl font-semibold tracking-tight">On the desktop, it sits in the corner</h2>
+            <p class="mt-4 text-zinc-400 leading-relaxed">
+              Once a timer starts, the desktop app can shrink to a small window that floats
+              over everything else. Your task stays in view while you work, which turns out
+              to be most of what keeps you on it.
+            </p>
+            <p class="mt-4 text-zinc-400 leading-relaxed">
+              It also follows you across workspaces on Sway and niri, can show the timer in
+              the GNOME top bar, and runs your own commands when a timer ends.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Web vs desktop -->
+      <section class="border-t border-zinc-800/60">
+        <div class="mx-auto max-w-4xl px-4 sm:px-6 py-20">
+          <h2 class="text-3xl font-semibold tracking-tight">Browser or desktop?</h2>
+          <p class="mt-4 text-zinc-400 leading-relaxed">
+            The web version is the same timer and the same stats, with nothing to install.
+            Start there. Get the desktop app when you want the timer in a corner of your
+            screen instead of in a tab.
+          </p>
+          <div class="mt-8 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="text-zinc-500">
+                <tr class="border-b border-zinc-800">
+                  <th class="py-3 pr-4 font-normal"></th>
+                  <th class="py-3 px-4 font-medium text-zinc-300">Browser</th>
+                  <th class="py-3 pl-4 font-medium text-zinc-300">Desktop</th>
+                </tr>
+              </thead>
+              <tbody class="text-zinc-400 [&>tr]:border-b [&>tr]:border-zinc-800/60">
+                <tr><td class="py-3 pr-4 text-zinc-200">Timer, predictions, stats</td><td class="px-4">Yes</td><td class="pl-4">Yes</td></tr>
+                <tr><td class="py-3 pr-4 text-zinc-200">Bell and notifications</td><td class="px-4">While the tab is open</td><td class="pl-4">Yes</td></tr>
+                <tr><td class="py-3 pr-4 text-zinc-200">Small window in the corner</td><td class="px-4">No</td><td class="pl-4">Yes</td></tr>
+                <tr><td class="py-3 pr-4 text-zinc-200">Works offline</td><td class="px-4">After the first visit</td><td class="pl-4">Yes</td></tr>
+                <tr><td class="py-3 pr-4 text-zinc-200">Your own commands</td><td class="px-4">No</td><td class="pl-4">Yes</td></tr>
+                <tr><td class="py-3 pr-4 text-zinc-200">Where sessions are kept</td><td class="px-4">In this browser, exportable as CSV</td><td class="pl-4">A CSV file on disk</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4 text-sm text-zinc-500">
+            Browser data lives in that one browser. Clearing site data deletes it, so export
+            your sessions now and then.
+          </p>
+        </div>
+      </section>
+
+      <!-- Download -->
+      <section id="download" class="border-t border-zinc-800/60">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20">
+          <h2 class="text-3xl font-semibold tracking-tight">Download</h2>
+          <p class="mt-4 text-zinc-400">
+            Latest release, built from the
+            <a href="https://github.com/ddorn/pucoti-tauri" class="text-accent hover:underline">source on GitHub</a>.
+            Older versions are on the
+            <a href="https://github.com/ddorn/pucoti-tauri/releases" class="text-accent hover:underline">releases page</a>.
+          </p>
+
+          <div class="mt-10 grid md:grid-cols-3 gap-6">
+            <div id="download-linux" class="min-w-0 rounded-2xl border border-zinc-800 bg-surface-raised p-6">
+              <h3 class="text-xl font-medium">Linux</h3>
+              <ul class="mt-4 space-y-2">
+                <li><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_amd64.deb" class="text-accent hover:underline">Debian, Ubuntu (.deb)</a></li>
+                <li><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x86_64.rpm" class="text-accent hover:underline">Fedora, openSUSE (.rpm)</a></li>
+              </ul>
+              <p class="mt-4 text-sm text-zinc-400">Arch, from the AUR:</p>
+              <pre class="mt-2 rounded-lg bg-surface px-3 py-2 text-sm overflow-x-auto"><code>yay -S pucoti-bin</code></pre>
+            </div>
+
+            <div id="download-windows" class="min-w-0 rounded-2xl border border-zinc-800 bg-surface-raised p-6">
+              <h3 class="text-xl font-medium">Windows</h3>
+              <ul class="mt-4 space-y-2">
+                <li><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x64.msi" class="text-accent hover:underline">Installer (.msi)</a></li>
+              </ul>
+              <p class="mt-4 text-sm text-zinc-400">
+                The installer isn't signed, so Windows may warn you before running it.
+                Choose "More info", then "Run anyway".
+              </p>
+            </div>
+
+            <div id="download-macos" class="min-w-0 rounded-2xl border border-zinc-800 bg-surface-raised p-6">
+              <h3 class="text-xl font-medium">macOS</h3>
+              <p class="mt-4 text-sm text-zinc-400">
+                The app isn't signed, so macOS won't open it from a plain download. Install
+                it from a terminal instead. For Apple Silicon:
+              </p>
+              <pre class="mt-2 rounded-lg bg-surface px-3 py-2 text-xs overflow-x-auto"><code>curl -L https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_aarch64.app.tar.gz \
+  | tar -xz -C /Applications
+xattr -cr /Applications/Pucoti.app
+open /Applications/Pucoti.app</code></pre>
+              <p class="mt-3 text-sm text-zinc-500">
+                On an Intel Mac, replace <code>aarch64</code> with <code>x64</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-zinc-800/60">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-8 flex flex-wrap items-center justify-between gap-4 text-sm text-zinc-500">
+        <p>Pucoti is free software under the MIT license.</p>
+        <div class="flex gap-6">
+          <a href="https://github.com/ddorn/pucoti-tauri" class="hover:text-zinc-300">Source</a>
+          <a href="https://github.com/ddorn/pucoti-tauri/issues" class="hover:text-zinc-300">Report a problem</a>
+          <a href="/app/" class="hover:text-zinc-300">Open app</a>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>
