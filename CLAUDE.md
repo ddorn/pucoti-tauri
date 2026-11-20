@@ -344,7 +344,8 @@ on every push to `main`:
 
 - **Landing page** (`site/`, `vite.site.config.ts`): static HTML styled with the app's own
   Tailwind theme (`site/site.css` imports `src/index.css`). Its type scale is short on
-  purpose: h1, h2, h3, `text-lg` body and `text-base` secondary text, nothing smaller.
+  purpose: h1, h2, h3 and a single `text-lg` body style in one colour; only the demo,
+  which mimics the app's UI, uses anything else. Text is kept to headlines and one-liners.
   React runs only the hero demo, `site/TimerDemo.tsx`: a timer already running on
   "discover Pucoti" when the page opens, which docks to the corner of the window once
   scrolled past. It reuses the app's parser and `CountdownDisplay` but keeps its own

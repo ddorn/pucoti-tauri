@@ -288,13 +288,14 @@ export function TimerDemo() {
           tabIndex={docked ? 0 : -1}
           title="Back to the timer"
           className={clsx(
-            'fixed bottom-4 right-4 z-20 w-56 rounded-xl border border-zinc-800 bg-surface-raised/95 backdrop-blur',
-            'px-4 pt-3 pb-1 shadow-2xl shadow-black/60 text-left',
+            // Square, with the accent border: it stands for the app's own corner window
+            'fixed bottom-4 right-4 z-20 w-56 border-2 border-accent bg-surface',
+            'px-4 pt-3 pb-2 shadow-2xl shadow-black/60 text-center',
             'transition duration-300 motion-reduce:transition-none',
             docked ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
           )}
         >
-          <p className="text-base font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
+          <p className="text-lg font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
           <CountdownDisplay remaining={remaining} accentColor="amber" className="h-14 text-5xl" />
         </button>
       )}
