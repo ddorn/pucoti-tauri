@@ -32,3 +32,10 @@ body {
 code {
   font-family: var(--font-mono);
 }
+
+/* The app's big headings, as on its Settings screen: bold, with an amber shadow */
+h1,
+h2 {
+  font-weight: 700;
+  text-shadow: 0 max(0.05em, 2px) 1px var(--color-accent);
+}
