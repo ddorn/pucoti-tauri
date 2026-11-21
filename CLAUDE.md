@@ -351,10 +351,12 @@ on every push to `main`:
   kept to headlines and one-liners.
   React runs only the demo, `site/TimerDemo.tsx`: a timer already running on
   "discover Pucoti" when the page opens, which docks to the corner of the window once
-  scrolled past. Through a portal it also fills `#ending`, which asks whether the
-  visitor is done reading, grades the guess, and starts the next timer, "get Pucoti",
-  right above the downloads. It reuses the app's parser and `CountdownDisplay` but keeps
-  its own state, because it must not touch the real app's IndexedDB on the same origin.
+  its digits scroll under the header. Through a portal it also fills `#ending`, which
+  asks whether the visitor is done reading, comments on how long they took against the
+  5 minutes we gave them, and starts the next timer, "download Pucoti", right above the
+  downloads. It reuses the app's parser and `CountdownDisplay` but keeps its own state,
+  because it must not touch the real app's IndexedDB on the same origin. Tailwind only
+  scans `site/`, so `site/site.css` lists the app files the demo imports with `@source`.
 - **Web app** under `/app/`: the web build sets `base: '/app/'`, so anything served from
   `public/` must be referenced through `import.meta.env.BASE_URL`, never as `/file`.
 

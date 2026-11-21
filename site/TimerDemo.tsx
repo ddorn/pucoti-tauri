@@ -87,15 +87,16 @@ export function TimerDemo() {
     }
   }, [running, remaining])
 
-  // Dock once most of the demo has scrolled up out of view. Only upwards: on a phone the
-  // demo starts below the fold, and a corner copy of something just below would be noise.
+  // Dock once the middle of the demo, where the digits are, goes under the sticky header
+  // (64px). Only upwards: on a phone the demo starts below the fold, and a corner copy of
+  // something just below would be noise.
   // A scroll listener rather than an IntersectionObserver, which never fires when the page
   // jumps from below the demo to above it (a reload halfway down, an anchor link).
   // Browsers already fire scroll at most once per frame, so there is nothing to throttle.
   useEffect(() => {
     const update = () => {
       const rect = frameRef.current?.getBoundingClientRect()
-      if (rect) setDocked(rect.bottom < rect.height * 0.25)
+      if (rect) setDocked(rect.top + rect.height / 2 < 64)
     }
     update()
     window.addEventListener('scroll', update, { passive: true })
@@ -305,14 +306,15 @@ export function TimerDemo() {
           title="Back to the timer"
           className={clsx(
             // Square, with the accent border: it stands for the app's own corner window
-            'fixed bottom-4 right-4 z-20 w-56 border-2 border-accent bg-surface',
-            'px-4 pt-3 pb-2 shadow-2xl shadow-black/60 text-center',
+            'fixed bottom-4 right-4 z-20 w-56 sm:w-72 border-2 border-accent bg-surface',
+            'px-5 pt-3 pb-3 shadow-2xl shadow-black/60 text-center',
             'transition duration-300 motion-reduce:transition-none',
             docked ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
           )}
         >
-          <p className="text-lg font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
-          <CountdownDisplay remaining={remaining} accentColor="amber" className="h-14 text-5xl" />
+          <p className="text-lg sm:text-xl font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
+          {/* ! because CountdownDisplay's own h-full would win otherwise */}
+          <CountdownDisplay remaining={remaining} accentColor="amber" className="h-14! text-5xl sm:h-20! sm:text-7xl" />
         </button>
       )}
 
@@ -373,8 +375,11 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
         <>
           <h2 className="text-4xl font-semibold tracking-tight text-ink">Done reading?</h2>
           <p className="mt-4">
-            {running.intent === FIRST_TASK.intent ? 'We started a timer when you arrived: ' : 'Your timer: '}
-            <span className="text-ink">{running.intent || 'untitled'}</span>, {formatDuration(running.predicted)}.
+            {running.intent === FIRST_TASK.intent ? (
+              <>We gave you {spoken(running.predicted)} to discover Pucoti.</>
+            ) : (
+              <>Your timer: <span className="text-ink">{running.intent || 'untitled'}</span>, {spoken(running.predicted)}.</>
+            )}
           </p>
           <p className="mt-8 font-timer text-6xl font-bold text-ink">{formatCountdown(elapsed)}</p>
           <p className="mt-2">so far</p>
@@ -386,7 +391,7 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
       {onNext ? (
         <p className="mt-10 text-2xl font-medium text-ink">
           Next timer, started for you: <span className="text-accent-muted">{NEXT_TASK.intent}</span>,
-          {' '}{formatDuration(NEXT_TASK.seconds)}. It's in the corner.
+          {' '}{spoken(NEXT_TASK.seconds)}. It's in the corner.
         </p>
       ) : (
         <button
@@ -394,36 +399,55 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
           onClick={onFinish}
           className="mt-8 rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover"
         >
-          {reading ? "I'm done" : `Start: ${NEXT_TASK.intent}, ${formatDuration(NEXT_TASK.seconds)}`}
+          {reading ? "I'm done" : `Start: ${NEXT_TASK.intent}, ${spoken(NEXT_TASK.seconds)}`}
         </button>
       )}
     </div>
   )
 }
 
-/** How long the visit took. The first guess was ours, not the visitor's, so it says so. */
+/**
+ * How long the visit took. The first timer's 5 minutes were a time we gave the visitor,
+ * not their prediction, so that result is about their reading, not their guessing.
+ */
 function Result({ run }: { run: Run }) {
-  const ours = run.intent === FIRST_TASK.intent
-  const who = ours ? 'we' : 'you'
-  const error = errorPercent(run.predicted, run.actual)
-  const pct = Math.abs(error).toFixed(0)
-  const compared = error > 0 ? `${pct}% longer than ${who} thought`
-    : error < 0 ? `${pct}% less than ${who} thought`
-    : `exactly what ${who} thought`
+  if (run.intent !== FIRST_TASK.intent) {
+    const error = errorPercent(run.predicted, run.actual)
+    return (
+      <>
+        <h2 className="text-4xl font-semibold tracking-tight text-ink">
+          {run.intent || 'That'} took {spoken(run.actual)}.
+        </h2>
+        <p className="mt-4">You guessed {spoken(run.predicted)}: {formatErrorPercent(error)}.</p>
+        <p className="mt-1">{run.remark}</p>
+      </>
+    )
+  }
+
+  const ratio = run.actual / run.predicted
+  const [title, comment] =
+    ratio < 0.3 ? ["Whoa, you're fast.", 'Already convinced, then.']
+    : ratio <= 1 ? ['With time to spare.', 'Could you have done that faster?']
+    : ratio <= 2 ? ['A bit over.', "That's the planning fallacy, but ours."]
+    : ['You must really like Pucoti.', "We'll take it."]
 
   return (
     <>
-      <h2 className="text-4xl font-semibold tracking-tight text-ink">
-        {ours
-          ? `You spent ${formatDuration(run.actual)} discovering Pucoti.`
-          : `${run.intent || 'That'} took ${formatDuration(run.actual)}.`}
-      </h2>
+      <h2 className="text-4xl font-semibold tracking-tight text-ink">{title}</h2>
       <p className="mt-4">
-        {ours ? 'We' : 'You'} guessed {formatDuration(run.predicted)}, so that's {compared}.
+        {spoken(run.actual)} on the page, for the {spoken(run.predicted)} we gave you. {comment}
       </p>
-      {!ours && <p className="mt-1">{run.remark}</p>}
     </>
   )
+}
+
+/** A duration for a sentence: "5 minutes", "1 minute 30 seconds", "42 seconds". */
+function spoken(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const rest = seconds % 60
+  const unit = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
+  const parts = [minutes && unit(minutes, 'minute'), (rest || !minutes) && unit(rest, 'second')]
+  return parts.filter(Boolean).join(' ')
 }
 
 function ActionButton({ keys, label, onClick, primary }: {
