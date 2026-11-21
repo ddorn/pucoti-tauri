@@ -141,7 +141,6 @@
               <div class="mt-5 flex flex-wrap gap-1" role="group" aria-label="Your distribution">
                   <button type="button" data-pick="linux:deb" class="rounded-md px-3 py-1">Debian, Ubuntu</button>
                   <button type="button" data-pick="linux:rpm" class="rounded-md px-3 py-1">Fedora</button>
-                  <button type="button" data-pick="linux:arch" class="rounded-md px-3 py-1">Arch</button>
               </div>
               <div data-panel="linux:deb" class="mt-4">
                 <p><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_amd64.deb" class="text-accent-muted underline underline-offset-4 hover:text-ink">Download the .deb</a>, then open it to install, or run:</p>
@@ -154,13 +153,6 @@
                 <p><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x86_64.rpm" class="text-accent-muted underline underline-offset-4 hover:text-ink">Download the .rpm</a>, then open it to install, or run:</p>
                 <div class="mt-3 flex items-start gap-2 rounded-lg bg-surface pl-3 pr-1 py-1 text-zinc-400">
                   <pre class="min-w-0 flex-1 overflow-x-auto py-1 text-lg"><code class="text-zinc-100">sudo dnf install ~/Downloads/Pucoti_x86_64.rpm</code></pre>
-                  <button type="button" data-copy class="shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
-                </div>
-              </div>
-              <div data-panel="linux:arch" class="mt-4">
-                <p>It's on the AUR:</p>
-                <div class="mt-3 flex items-start gap-2 rounded-lg bg-surface pl-3 pr-1 py-1 text-zinc-400">
-                  <pre class="min-w-0 flex-1 overflow-x-auto py-1 text-lg"><code class="text-zinc-100">yay -S pucoti-bin</code></pre>
                   <button type="button" data-copy class="shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
                 </div>
               </div>

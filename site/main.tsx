@@ -84,7 +84,7 @@ document.querySelectorAll<HTMLElement>('[data-pick]').forEach(button => {
   const [group, value] = button.dataset.pick!.split(':')
   button.addEventListener('click', () => pick(group, value))
 })
-// Some browsers name the distribution in their user agent; Arch never shows up there
+// Some browsers name the distribution in their user agent
 pick('linux', /Fedora|Red Hat/i.test(navigator.userAgent) ? 'rpm' : 'deb')
 pick('mac', os === 'macos' ? detectMacArch() : 'aarch64')
 
