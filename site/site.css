@@ -1,6 +1,12 @@
 /* The app's tokens, fonts and base styles, so the page and the app cannot drift apart */
 @import '../src/index.css';
 
+/* Tailwind only scans site/, so the app files the demo imports are listed here, or their
+   classes (the countdown's overtime red, for one) are never generated */
+@source '../src/components/CountdownDisplay.tsx';
+@source '../src/components/Kbd.tsx';
+@source '../src/lib/completion-remarks.tsx';
+
 /* The page is light: paper and ink. Pucoti itself (the demo, mock-ups, commands) keeps the
    app's dark surface, so it stands out. Amber is too light for text on paper, so text
    uses accent-muted; plain accent stays for fills and for text on the dark surfaces. */

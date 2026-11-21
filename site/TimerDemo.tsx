@@ -12,7 +12,7 @@ import { formatErrorPercent, getCompletionRemark } from '../src/lib/completion-r
  * opens, timing the visit itself, and docks to the corner of the window once scrolled
  * past, the way the desktop app sits in a corner of the screen. At the bottom of the page
  * it asks whether the visitor is done reading, grades the guess, and starts the next
- * timer: getting Pucoti.
+ * timer: downloading Pucoti.
  *
  * It uses the app's parser, countdown display and completion remarks, but keeps its own
  * small state rather than the app's timer machine: nothing here is saved, and it must
@@ -20,7 +20,7 @@ import { formatErrorPercent, getCompletionRemark } from '../src/lib/completion-r
  */
 
 const FIRST_TASK = { intent: 'discover Pucoti', seconds: 5 * 60 }
-const NEXT_TASK = { intent: 'get Pucoti', seconds: 2 * 60 }
+const NEXT_TASK = { intent: 'download Pucoti', seconds: 5 * 60 }
 const TICK_MS = 200
 const EXAMPLES = ['reply to emails 10m', 'write the intro 25m', 'fix the login bug 45m']
 
@@ -368,35 +368,25 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 py-20">
       {lastRun ? (
-        <>
-          <h2 className="text-4xl font-semibold tracking-tight text-ink">
-            You guessed {formatDuration(lastRun.predicted)}, and took {formatDuration(lastRun.actual)}.
-          </h2>
-          <p className="mt-4">That's {formatErrorPercent(errorPercent(lastRun.predicted, lastRun.actual))}.</p>
-          <p className="mt-1">{lastRun.remark}</p>
-        </>
+        <Result run={lastRun} />
       ) : reading ? (
         <>
           <h2 className="text-4xl font-semibold tracking-tight text-ink">Done reading?</h2>
-          <div className="mt-8 flex flex-wrap gap-x-14 gap-y-6">
-            <div>
-              <p className="font-timer text-6xl font-bold text-ink">{formatCountdown(running.predicted)}</p>
-              <p className="mt-2">you gave <span className="text-ink">{running.intent || 'this'}</span></p>
-            </div>
-            <div>
-              <p className="font-timer text-6xl font-bold text-ink">{formatCountdown(elapsed)}</p>
-              <p className="mt-2">so far</p>
-            </div>
-          </div>
+          <p className="mt-4">
+            {running.intent === FIRST_TASK.intent ? 'We started a timer when you arrived: ' : 'Your timer: '}
+            <span className="text-ink">{running.intent || 'untitled'}</span>, {formatDuration(running.predicted)}.
+          </p>
+          <p className="mt-8 font-timer text-6xl font-bold text-ink">{formatCountdown(elapsed)}</p>
+          <p className="mt-2">so far</p>
         </>
       ) : (
-        <h2 className="text-4xl font-semibold tracking-tight text-ink">Next: get Pucoti.</h2>
+        <h2 className="text-4xl font-semibold tracking-tight text-ink">Next: download Pucoti.</h2>
       )}
 
       {onNext ? (
         <p className="mt-10 text-2xl font-medium text-ink">
-          Next timer, started for you: <span className="text-accent-muted">get Pucoti</span>, 2 minutes.
-          It's in the corner.
+          Next timer, started for you: <span className="text-accent-muted">{NEXT_TASK.intent}</span>,
+          {' '}{formatDuration(NEXT_TASK.seconds)}. It's in the corner.
         </p>
       ) : (
         <button
@@ -404,10 +394,35 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
           onClick={onFinish}
           className="mt-8 rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover"
         >
-          {reading ? "I'm done" : 'Start: get Pucoti, 2 minutes'}
+          {reading ? "I'm done" : `Start: ${NEXT_TASK.intent}, ${formatDuration(NEXT_TASK.seconds)}`}
         </button>
       )}
     </div>
+  )
+}
+
+/** How long the visit took. The first guess was ours, not the visitor's, so it says so. */
+function Result({ run }: { run: Run }) {
+  const ours = run.intent === FIRST_TASK.intent
+  const who = ours ? 'we' : 'you'
+  const error = errorPercent(run.predicted, run.actual)
+  const pct = Math.abs(error).toFixed(0)
+  const compared = error > 0 ? `${pct}% longer than ${who} thought`
+    : error < 0 ? `${pct}% less than ${who} thought`
+    : `exactly what ${who} thought`
+
+  return (
+    <>
+      <h2 className="text-4xl font-semibold tracking-tight text-ink">
+        {ours
+          ? `You spent ${formatDuration(run.actual)} discovering Pucoti.`
+          : `${run.intent || 'That'} took ${formatDuration(run.actual)}.`}
+      </h2>
+      <p className="mt-4">
+        {ours ? 'We' : 'You'} guessed {formatDuration(run.predicted)}, so that's {compared}.
+      </p>
+      {!ours && <p className="mt-1">{run.remark}</p>}
+    </>
   )
 }
 

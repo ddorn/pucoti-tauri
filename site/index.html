@@ -62,24 +62,40 @@
         <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20">
           <h2 class="text-4xl font-semibold tracking-tight text-ink">A small loop to build your own practice on.</h2>
 
+          <!-- Each card is text, then a visual pushed to the bottom, so visuals in a row line
+               up even when one card's text runs a line longer -->
           <div class="mt-12 grid md:grid-cols-2 gap-x-12 gap-y-16">
-            <div>
+            <div class="flex flex-col">
               <h3 class="text-2xl font-medium text-ink">Do one thing at a time.</h3>
-              <p class="mt-2">What you're doing stays in a corner of the screen, over everything else.</p>
-              <img src="../docs/screenshots/small-mode.webp" alt="Pucoti as a small window in the corner of the screen, over a code editor" loading="lazy" class="mt-6 w-full aspect-[3/2] object-cover object-right-bottom rounded-xl border border-line" />
+              <p class="mt-2 mb-6">What you're doing stays in a corner of the screen, over everything else.</p>
+              <img src="../docs/screenshots/small-mode.webp" alt="Pucoti as a small window in the corner of the screen, over a code editor" loading="lazy" class="mt-auto w-full aspect-[3/2] object-cover object-right-bottom rounded-xl border border-line" />
             </div>
 
-            <div>
+            <div class="flex flex-col">
+              <h3 class="text-2xl font-medium text-ink">Reflect after every task.</h3>
+              <p class="mt-2 mb-6">You see how far off you were, while you still remember why.</p>
+              <div class="mt-auto aspect-[3/2] rounded-xl bg-surface p-5 sm:p-8 flex flex-col justify-center text-center">
+                <p class="text-accent font-medium">write the intro</p>
+                <p class="mt-1 text-base text-zinc-400">Predicted 25m, took 38m</p>
+                <p class="mt-2 text-3xl font-semibold text-zinc-100">52% over</p>
+                <div class="mt-5 space-y-2 text-lg text-zinc-200 italic">
+                  <p>How could I have seen that this would take longer?</p>
+                  <p><a href="https://www.lesswrong.com/posts/rYq6joCrZ8m62m7ej/how-could-i-have-thought-that-faster" class="underline decoration-accent underline-offset-4 hover:text-accent">How could I have done that faster?</a></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col">
               <h3 class="text-2xl font-medium text-ink">Learn how long things really take you.</h3>
-              <p class="mt-2">Everyone falls for the <a href="https://www.lesswrong.com/posts/CPm5LTwHrvBJCa9h5/planning-fallacy" class="text-accent-muted underline underline-offset-4 hover:text-ink">planning fallacy</a>. Pucoti measures yours, and tells you how much to add.</p>
-              <img src="../docs/screenshots/stats.webp" alt="Pucoti's stats: add 14% to your estimates to be on time 80% of the time" loading="lazy" class="mt-6 w-full aspect-[3/2] object-cover object-top rounded-xl border border-line" />
+              <p class="mt-2 mb-6">Everyone falls for the <a href="https://www.lesswrong.com/posts/CPm5LTwHrvBJCa9h5/planning-fallacy" class="text-accent-muted underline underline-offset-4 hover:text-ink">planning fallacy</a>. Guess, compare, ask why, and your guesses get better. The stats show by how much.</p>
+              <img src="../docs/screenshots/stats.webp" alt="Pucoti's stats: add 14% to your estimates to be on time 80% of the time" loading="lazy" class="mt-auto w-full aspect-[3/2] object-cover object-top rounded-xl border border-line" />
             </div>
 
-            <div>
+            <div class="flex flex-col">
               <h3 class="text-2xl font-medium text-ink">Know where your day went.</h3>
-              <p class="mt-2">Every timer is kept: what you meant to do, and how long it took.</p>
+              <p class="mt-2 mb-6">Every timer is kept: what you meant to do, and how long it took.</p>
               <!-- A mock-up of the history: what a morning looks like -->
-              <div class="mt-6 aspect-[3/2] rounded-xl bg-surface p-5 sm:p-8 font-mono text-base text-zinc-400 flex flex-col justify-center gap-3 sm:gap-4" aria-label="An example morning in Pucoti's history">
+              <div class="mt-auto aspect-[3/2] rounded-xl bg-surface p-5 sm:p-8 font-mono text-base text-zinc-400 flex flex-col justify-center gap-3 sm:gap-4" aria-label="An example morning in Pucoti's history">
                 <p class="text-zinc-500">Today</p>
                 <div class="flex gap-4"><span class="hidden sm:inline text-zinc-600">09:05</span><span class="flex-1 min-w-0 truncate text-zinc-200">reply to emails</span><span class="shrink-0">10m → <span class="text-red-400">14m</span></span></div>
                 <div class="flex gap-4"><span class="hidden sm:inline text-zinc-600">09:20</span><span class="flex-1 min-w-0 truncate text-zinc-200">write the intro</span><span class="shrink-0">25m → <span class="text-red-400">38m</span></span></div>
@@ -87,33 +103,19 @@
                 <div class="flex gap-4"><span class="hidden sm:inline text-zinc-600">10:50</span><span class="flex-1 min-w-0 truncate text-zinc-200">review the PR</span><span class="shrink-0">20m → <span class="text-red-400">26m</span></span></div>
               </div>
             </div>
-
-            <div>
-              <h3 class="text-2xl font-medium text-ink">Get feedback after every task.</h3>
-              <p class="mt-2">See how far off you were, then ask yourself why.</p>
-              <div class="mt-6 aspect-[3/2] rounded-xl bg-surface p-5 sm:p-8 flex flex-col justify-center text-center">
-                <p class="text-accent font-medium">write the intro</p>
-                <p class="mt-1 text-base text-zinc-400">Predicted 25m, took 38m</p>
-                <p class="mt-2 text-3xl font-semibold text-zinc-100">52% over</p>
-                <div class="mt-5 space-y-2 text-lg text-zinc-200 italic">
-                  <p>How could I have seen this would take longer?</p>
-                  <p><a href="https://www.lesswrong.com/posts/rYq6joCrZ8m62m7ej/how-could-i-have-thought-that-faster" class="underline decoration-accent underline-offset-4 hover:text-accent">How could I have done it faster?</a></p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <h3 class="mt-20 text-2xl font-medium text-ink">And also</h3>
           <ul class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4">
             <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -12" /> <path d="M14 6a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -12" /></svg><span>No pause. Time keeps going.</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /> <path d="M12 10l0 3l2 0" /> <path d="M7 4l-2.75 2" /> <path d="M17 4l2.75 2" /></svg><span>A bell at zero, until you act</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" /></svg><span>Interrupted? Hold the timer, start another</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8v-2a2 2 0 0 1 2 -2h2" /> <path d="M4 16v2a2 2 0 0 0 2 2h2" /> <path d="M16 4h2a2 2 0 0 1 2 2v2" /> <path d="M16 20h2a2 2 0 0 0 2 -2v-2" /></svg><span>Zen mode: only the timer</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" /> <path d="M9 17v1a3 3 0 0 0 6 0v-1" /> <path d="M21 6.727a11.05 11.05 0 0 0 -2.794 -3.727" /> <path d="M3 6.727a11.05 11.05 0 0 1 2.792 -3.727" /></svg><span>Keeps ringing, so you can't ignore it</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-8 4l8 4l8 -4l-8 -4" /> <path d="M4 12l8 4l8 -4" /> <path d="M4 16l8 4l8 -4" /></svg><span>Stack timers, if you must be interrupted</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2l0 -8" /> <path d="M6 10l0 .01" /> <path d="M10 10l0 .01" /> <path d="M14 10l0 .01" /> <path d="M18 10l0 .01" /> <path d="M6 14l0 .01" /> <path d="M18 14l0 .01" /> <path d="M10 14l4 .01" /></svg><span>Keyboard-driven</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4l18 0" /> <path d="M4 4v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-10" /> <path d="M12 16l0 4" /> <path d="M9 20l6 0" /> <path d="M8 12l3 -3l2 2l3 -3" /></svg><span>A full-screen timer for a room or a workshop</span></li>
               <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828" /> <path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87" /> <path d="M3 3l18 18" /></svg><span>Hide the clock, test your sense of time</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2l0 -8" /> <path d="M6 10l0 .01" /> <path d="M10 10l0 .01" /> <path d="M14 10l0 .01" /> <path d="M18 10l0 .01" /> <path d="M6 14l0 .01" /> <path d="M18 14l0 .01" /> <path d="M10 14l4 .01" /></svg><span>A key for everything</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7l-18 0" /> <path d="M18 10l3 -3l-3 -3" /> <path d="M6 20l-3 -3l3 -3" /> <path d="M3 17l18 0" /></svg><span>Follows you across workspaces on Sway and niri</span></li>
-              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l3 3l-3 3" /> <path d="M13 15l3 0" /> <path d="M3 6a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -12" /></svg><span>Runs your own scripts when a timer starts or ends</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l3 3l-3 3" /> <path d="M13 15l3 0" /> <path d="M3 6a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -12" /></svg><span>Run your own scripts when a timer starts or ends</span></li>
               <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.18 8.189a4.01 4.01 0 0 0 2.616 2.627m3.507 -.545a4 4 0 1 0 -5.59 -5.552" /> <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.412 0 .81 .062 1.183 .178m2.633 2.618c.12 .38 .184 .785 .184 1.204v2" /> <path d="M3 3l18 18" /></svg><span>No account. Your data stays with you.</span></li>
+              <li class="flex gap-3"><svg class="size-6 shrink-0 mt-0.5 text-accent-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10" /> <path d="M7 20h10" /> <path d="M9 16v4" /> <path d="M15 16v4" /></svg><span>Extra support for Sway, niri and GNOME</span></li>
           </ul>
         </div>
       </section>
