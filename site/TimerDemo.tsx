@@ -313,8 +313,9 @@ export function TimerDemo() {
           )}
         >
           <p className="text-lg sm:text-xl font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
-          {/* ! because CountdownDisplay's own h-full would win otherwise */}
-          <CountdownDisplay remaining={remaining} accentColor="amber" className="h-14! text-5xl sm:h-20! sm:text-7xl" />
+          {/* autoscale fits the digits to the box, so a long overtime shrinks instead of
+              spilling out. ! because CountdownDisplay's own h-full would win otherwise */}
+          <CountdownDisplay remaining={remaining} autoscale accentColor="amber" className="h-14! sm:h-20!" />
         </button>
       )}
 
