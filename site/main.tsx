@@ -64,14 +64,15 @@ if (os && heroDownload) {
   heroDownload?.classList.add('hidden')
 }
 
-// ── macOS: Apple Silicon or Intel ──
+// ── Pickers: the Linux distribution and the Mac's chip ──
 
-function pickMacArch(arch: MacArch) {
-  document.querySelectorAll<HTMLElement>('[data-arch]').forEach(el => {
-    el.classList.toggle('hidden', el.dataset.arch !== arch)
+/** Shows the `data-panel="group:value"` elements of the value picked, hides the group's others */
+function pick(group: string, value: string) {
+  document.querySelectorAll<HTMLElement>(`[data-panel^="${group}:"]`).forEach(el => {
+    el.classList.toggle('hidden', el.dataset.panel !== `${group}:${value}`)
   })
-  document.querySelectorAll<HTMLElement>('[data-arch-pick]').forEach(button => {
-    const active = button.dataset.archPick === arch
+  document.querySelectorAll<HTMLElement>(`[data-pick^="${group}:"]`).forEach(button => {
+    const active = button.dataset.pick === `${group}:${value}`
     button.setAttribute('aria-pressed', String(active))
     button.className = 'rounded-md px-3 py-1 ' + (active
       ? 'bg-ink text-paper'
@@ -79,10 +80,13 @@ function pickMacArch(arch: MacArch) {
   })
 }
 
-document.querySelectorAll<HTMLElement>('[data-arch-pick]').forEach(button => {
-  button.addEventListener('click', () => pickMacArch(button.dataset.archPick as MacArch))
+document.querySelectorAll<HTMLElement>('[data-pick]').forEach(button => {
+  const [group, value] = button.dataset.pick!.split(':')
+  button.addEventListener('click', () => pick(group, value))
 })
-pickMacArch(os === 'macos' ? detectMacArch() : 'aarch64')
+// Some browsers name the distribution in their user agent; Arch never shows up there
+pick('linux', /Fedora|Red Hat/i.test(navigator.userAgent) ? 'rpm' : 'deb')
+pick('mac', os === 'macos' ? detectMacArch() : 'aarch64')
 
 // ── Copy buttons: copy the command shown next to them ──
 

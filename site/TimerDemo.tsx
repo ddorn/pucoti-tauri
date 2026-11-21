@@ -426,10 +426,10 @@ function Result({ run }: { run: Run }) {
 
   const ratio = run.actual / run.predicted
   const [title, comment] =
-    ratio < 0.3 ? ["Whoa, you're fast.", 'Already convinced, then.']
+    ratio < 0.6 ? ["Whoa, you're fast.", 'Already convinced, then?']
     : ratio <= 1 ? ['With time to spare.', 'Could you have done that faster?']
-    : ratio <= 2 ? ['A bit over.', "That's the planning fallacy, but ours."]
-    : ['You must really like Pucoti.', "We'll take it."]
+    : ratio <= 2 ? ['You must really like Pucoti.', "We'll take it!"]
+    : ["You got distracted, didn't you?", 'Get Pucoti, you might need it!']
 
   return (
     <>
