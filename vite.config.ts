@@ -3,7 +3,10 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-const isTauriEnv = process.env.VITE_PLATFORM === 'tauri'
+// Tauri's CLI sets TAURI_ENV_PLATFORM for the commands it runs before building or serving
+// the frontend, so a desktop build is recognised however it is started (npm scripts, CI's
+// tauri-action, a bare `tauri build`). The app reads the result as import.meta.env.VITE_PLATFORM.
+const isTauriEnv = !!process.env.TAURI_ENV_PLATFORM || process.env.VITE_PLATFORM === 'tauri'
 
 // Tauri loads the build over file://, so its paths are relative. On the web the app
 // lives under /app/ of pucoti.com, next to the landing page in site/.
@@ -53,5 +56,6 @@ export default defineConfig({
   define: {
     // Polyfill for libraries expecting Node.js global variable
     global: 'globalThis',
+    'import.meta.env.VITE_PLATFORM': JSON.stringify(isTauriEnv ? 'tauri' : 'web'),
   },
 })

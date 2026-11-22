@@ -16,8 +16,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "VITE_PLATFORM=tauri tauri dev",
-    "tauri:build": "VITE_PLATFORM=tauri tauri build --bundles deb",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build --bundles deb",
     "test": "vitest run",
     "test:watch": "vitest",
     "version": "node scripts/sync-version.cjs && git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && echo \"---- Don't forget to git push --tags! ----\""
