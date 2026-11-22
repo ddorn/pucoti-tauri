@@ -354,7 +354,7 @@ on every push to `main`:
   its digits scroll under the header. Through a portal it also fills `#ending`, which
   asks whether the visitor is done reading, comments on how long they took against the
   5 minutes we gave them, and starts the next timer, "download Pucoti", right above the
-  downloads. Phones have nothing to download, so there it points to the web app instead. It reuses the app's parser and `CountdownDisplay` but keeps its own state,
+  downloads. Phones cannot run Pucoti, so there it says to download it on a laptop instead. It reuses the app's parser and `CountdownDisplay` but keeps its own state,
   because it must not touch the real app's IndexedDB on the same origin. Tailwind only
   scans `site/`, so `site/site.css` lists the app files the demo imports with `@source`.
   `public/og.png` is the link preview (1200×630); the web app's service worker skips it.

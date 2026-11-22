@@ -22,7 +22,7 @@ import { formatErrorPercent, getCompletionRemark } from '../src/lib/completion-r
 const FIRST_TASK = { intent: 'discover Pucoti', seconds: 5 * 60 }
 const NEXT_TASK = { intent: 'download Pucoti', seconds: 5 * 60 }
 const TICK_MS = 200
-const EXAMPLES = ['reply to emails 10m', 'write the intro 25m', 'fix the login bug 45m']
+const EXAMPLES = ['plan the day 10m', 'send one quick email 5m', 'fix the login bug 45m']
 
 interface Running {
   intent: string
@@ -49,8 +49,8 @@ function startTimer(intent: string, predicted: number): View {
 }
 
 /**
- * `canDownload` is false where there is no desktop app to get (phones): the ending then
- * points to the web app instead of starting a timer for the download.
+ * `canDownload` is false on phones, which cannot run Pucoti: the ending then sends the
+ * visitor to their laptop instead of starting a timer for the download.
  */
 export function TimerDemo({ canDownload }: { canDownload: boolean }) {
   const [view, setView] = useState<View>(() => startTimer(FIRST_TASK.intent, FIRST_TASK.seconds))
@@ -400,7 +400,7 @@ function Ending({ running, elapsed, lastRun, canDownload, onFinish }: {
         </>
       ) : (
         <h2 className="text-4xl font-semibold tracking-tight text-ink">
-          {canDownload ? 'Next: download Pucoti.' : 'Next: try Pucoti.'}
+          {canDownload ? 'Next: download Pucoti.' : 'Next: download Pucoti on your laptop.'}
         </h2>
       )}
 
@@ -417,13 +417,9 @@ function Ending({ running, elapsed, lastRun, canDownload, onFinish }: {
         >
           {reading ? "I'm done" : `Start: ${NEXT_TASK.intent}, ${spoken(NEXT_TASK.seconds)}`}
         </button>
-      ) : (
-        <a
-          href="/app/"
-          className="mt-8 inline-block rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover"
-        >
-          Try it in your browser
-        </a>
+      ) : lastRun && (
+        // Pucoti is made for a computer: phones get no timer for a download they cannot use
+        <p className="mt-10 text-2xl font-medium text-ink">Next: download it on your laptop.</p>
       )}
     </div>
   )
