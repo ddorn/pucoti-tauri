@@ -45,6 +45,8 @@ export default defineConfig({
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,mp3}'],
+          // The landing page's link preview, which shares public/ but not the app
+          globIgnores: ['og.png'],
         },
       }),
     ] : []),

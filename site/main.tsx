@@ -8,7 +8,7 @@ import './site.css'
 document.getElementById('ending')?.replaceChildren()
 createRoot(document.getElementById('demo')!).render(
   <StrictMode>
-    <TimerDemo />
+    <TimerDemo canDownload={detectOS() !== null} />
   </StrictMode>
 )
 
@@ -23,6 +23,8 @@ function detectOS(): OS | null {
   const ua = navigator.userAgent
   // Phones get no download button: the web app is the only Pucoti they can run
   if (/Android|iPhone|iPad|iPod/i.test(ua)) return null
+  // iPads ask for the desktop site, so they say Macintosh; real Macs have no touch screen
+  if (/Mac/i.test(ua) && navigator.maxTouchPoints > 1) return null
   if (/Windows/i.test(ua)) return 'windows'
   if (/Mac/i.test(ua)) return 'macos'
   if (/Linux|X11|CrOS/i.test(ua)) return 'linux'
@@ -91,6 +93,8 @@ pick('mac', os === 'macos' ? detectMacArch() : 'aarch64')
 // ── Copy buttons: copy the command shown next to them ──
 
 document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach(button => {
+  // Hidden in the HTML, since they do nothing without this script
+  button.classList.remove('hidden')
   button.addEventListener('click', async () => {
     const pre = button.parentElement?.querySelector('pre:not(.hidden)')
     if (!pre?.textContent) return

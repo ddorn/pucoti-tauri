@@ -48,7 +48,11 @@ function startTimer(intent: string, predicted: number): View {
   return { kind: 'running', timer: { intent, predicted, adjustment: 0, startedAt: Date.now() } }
 }
 
-export function TimerDemo() {
+/**
+ * `canDownload` is false where there is no desktop app to get (phones): the ending then
+ * points to the web app instead of starting a timer for the download.
+ */
+export function TimerDemo({ canDownload }: { canDownload: boolean }) {
   const [view, setView] = useState<View>(() => startTimer(FIRST_TASK.intent, FIRST_TASK.seconds))
   const [input, setInput] = useState('')
   const [noPrediction, setNoPrediction] = useState(false)
@@ -73,19 +77,12 @@ export function TimerDemo() {
     return () => window.clearInterval(id)
   }, [isRunning])
 
-  // One ring when the countdown crosses zero, like the app's first bell. Browsers drop it
-  // if the visitor has not interacted with the page yet, which is the polite outcome.
-  const rangRef = useRef(false)
+  // One ring each time a countdown crosses zero, like the app's first bell. Browsers drop
+  // it if the visitor has not interacted with the page yet, which is the polite outcome.
+  const overtime = running !== null && remaining < 0
   useEffect(() => {
-    if (!running) {
-      rangRef.current = false
-      return
-    }
-    if (remaining < 0 && !rangRef.current) {
-      rangRef.current = true
-      new Audio(import.meta.env.BASE_URL + 'bell.mp3').play().catch(() => {})
-    }
-  }, [running, remaining])
+    if (overtime) new Audio(import.meta.env.BASE_URL + 'bell.mp3').play().catch(() => {})
+  }, [overtime])
 
   // Dock once the middle of the demo, where the digits are, goes under the sticky header
   // (64px). Only upwards: on a phone the demo starts below the fold, and a corner copy of
@@ -107,14 +104,11 @@ export function TimerDemo() {
     }
   }, [])
 
-  // Move focus with the view so the keys keep working, but not on load: the page should
-  // not open with focus parked in the middle of it.
-  const firstRender = useRef(true)
+  // Move focus with the view so the keys keep working, but only while the visitor is using
+  // the demo: not on load, and not when the view changes from the bottom of the page.
+  const usingDemo = useRef(false)
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false
-      return
-    }
+    if (!usingDemo.current) return
     if (view.kind === 'edit' && window.matchMedia('(pointer: fine)').matches) {
       inputRef.current?.focus({ preventScroll: true })
     } else if (view.kind !== 'edit') {
@@ -149,11 +143,19 @@ export function TimerDemo() {
     setView({ kind: 'done', run: currentRun(running) })
   }
 
-  /** Finish from the bottom of the page: grade it there, and go straight to the next timer. */
+  /**
+   * Finish from the bottom of the page: grade it there, and go straight to the next timer,
+   * where there is something to download.
+   */
   function finishAndStartNext() {
     if (running) setLastRun(currentRun(running))
     setNow(Date.now())
-    setView(startTimer(NEXT_TASK.intent, NEXT_TASK.seconds))
+    if (canDownload) {
+      setView(startTimer(NEXT_TASK.intent, NEXT_TASK.seconds))
+    } else {
+      setInput('')
+      setView({ kind: 'edit' })
+    }
   }
 
   function backToEdit() {
@@ -169,6 +171,8 @@ export function TimerDemo() {
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.ctrlKey || e.metaKey || e.altKey) return
+    // Enter on a focused button or link is that control's own click
+    if (e.key === 'Enter' && e.target !== e.currentTarget && (e.target as HTMLElement).closest('a, button')) return
     if (view.kind === 'running') {
       const actions: Record<string, () => void> = {
         Enter: finish,
@@ -195,6 +199,11 @@ export function TimerDemo() {
         ref={frameRef}
         tabIndex={-1}
         onKeyDown={onKeyDown}
+        onPointerDown={() => (usingDemo.current = true)}
+        onFocus={() => (usingDemo.current = true)}
+        onBlur={e => {
+          if (!e.currentTarget.contains(e.relatedTarget)) usingDemo.current = false
+        }}
         className="rounded-2xl border border-zinc-800 bg-surface shadow-2xl shadow-black/60 outline-none overflow-hidden"
       >
         <div className="flex items-center gap-2 px-4 h-11 border-b border-zinc-800/80 bg-surface-raised text-base text-zinc-400">
@@ -300,7 +309,10 @@ export function TimerDemo() {
       {running && (
         <button
           type="button"
-          onClick={() => frameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+          onClick={() => frameRef.current?.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'center',
+          })}
           aria-hidden={!docked}
           tabIndex={docked ? 0 : -1}
           title="Back to the timer"
@@ -312,7 +324,7 @@ export function TimerDemo() {
             docked ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none',
           )}
         >
-          <p className="text-lg sm:text-xl font-medium text-accent truncate">{running.intent || 'Untitled'}</p>
+          <span className="block text-lg sm:text-xl font-medium text-accent truncate">{running.intent || 'Untitled'}</span>
           {/* autoscale fits the digits to the box, so a long overtime shrinks instead of
               spilling out. ! because CountdownDisplay's own h-full would win otherwise */}
           <CountdownDisplay remaining={remaining} autoscale accentColor="amber" className="h-14! sm:h-20!" />
@@ -320,7 +332,7 @@ export function TimerDemo() {
       )}
 
       {endingEl && createPortal(
-        <Ending running={running} elapsed={elapsed} lastRun={lastRun} onFinish={finishAndStartNext} />,
+        <Ending running={running} elapsed={elapsed} lastRun={lastRun} canDownload={canDownload} onFinish={finishAndStartNext} />,
         endingEl,
       )}
     </>
@@ -359,10 +371,11 @@ function DoneView({ run, onNext }: { run: Run; onNext: () => void }) {
 }
 
 /** The end of the page, in the page's light style rather than the app's. */
-function Ending({ running, elapsed, lastRun, onFinish }: {
+function Ending({ running, elapsed, lastRun, canDownload, onFinish }: {
   running: Running | null
   elapsed: number
   lastRun: Run | null
+  canDownload: boolean
   onFinish: () => void
 }) {
   const onNext = running?.intent === NEXT_TASK.intent
@@ -386,7 +399,9 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
           <p className="mt-2">so far</p>
         </>
       ) : (
-        <h2 className="text-4xl font-semibold tracking-tight text-ink">Next: download Pucoti.</h2>
+        <h2 className="text-4xl font-semibold tracking-tight text-ink">
+          {canDownload ? 'Next: download Pucoti.' : 'Next: try Pucoti.'}
+        </h2>
       )}
 
       {onNext ? (
@@ -394,7 +409,7 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
           Next timer, started for you: <span className="text-accent-muted">{NEXT_TASK.intent}</span>,
           {' '}{spoken(NEXT_TASK.seconds)}. It's in the corner.
         </p>
-      ) : (
+      ) : reading || canDownload ? (
         <button
           type="button"
           onClick={onFinish}
@@ -402,6 +417,13 @@ function Ending({ running, elapsed, lastRun, onFinish }: {
         >
           {reading ? "I'm done" : `Start: ${NEXT_TASK.intent}, ${spoken(NEXT_TASK.seconds)}`}
         </button>
+      ) : (
+        <a
+          href="/app/"
+          className="mt-8 inline-block rounded-lg bg-accent px-5 py-3 font-medium text-black hover:bg-accent-hover"
+        >
+          Try it in your browser
+        </a>
       )}
     </div>
   )

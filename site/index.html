@@ -7,9 +7,14 @@
     <meta name="description" content="A purposeful countdown timer. Write down what you want to do, give it a time, and see how long it really took. Free and open source, for Linux, Windows, macOS and the browser." />
     <meta name="theme-color" content="#f5efe3" />
     <meta property="og:title" content="Pucoti" />
-    <meta property="og:description" content="Use your time with intention. A purposeful countdown timer." />
+    <meta property="og:description" content="Use your time with intention. A countdown timer that shows how long things really take you." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://pucoti.com/" />
+    <meta property="og:image" content="https://pucoti.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Use your time with intention. Pucoti, a countdown timer, 13 minutes over on writing the intro." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/png" href="/icon-128.png" />
     <link rel="canonical" href="https://pucoti.com/" />
   </head>
@@ -54,7 +59,8 @@
         </div>
 
         <div id="demo" class="dark">
-          <img src="../docs/screenshots/timer.webp" alt="The Pucoti timer counting down on a task" class="rounded-2xl" />
+          <!-- The demo takes this place; without JavaScript, a picture of it -->
+          <noscript><img src="../docs/screenshots/timer.webp" alt="The Pucoti timer counting down on a task" class="rounded-2xl" /></noscript>
         </div>
       </section>
 
@@ -123,7 +129,7 @@
       <!-- The demo fills this in: it grades the visit, then starts the next timer -->
       <section id="ending" class="border-t border-line">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 py-20">
-          <h2 class="text-4xl font-semibold tracking-tight text-ink">Next: get Pucoti.</h2>
+          <h2 class="text-4xl font-semibold tracking-tight text-ink">Next: download Pucoti.</h2>
         </div>
       </section>
 
@@ -146,14 +152,14 @@
                 <p><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_amd64.deb" class="text-accent-muted underline underline-offset-4 hover:text-ink">Download the .deb</a>, then open it to install, or run:</p>
                 <div class="mt-3 flex items-start gap-2 rounded-lg bg-surface pl-3 pr-1 py-1 text-zinc-400">
                   <pre class="min-w-0 flex-1 overflow-x-auto py-1 text-lg"><code class="text-zinc-100">sudo apt install ~/Downloads/Pucoti_amd64.deb</code></pre>
-                  <button type="button" data-copy class="shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
+                  <button type="button" data-copy class="hidden shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
                 </div>
               </div>
               <div data-panel="linux:rpm" class="mt-4">
                 <p><a href="https://github.com/ddorn/pucoti-tauri/releases/latest/download/Pucoti_x86_64.rpm" class="text-accent-muted underline underline-offset-4 hover:text-ink">Download the .rpm</a>, then open it to install, or run:</p>
                 <div class="mt-3 flex items-start gap-2 rounded-lg bg-surface pl-3 pr-1 py-1 text-zinc-400">
                   <pre class="min-w-0 flex-1 overflow-x-auto py-1 text-lg"><code class="text-zinc-100">sudo dnf install ~/Downloads/Pucoti_x86_64.rpm</code></pre>
-                  <button type="button" data-copy class="shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
+                  <button type="button" data-copy class="hidden shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
                 </div>
               </div>
             </div>
@@ -186,7 +192,7 @@ xattr -cr /Applications/Pucoti.app &amp;&amp; open /Applications/Pucoti.app</cod
                 <pre data-panel="mac:x64" class="min-w-0 flex-1 overflow-x-auto py-1 text-lg"><code class="text-zinc-100">base=https://github.com/ddorn/pucoti-tauri/releases/latest/download
 curl -L $base/Pucoti_x64.app.tar.gz | tar -xz -C /Applications
 xattr -cr /Applications/Pucoti.app &amp;&amp; open /Applications/Pucoti.app</code></pre>
-                <button type="button" data-copy class="shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
+                <button type="button" data-copy class="hidden shrink-0 rounded-md px-2 py-1 hover:bg-zinc-800 hover:text-zinc-100">Copy</button>
               </div>
             </div>
           </div>
