@@ -1,5 +1,7 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite'
+import { rm } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { defineConfig, type Plugin } from 'vite'
 import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -14,10 +16,32 @@ const isTauriEnv = !!process.env.TAURI_ENV_PLATFORM || process.env.VITE_PLATFORM
 // lives under /app/ of pucoti.com, next to the landing page in site/.
 const base = isTauriEnv ? './' : '/app/'
 
+/**
+ * public/ is shared with the web app and the landing page, but the desktop app needs
+ * none of these: the bell is built into the Rust binary, and the large icon and the link
+ * preview are only for the PWA and the landing page.
+ */
+const WEB_ONLY_PUBLIC_FILES = ['bell.mp3', 'icon-512.png', 'og.png']
+
+function dropWebOnlyPublicFiles(): Plugin {
+  let outDir = ''
+  return {
+    name: 'pucoti:drop-web-only-public-files',
+    apply: 'build',
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir)
+    },
+    async closeBundle() {
+      await Promise.all(WEB_ONLY_PUBLIC_FILES.map(f => rm(resolve(outDir, f), { force: true })))
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    ...(isTauriEnv ? [dropWebOnlyPublicFiles()] : []),
     // PWA only for web builds
     ...(!isTauriEnv ? [
       VitePWA({
