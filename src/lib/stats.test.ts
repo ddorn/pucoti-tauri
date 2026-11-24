@@ -101,9 +101,11 @@ describe('computeOnTimeRate', () => {
 })
 
 describe('filterByTimeRange', () => {
-  const old = makeSession({ timestamp: new Date('2025-01-01') })
-  const recent = makeSession({ timestamp: new Date('2026-02-15') })
-  const veryRecent = makeSession({ timestamp: new Date('2026-03-01') })
+  // Relative to now, so the windows stay meaningful as time passes.
+  const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+  const old = makeSession({ timestamp: daysAgo(600) })
+  const recent = makeSession({ timestamp: daysAgo(100) })
+  const veryRecent = makeSession({ timestamp: daysAgo(5) })
   const sessions = [old, recent, veryRecent]
 
   it('returns all sessions for "all"', () => {
