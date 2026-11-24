@@ -3,8 +3,7 @@
  * folder into a single Platform object.
  */
 import type { Platform, ShellResult } from '../types'
-import type { Session } from '../../session'
-import { loadSessions, appendSession, exportSessionsCSV, getCSVPath } from './storage'
+import { loadSessions, appendSession, exportSessionsCSV, importSessionsCSV, getCSVPath } from './storage'
 import { loadSettings, saveSettings } from './settings'
 import { playBell, showNotification } from './sound'
 import { setSmallMode, setNormalMode, initializeWindowForPlatform, getMaxWindowSize } from './window'
@@ -18,30 +17,6 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { invoke } from '@tauri-apps/api/core'
 import { Command, open as tauriOpenUrl } from '@tauri-apps/plugin-shell'
 import { open as tauriOpenDialog } from '@tauri-apps/plugin-dialog'
-import { parseCSVLine } from '../csv'
-
-async function importSessionsCSV(csv: string): Promise<void> {
-  const lines = csv.trim().split('\n')
-  if (lines.length <= 1) return
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim()
-    if (!line) continue
-
-    const fields = parseCSVLine(line)
-    if (fields.length < 5) continue
-
-    const [timestamp, focusText, predictedSeconds, actualSeconds, status, tags = ''] = fields
-    await appendSession({
-      timestamp: new Date(timestamp),
-      focusText,
-      predictedSeconds: parseInt(predictedSeconds, 10),
-      actualSeconds: parseInt(actualSeconds, 10),
-      status: status as Session['status'],
-      tags: tags ? tags.split(';').map(t => t.trim()) : [],
-    })
-  }
-}
 
 export const tauriPlatform: Platform = {
   loadSessions,

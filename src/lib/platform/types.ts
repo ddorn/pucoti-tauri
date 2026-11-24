@@ -6,7 +6,8 @@ export interface Platform {
   loadSessions(): Promise<Session[]>
   appendSession(session: Session): Promise<void>
   exportSessionsCSV(): Promise<string>
-  importSessionsCSV(csv: string): Promise<void>
+  /** Adds the CSV's sessions that are not stored yet. */
+  importSessionsCSV(csv: string): Promise<{ added: number; skipped: number }>
   /** Filesystem path of the sessions CSV (shown in UI). Null on platforms without disk storage. */
   getSessionsStoragePath(): Promise<string | null>
 
@@ -22,6 +23,11 @@ export interface Platform {
   setSmallMode(settings: Settings): Promise<void>
   setNormalMode(settings: Settings): Promise<void>
   initializeWindowForPlatform(): Promise<void>
+  /**
+   * Runs the handler as the app goes away: window close on desktop, tab close or reload
+   * on the web. On the web the page does not wait for it, so only work that starts
+   * synchronously is sure to happen - which `appendSession` guarantees.
+   */
   onCloseRequested(handler: () => Promise<void>): Promise<() => void>
   /** Logical size of the current monitor, used to cap window resizing. Null when unavailable (e.g. web). */
   getMaxWindowSize(): Promise<{ width: number; height: number } | null>

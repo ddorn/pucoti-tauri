@@ -1,9 +1,9 @@
 import { resolve } from '@tauri-apps/api/path';
-import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs';
+import { readTextFile, writeTextFile, exists } from '@tauri-apps/plugin-fs'
 import { formatTimestamp } from '../../format'
 import { getDataDir } from './paths'
-import type { Session, SessionStatus } from '../../session'
-import { escapeCSV, parseCSVLine } from '../csv'
+import type { Session } from '../../session'
+import { escapeCSV, parseSessionsCSV, sessionsToImport, byTimestamp, SESSIONS_CSV_HEADER } from '../csv'
 
 export async function getCSVPath(): Promise<string> {
   const dir = await getDataDir()
@@ -20,38 +20,12 @@ export async function loadSessions(): Promise<Session[]> {
     console.error('Failed to read sessions CSV (returning empty array):', err)
     return []
   }
-
-  const lines = content.trim().split('\n')
-  if (lines.length <= 1) return []
-
-  const sessions: Session[] = []
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim()
-    if (!line) continue
-
-    const fields = parseCSVLine(line)
-    if (fields.length < 5) continue
-
-    const [timestamp, focusText, predictedSeconds, actualSeconds, status, tags = ''] = fields
-    sessions.push({
-      timestamp: new Date(timestamp),
-      focusText,
-      predictedSeconds: parseInt(predictedSeconds, 10),
-      actualSeconds: parseInt(actualSeconds, 10),
-      status: status as SessionStatus,
-      tags: tags ? tags.split(';').map(t => t.trim()) : [],
-    })
-  }
-
-  return sessions
+  // Sorted because an import appends older sessions after newer ones
+  return parseSessionsCSV(content).sort(byTimestamp)
 }
 
-export async function appendSession(session: Session): Promise<void> {
-  const csvPath = await getCSVPath()
-
-  const fileExists = await exists(csvPath)
-
-  const line = [
+function formatSessionLine(session: Session): string {
+  return [
     formatTimestamp(session.timestamp),
     escapeCSV(session.focusText),
     session.predictedSeconds.toString(),
@@ -59,13 +33,27 @@ export async function appendSession(session: Session): Promise<void> {
     session.status,
     session.tags.join(';'),
   ].join(',')
+}
 
-  if (!fileExists) {
-    const header = 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
-    await writeTextFile(csvPath, header + line + '\n')
+async function appendLines(lines: string[]): Promise<void> {
+  if (lines.length === 0) return
+  const csvPath = await getCSVPath()
+  const body = lines.map(line => line + '\n').join('')
+  if (!(await exists(csvPath))) {
+    await writeTextFile(csvPath, SESSIONS_CSV_HEADER + body)
   } else {
-    await writeTextFile(csvPath, line + '\n', { append: true })
+    await writeTextFile(csvPath, body, { append: true })
   }
+}
+
+export async function appendSession(session: Session): Promise<void> {
+  await appendLines([formatSessionLine(session)])
+}
+
+export async function importSessionsCSV(csv: string): Promise<{ added: number; skipped: number }> {
+  const { added, skipped } = sessionsToImport(csv, await loadSessions())
+  await appendLines(added.map(formatSessionLine))
+  return { added: added.length, skipped }
 }
 
 export async function exportSessionsCSV(): Promise<string> {
@@ -74,6 +62,6 @@ export async function exportSessionsCSV(): Promise<string> {
     return await readTextFile(csvPath)
   } catch (err) {
     console.error('Failed to read CSV for export (returning header only):', err)
-    return 'timestamp,focus_text,predicted_seconds,actual_seconds,status,tags\n'
+    return SESSIONS_CSV_HEADER
   }
 }

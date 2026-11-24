@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { Session } from '../lib/session'
 import { platform } from '../lib/platform'
 
@@ -7,8 +7,8 @@ export function useSessions() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    platform.loadSessions()
+  const reload = useCallback(() => {
+    return platform.loadSessions()
       .then(setSessions)
       .catch(err => {
         console.error('Failed to load sessions:', err)
@@ -17,5 +17,9 @@ export function useSessions() {
       .finally(() => setLoading(false))
   }, [])
 
-  return { sessions, loading, error }
+  useEffect(() => {
+    reload()
+  }, [reload])
+
+  return { sessions, loading, error, reload }
 }

@@ -100,13 +100,15 @@ function HeroCard({ currentRate, change, granularity }: {
 
 export function Stats() {
   const { setScreen } = useApp()
-  const { sessions, loading, error } = useSessions()
+  const { sessions, loading, error, reload } = useSessions()
   const { settings } = useSettings()
   const [timeRange, setTimeRange] = useState<TimeRange>('all')
   const [granularity, setGranularity] = useState<Granularity>('week')
   const [csvPath, setCsvPath] = useState<string | null>(null)
   const [sessionSort, setSessionSort] = useState<SessionSortMode>('predictions')
   const sessionTableRef = useRef<HTMLDivElement>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
+  const [importResult, setImportResult] = useState<string | null>(null)
 
   const barColor = COLOR_PALETTES[settings.accentColor].base
 
@@ -154,6 +156,24 @@ export function Stats() {
       URL.revokeObjectURL(url)
     } catch (err) {
       console.error('Export failed:', err)
+    }
+  }
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    // Cleared so that picking the same file again still fires a change
+    e.target.value = ''
+    if (!file) return
+    try {
+      const { added, skipped } = await platform.importSessionsCSV(await file.text())
+      const plural = (n: number) => `${n} session${n === 1 ? '' : 's'}`
+      setImportResult(skipped > 0
+        ? `Imported ${plural(added)}, skipped ${skipped} already here or unreadable.`
+        : `Imported ${plural(added)}.`)
+      await reload()
+    } catch (err) {
+      console.error('Import failed:', err)
+      setImportResult('Import failed: is this a CSV exported from Pucoti?')
     }
   }
 
@@ -276,21 +296,35 @@ export function Stats() {
           <div ref={sessionTableRef}>
             <SessionTable key={sessionSort} sessions={filteredSessions} initialSort={sessionSort} />
           </div>
-
-          {/* Export */}
-          <section className="text-center">
-            <Text>Download all your predictions for further analysis</Text>
-            {csvPath && (
-              <Text>
-                You can also find this CSV at <span className="select-all">{csvPath}</span>
-              </Text>
-            )}
-            <Button outline onClick={handleExport} disabled={sessions.length === 0}>
-              Export CSV
-            </Button>
-          </section>
         </>
       )}
+
+      {/* Export and import. Shown with no sessions too: importing is how a new browser
+          or computer gets its history back. */}
+      <section className="text-center space-y-2">
+        <Text>Download all your predictions for further analysis, or bring in sessions exported from another device</Text>
+        {csvPath && (
+          <Text>
+            You can also find this CSV at <span className="select-all">{csvPath}</span>
+          </Text>
+        )}
+        <div className="flex justify-center gap-3">
+          <Button outline onClick={handleExport} disabled={sessions.length === 0}>
+            Export CSV
+          </Button>
+          <Button outline onClick={() => importInputRef.current?.click()}>
+            Import CSV
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={handleImport}
+          />
+        </div>
+        {importResult && <Text className="text-zinc-400">{importResult}</Text>}
+      </section>
 
       {/* Privacy notice (web only) */}
       {!isTauri && (
