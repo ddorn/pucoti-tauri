@@ -237,11 +237,15 @@ export function Timer() {
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
-    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [editMode, displayMode, settings, setDisplayMode, updateSettings, timerState, remaining, handlePrefill])
+
+  // Drop a pending resize save only when the screen goes away. The keydown effect
+  // re-runs every second (it depends on `remaining`), so cancelling there would
+  // lose the save whenever a tick lands inside the debounce window.
+  useEffect(() => () => {
+    if (resizePersistRef.current) clearTimeout(resizePersistRef.current)
+  }, [])
 
   const handleEditSubmit = useCallback((forceTimebox: boolean = false) => {
     // If input is empty, just close edit mode
