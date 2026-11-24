@@ -357,14 +357,18 @@ Follow semantic versioning (patch for fixes, minor for new features, major for b
 3. **Write the changelog**: Add a new entry to `CHANGELOG.md` following the guidelines above.
 4. **Commit**: Stage and commit the changelog (and any other pending changes).
 5. **Bump the version**: Run `npm version patch`, `npm version minor`, or `npm version major`. This updates `package.json` and creates a git tag automatically.
-6. **Push with tags**: `git push --follow-tags`
+6. **Push with tags**: `git push --follow-tags`. `publish.yml` builds the desktop apps into a draft GitHub release.
+7. **Publish the draft release** on GitHub once every build has finished. This also deploys pucoti.com (see Website below).
 
 **If the build fails after tagging**: Since no release was published, move the tag instead of creating a patch version. Fix the issue, commit, then: `git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`, re-tag with `git tag vX.Y.Z`, and push again. Also delete any partial draft release on GitHub before re-triggering.
 
 ## Website
 
 pucoti.com is two builds deployed together to GitHub Pages by `.github/workflows/pages.yml`
-on every push to `main`:
+when a release is published, built from that release's tag. Pushes to `main` deploy
+nothing, so the web app and the landing page only change with a release. Running the
+workflow by hand rebuilds the latest published release. The `github-pages` environment
+allows deploys from `pucoti-v*` tags, which is what release runs deploy from.
 
 - **Landing page** (`site/`, `vite.site.config.ts`): static HTML using the app's fonts
   and tokens (`site/site.css` imports `src/index.css`) on a light paper theme defined in

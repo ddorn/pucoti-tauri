@@ -3,9 +3,18 @@ name: 'pages'
 # Builds pucoti.com: the landing page from site/ at the root, and the web app under /app/.
 # The custom domain is set in the repository's Pages settings, which is why there is no
 # CNAME file.
+#
+# Deploys when a release is published, from that release's tag, so the web app ships the
+# same version as the desktop builds and the site's download links resolve the moment it
+# goes live. A manual run rebuilds the latest published release, never the branch it is
+# started from.
+#
+# Publishing the draft release by hand is what triggers this: releases created with
+# GITHUB_TOKEN (as publish.yml would with releaseDraft: false) trigger no workflows.
+# The github-pages environment must allow deploys from pucoti-v* tags.
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -13,16 +22,32 @@ permissions:
   pages: write
   id-token: write
 
-# Never cancel a deploy halfway, but skip straight to the newest push
+# Never cancel a deploy halfway, but skip straight to the newest run
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
   build:
+    # releases/latest/download/ skips prereleases, so the site must too
+    if: ${{ !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     steps:
+      - name: Pick the release to build
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -z "$TAG" ]; then
+            TAG=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          fi
+          echo "Building $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.tag }}
 
       - uses: actions/setup-node@v4
         with:
