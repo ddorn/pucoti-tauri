@@ -38,8 +38,8 @@ npm run test:watch       # Run tests in watch mode
 
 ### Testing
 - Test files: `src/lib/*.test.ts`
-- Run single test file: `npx vitest src/lib/regression.test.ts`
-- Tests cover time parsing and statistical calculations
+- Run single test file: `npx vitest src/lib/stats.test.ts`
+- Tests cover time and command parsing, and statistical calculations
 
 ## Architecture
 
@@ -86,9 +86,9 @@ The timer machine uses an event-driven architecture where independent subscriber
    - Uses `useSettings()` for bell path and interval
 
 2. **useStorageSubscriber** (`src/hooks/useStorageSubscriber.ts`)
-   - Appends session to CSV on `completed` and `canceled` events
-   - Handles window close: saves with status 'unknown' if timer active
-   - Uses `appendSession()` from `src/lib/storage.ts`
+   - Appends session on `completed` and `canceled` events
+   - Handles window or tab close: saves with status 'unknown' if timer active
+   - Uses `platform.appendSession()` (see Platform Layer)
 
 3. **useDbusSubscriber** (`src/hooks/useDbusSubscriber.ts`)
    - Syncs timer state to GNOME panel indicator on every `tick`
@@ -124,13 +124,34 @@ timerMachine.cancel()
 
 **Key Insight**: Timer state includes `adjustmentSeconds` to handle +/- time adjustments (j/k keys) without resetting the start time. Elapsed time is always calculated fresh from `startTime` for accuracy.
 
-### Storage System (`src/lib/storage.ts`)
+### Platform Layer (`src/lib/platform/`)
+
+The same frontend builds as the desktop app and as the web app at pucoti.com/app/.
+Everything that differs goes through the `Platform` interface (`types.ts`), implemented
+in `tauri/` and `web/`:
+
+```typescript
+import { platform, isTauri } from '../lib/platform'
+await platform.appendSession(session)
+```
+
+- `isTauri` comes from `import.meta.env.VITE_PLATFORM`, which `vite.config.ts` sets at
+  build time (a desktop build is recognised by Tauri's `TAURI_ENV_PLATFORM`). The bundler
+  drops the unused implementation, so the web build carries no Tauri code and vice versa.
+- Desktop-only settings are wrapped in `DesktopOnly` (`src/components/DesktopOnly.tsx`),
+  which greys them out on the web.
+- Only the web build is a PWA (`vite-plugin-pwa`).
+
+### Storage System
 
 **Session Persistence**:
-- All sessions saved to CSV: `~/.local/share/pucoti/sessions.csv`
+- Desktop (`platform/tauri/storage.ts`): CSV at `~/.local/share/pucoti/sessions.csv`
+- Web (`platform/web/storage.ts`): IndexedDB, through a `localStorage` outbox so a session
+  saved while the tab closes is not lost (it reaches IndexedDB on the next visit)
 - Format: timestamp, focus_text, predicted_seconds, actual_seconds, status, tags
 - Status types: 'completed', 'canceled', 'unknown'
-- On window close: if timer is active, saves session with status 'unknown'
+- On window or tab close: if timer is active, saves session with status 'unknown'
+- Stats can export sessions as CSV and import a CSV back; rows already stored are skipped
 
 ### Statistics Engine (`src/lib/stats.ts`)
 
@@ -264,13 +285,16 @@ Frontend communicates via `@tauri-apps/api` and plugin imports.
 ## Important Patterns
 
 ### Reading/Writing Data
-Always use Tauri APIs, never Node.js fs:
+Go through `platform` (see Platform Layer), never Tauri APIs or Node.js fs directly from
+shared code. Inside `src/lib/platform/tauri/`, use the Tauri APIs:
 ```typescript
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs'
 ```
 
 ### Shell Commands
-Use Command API with scoped shells:
+From shared code, use `platform.runShell()` or the helpers in `src/lib/shell-hooks.ts`;
+both return null on the web. Inside `src/lib/platform/tauri/`, use the Command API with
+scoped shells:
 ```typescript
 import { Command } from '@tauri-apps/plugin-shell'
 const cmd = Command.create('run-sh', ['-c', 'your command'])
@@ -287,7 +311,7 @@ await updateSettings({ normalWindowWidth: 800 })
 
 **Adding a New Setting:**
 
-1. Add the property to the `Settings` interface in `src/lib/settings.ts`
+1. Add the property to the `Settings` interface in `src/lib/settings-types.ts`
 2. Add the default value to `DEFAULT_SETTINGS` in the same file
 3. Add UI control in `src/screens/Settings.tsx` (if user-configurable)
 4. Use the setting anywhere via `useSettings()` hook - no prop drilling needed
@@ -298,7 +322,7 @@ All components (including AppProvider) access settings via the same hook pattern
 
 Handled by `useStorageSubscriber` hook:
 - Start timer: `timerMachine.start()` creates timer state in memory, emits `started` event
-- Complete/Cancel: `timerMachine.complete()`/`cancel()` emit events, subscriber appends to `sessions.csv`
+- Complete/Cancel: `timerMachine.complete()`/`cancel()` emit events, subscriber appends the session
 - Window close: subscriber detects active timer via `timerMachine.getState()`, saves session with status 'unknown'
 
 ## Changelog Management
