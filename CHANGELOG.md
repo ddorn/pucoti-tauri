@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.5.0] - 2026-11-24
+
+### Added
+
+- **Pucoti in the browser**: Pucoti now runs on the web at [pucoti.com/app](https://pucoti.com/app/), and can be installed as an app from there. Your sessions stay in your browser, and a timer still running when you close the tab is kept. Window management, shell hooks and the GNOME panel indicator remain desktop-only, and are greyed out in Settings on the web.
+- **New website**: [pucoti.com](https://pucoti.com) explains what Pucoti is for, with a live timer to try it, and how to install it on each platform.
+- **Scramble timer**: Press `?` (or turn it on in Settings > Timer) to hide the countdown behind scrambled symbols, so you have to feel how much time has passed instead of reading it. It still turns red in overtime.
+- **Resize the window from the keyboard**: In the desktop app, press `+` and `-` to grow or shrink the window, in normal or corner mode. The new size is remembered, and never exceeds the screen.
+- **niri support**: On the niri compositor, corner mode places the window in the chosen corner of the screen, clear of your bars, and the floating window follows you to whichever workspace you switch to. Tile it to keep it on one workspace.
+- **Import sessions from CSV**: Stats has an Import CSV button next to Export, so you can move your history between computers, or from the desktop app to the web. Sessions you already have are skipped.
+- **`make install`**: When building from source, `make install` installs Pucoti with its menu entry and icons.
+
+### Changed
+
+- **Leaving the corner**: Opening Stats, Settings or the completion screen from the corner window brings it back to full size.
+
+### Fixed
+
+- **App icon**: Linux and macOS showed a placeholder instead of the Pucoti icon.
+- **Saved window size**: The window now opens at the size you set in Settings, instead of the default size.
+- **Empty sessions**: Starting a timer, pressing `q` or closing the app while on the idle 5:00 countdown no longer saves an empty session to your history.
+
 ## [1.4.0] - 2026-03-06
 
 ### Added
